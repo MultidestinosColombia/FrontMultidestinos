@@ -626,7 +626,7 @@ export default {
 
         // Realizar la solicitud para obtener todos los asesores
         const response = await fetch(
-          "https://backendmultidestinosexpress.onrender.com/user/zona/zona"
+          "https://backmultidestinos.onrender.com//user/zona/zona"
         );
         if (!response.ok) {
           throw new Error("Error al cargar los asesores por zona");
@@ -661,7 +661,7 @@ export default {
       try {
         console.log("Cargando zonas y usuarios...");
         const response = await fetch(
-          "https://backendmultidestinosexpress.onrender.com/user/zona/zona"
+          "https://backmultidestinos.onrender.com/user/zona/zona"
         );
         if (!response.ok) {
           throw new Error("Error al cargar las zonas y usuarios");
@@ -756,7 +756,7 @@ export default {
       };
       console.log("newClient", newClient);
 
-      fetch("https://backendmultidestinosexpress.onrender.com/cliente/", {
+      fetch("https://backmultidestinos.onrender.com/cliente/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -785,7 +785,7 @@ export default {
     },
     editarCliente(cliente) {
       // Construir la URL con el ID del cliente
-      const url = `https://backendmultidestinosexpress.onrender.com/user/${cliente.asesor}`;
+      const url = `https://backmultidestinos.onrender.com/user/${cliente.asesor}`;
 
       // Realizar la solicitud para obtener la información completa del cliente
       fetch(url)
@@ -854,7 +854,7 @@ export default {
       };
 
       fetch(
-        `https://backendmultidestinosexpress.onrender.com/cliente/${clienteEditado.id}`,
+        `https://backmultidestinos.onrender.com/cliente/${clienteEditado.id}`,
         {
           method: "PUT",
           headers: {
@@ -891,7 +891,7 @@ export default {
         });
     },
     eliminarCliente(id) {
-      fetch(`https://backendmultidestinosexpress.onrender.com/cliente/${id}`, {
+      fetch(`https://backmultidestinos.onrender.com/cliente/${id}`, {
         method: "DELETE",
       })
         .then((response) => {

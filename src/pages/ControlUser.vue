@@ -220,7 +220,7 @@ export default {
       }
     },
     cargarUsuarios() {
-      fetch("https://backendmultidestinosexpress.onrender.com/user/")
+      fetch("https://backmultidestinos.onrender.com/user/")
         .then((response) => response.json())
         .then((data) => {
           this.usuarios = data;
@@ -242,7 +242,7 @@ export default {
       };
       console.log(newUser);
 
-      fetch("https://backendmultidestinosexpress.onrender.com/user/", {
+      fetch("https://backmultidestinos.onrender.com/user/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -303,7 +303,7 @@ export default {
       console.log("Usuario editado:", usuarioEditado);
 
       fetch(
-        `https://backendmultidestinosexpress.onrender.com/user/${usuarioEditado.id}`,
+        `https://backmultidestinos.onrender.com/user/${usuarioEditado.id}`,
         {
           method: "PUT",
           headers: {
@@ -343,7 +343,7 @@ export default {
     },
     eliminarUsuario(id) {
       // Eliminar el usuario del servidor y actualizar la lista local
-      fetch(`https://backendmultidestinosexpress.onrender.com/user/${id}`, {
+      fetch(`https://backmultidestinos.onrender.com/user/${id}`, {
         method: "DELETE",
       })
         .then((response) => {

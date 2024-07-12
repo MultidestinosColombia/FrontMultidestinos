@@ -743,7 +743,7 @@ export default {
     const fetchCotizacionData = async () => {
       try {
         const response = await axios.get(
-          "https://backendmultidestinosexpress.onrender.com/cotizacion"
+          "https://backmultidestinos.onrender.com/cotizacion"
         );
         cotizacionData.value = response.data;
         await fetchUsers(); // Llama a fetchUsers después de obtener las cotizaciones
@@ -757,7 +757,7 @@ export default {
     const fetchUsers = async () => {
       try {
         const response = await axios.get(
-          "https://backendmultidestinosexpress.onrender.com/user/"
+          "https://backmultidestinos.onrender.com/user/"
         );
         const users = response.data;
         users.forEach((user) => {
@@ -1235,10 +1235,10 @@ export default {
 
         const [habitacionResponse, cotizacionResponse] = await Promise.all([
           axios.get(
-            `https://backendmultidestinosexpress.onrender.com/habitacionCotizacion/${idCotizacion}`
+            `https://backmultidestinos.onrender.com/habitacionCotizacion/${idCotizacion}`
           ),
           axios.get(
-            `https://backendmultidestinosexpress.onrender.com/cotizacion/${idCotizacion}`
+            `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
           ),
         ]);
 
@@ -1261,14 +1261,14 @@ export default {
 
         //clientes porcentaje
         const clienteResponse = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/cliente/buscar/${cotizacion.cliente}`
+          `https://backmultidestinos.onrender.com/cliente/buscar/${cotizacion.cliente}`
         );
         console.log("clienteResponse", clienteResponse);
         const clienteData = clienteResponse.data[0];
         console.log("clienteData", clienteData);
         const tipoBase = clienteData.tipoBase;
         const vendedorResponse = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/user/${cotizacion.CreadorCotizacion}`
+          `https://backmultidestinos.onrender.com/user/${cotizacion.CreadorCotizacion}`
         );
         const vendedorData = vendedorResponse.Data;
         console.log("vendedor", vendedorResponse.data.nombreCompleto);
@@ -1282,7 +1282,7 @@ export default {
 
         // Realizar la solicitud POST con los parámetros
         const hotelesResponse = await axios.post(
-          "https://backendmultidestinosexpress.onrender.com/hoteles/buscar",
+          "https://backmultidestinos.onrender.com/hoteles/buscar",
           params
         );
         const hotelincluye = hotelesResponse.data[0].incluye;
@@ -2213,10 +2213,10 @@ export default {
 
         const [habitacionResponse, cotizacionResponse] = await Promise.all([
           axios.get(
-            `https://backendmultidestinosexpress.onrender.com/habitacionCotizacion/${idCotizacion}`
+            `https://backmultidestinos.onrender.com/habitacionCotizacion/${idCotizacion}`
           ),
           axios.get(
-            `https://backendmultidestinosexpress.onrender.com/cotizacion/${idCotizacion}`
+            `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
           ),
         ]);
 
@@ -2239,14 +2239,14 @@ export default {
 
         //clientes porcentaje
         const clienteResponse = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/cliente/buscar/${cotizacion.cliente}`
+          `https://backmultidestinos.onrender.com/cliente/buscar/${cotizacion.cliente}`
         );
         console.log("clienteResponse", clienteResponse);
         const clienteData = clienteResponse.data[0];
         console.log("clienteData", clienteData);
         const tipoBase = clienteData.tipoBase;
         const vendedorResponse = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/user/${cotizacion.CreadorCotizacion}`
+          `https://backmultidestinos.onrender.com/user/${cotizacion.CreadorCotizacion}`
         );
         const vendedorData = vendedorResponse.Data;
         console.log("vendedor", vendedorResponse.data.nombreCompleto);
@@ -2260,7 +2260,7 @@ export default {
 
         // Realizar la solicitud POST con los parámetros
         const hotelesResponse = await axios.post(
-          "https://backendmultidestinosexpress.onrender.com/hoteles/buscar",
+          "https://backmultidestinos.onrender.com/hoteles/buscar",
           params
         );
         const hotelincluye = hotelesResponse.data[0].incluye;
@@ -3155,7 +3155,7 @@ export default {
     async fetchCotizacionData() {
       try {
         const response = await axios.get(
-          "https://backendmultidestinosexpress.onrender.com/cotizacion"
+          "https://backmultidestinos.onrender.com/cotizacion"
         );
         this.cotizacionData = response.data;
       } catch (error) {
@@ -3167,7 +3167,7 @@ export default {
       try {
         console.log("Obteniendo opciones de clientes...");
         const response = await axios.get(
-          "https://backendmultidestinosexpress.onrender.com/cliente"
+          "https://backmultidestinos.onrender.com/cliente"
         );
         console.log("Opciones de clientes nombre:", response.data.nombre);
         const allclientes = response.data.map((item) => item.nombre);
@@ -3185,7 +3185,7 @@ export default {
 
       try {
         const response = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/cliente/buscar/${this.selectedClient}`
+          `https://backmultidestinos.onrender.com/cliente/buscar/${this.selectedClient}`
         );
         const allCorreo = response.data.flatMap((item) =>
           item.correo.split(",")
@@ -3202,7 +3202,7 @@ export default {
         console.log("Salida seleccionada:", this.selectedDeparture);
 
         const response = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/planes/porCiudad/${this.selectedDeparture}`
+          `https://backmultidestinos.onrender.com/planes/porCiudad/${this.selectedDeparture}`
         );
 
         console.log("Respuesta del servidor:", response.data);
@@ -3306,7 +3306,7 @@ export default {
       // Realizar la solicitud POST al servidor con los parámetros actuales
       axios
         .post(
-          "https://backendmultidestinosexpress.onrender.com/hoteles/buscar",
+          "https://backmultidestinos.onrender.com/hoteles/buscar",
           this.params
         )
         .then((response) => {
@@ -3354,7 +3354,7 @@ export default {
       // Realizar la búsqueda de tipos de habitación
       axios
         .post(
-          "https://backendmultidestinosexpress.onrender.com/hoteles/buscar",
+          "https://backmultidestinos.onrender.com/hoteles/buscar",
           this.params
         )
         .then((response) => {
@@ -3411,7 +3411,7 @@ export default {
       try {
         // Realizar la solicitud GET para obtener la información del tiquete
         const response = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/tiquete/buscar/${salida}/${destino}`
+          `https://backmultidestinos.onrender.com/tiquete/buscar/${salida}/${destino}`
         );
 
         // Aquí puedes manejar la respuesta recibida
@@ -3483,14 +3483,14 @@ export default {
         precioTrans = 0;
 
       const impuestosResponse = await axios.get(
-        "https://backendmultidestinosexpress.onrender.com/canoCristal/"
+        "https://backmultidestinos.onrender.com/canoCristal/"
       );
       const impuestosData = impuestosResponse.data;
       console.log("Datos de impuestos obtenidos:", impuestosData);
       try {
         //clientes porcentaje
         const clienteResponse = await axios.get(
-          `https://backendmultidestinosexpress.onrender.com/cliente/buscar/${this.selectedClient}`
+          `https://backmultidestinos.onrender.com/cliente/buscar/${this.selectedClient}`
         );
         console.log("clienteResponse", clienteResponse);
 
@@ -3582,7 +3582,7 @@ export default {
           const preciosResponseArray = await Promise.all(
             preciosRequestDataArray.map((data) =>
               axios.post(
-                "https://backendmultidestinosexpress.onrender.com/hoteles/buscarT",
+                "https://backmultidestinos.onrender.com/hoteles/buscarT",
                 data
               )
             )
@@ -3614,7 +3614,7 @@ export default {
             destino: this.destination,
           };
           const transporteResponse = await axios.get(
-            "https://backendmultidestinosexpress.onrender.com/transporte/buscar",
+            "https://backmultidestinos.onrender.com/transporte/buscar",
             {
               params: transporteRequestData,
             }
@@ -4256,8 +4256,8 @@ export default {
         // Realizar la solicitud para guardar la cotización con los precios de las habitaciones
         const cotizacionResponse = await axios.post(
           this.programName !== "Caño Cristales"
-            ? "https://backendmultidestinosexpress.onrender.com/cotizacion"
-            : "https://backendmultidestinosexpress.onrender.com/cotizacion/c",
+            ? "https://backmultidestinos.onrender.com/cotizacion"
+            : "https://backmultidestinos.onrender.com/cotizacion/c",
           formData
         );
         if (cotizacionResponse.data.success) {
@@ -4284,7 +4284,7 @@ export default {
 
             // Realizar la solicitud POST para guardar los datos de la habitación
             const habitacionResponse = await axios.post(
-              "https://backendmultidestinosexpress.onrender.com/habitacionCotizacion/",
+              "https://backmultidestinos.onrender.com/habitacionCotizacion/",
               habitacion
             );
             console.log("Respuesta de la habitación:", habitacionResponse.data);

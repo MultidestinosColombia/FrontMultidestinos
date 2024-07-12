@@ -69,19 +69,16 @@ const router = useRouter();
 
 const login = async () => {
   try {
-    const response = await fetch(
-      "https://backendmultidestinosexpress.onrender.com/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          usuario: userName.value,
-          contrasena: password.value,
-        }),
-      }
-    );
+    const response = await fetch("https://backmultidestinos.onrender.com/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        usuario: userName.value,
+        contrasena: password.value,
+      }),
+    });
 
     if (response.ok) {
       const responseBody = await response.text(); // Leer el cuerpo de la respuesta
@@ -89,7 +86,7 @@ const login = async () => {
       if (responseBody === "Inicio de sesión exitoso") {
         // Aquí obtenemos los datos del usuario desde la API usando el nombre de usuario ingresado
         const userDataResponse = await fetch(
-          `https://backendmultidestinosexpress.onrender.com/user/username/${userName.value}`
+          `https://backmultidestinos.onrender.com/user/username/${userName.value}`
         );
         if (userDataResponse.ok) {
           const userData = await userDataResponse.json();
