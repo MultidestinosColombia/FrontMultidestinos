@@ -232,7 +232,6 @@
                         </p>
                         <div class="row q-col-gutter-md">
                           <div class="col">
-                            <!-- Tipo de habitación -->
                             <q-select
                               outlined
                               v-model="room.roomType"
@@ -242,7 +241,6 @@
                             />
                           </div>
                           <div class="col">
-                            <!-- Número de adultos -->
                             <q-select
                               outlined
                               v-model="room.adults"
@@ -253,7 +251,6 @@
                           </div>
                         </div>
 
-                        <!-- Checkbox para niños -->
                         <div class="row q-col-gutter-md">
                           <div class="col">
                             <q-checkbox
@@ -262,7 +259,6 @@
                               @update:modelValue="handleChildrenChange(index)"
                             />
                           </div>
-                          <!-- Input bloqueado para número de niños (máximo 1) -->
                           <div class="col">
                             <q-input
                               filled
@@ -273,53 +269,49 @@
                             />
                           </div>
                         </div>
-                        <!-- EDADES CAÑO CRISTAL -->
+
                         <div v-if="mostrarCamposEdad(index)">
-                          <div v-for="(room, index) in rooms" :key="index">
-                            <div class="row">
-                              <div class="col-12">
-                                <p class="age-input-label">
-                                  Edades y nacionalidad de los adultos:
-                                </p>
-                              </div>
-
-                              <div
-                                v-for="(age, i) in adultAgesComputed(room)"
-                                :key="'adult' + i + '-' + index"
-                                class="col-6 col-sm-4 col-md-3"
-                              >
-                                <q-input
-                                  filled
-                                  v-model="room.adultAges[i]"
-                                  :label="'Adulto ' + (i + 1) + ' - Edad'"
-                                  type="number"
-                                />
-
-                                <q-checkbox
-                                  v-model="room.isForeigner[i]"
-                                  label="Extranjero"
-                                />
-                              </div>
+                          <div class="row">
+                            <div class="col-12">
+                              <p class="age-input-label">
+                                Edades y nacionalidad de los adultos:
+                              </p>
                             </div>
 
-                            <div class="row" v-if="hasChildren[index]">
-                              <div class="col-12">
-                                <p class="age-input-label">Edad del niño:</p>
-                              </div>
-                              <div class="col-6 col-sm-4 col-md-3">
-                                <q-input
-                                  filled
-                                  v-model="room.childAge"
-                                  label="Niño"
-                                  type="number"
-                                />
-                              </div>
+                            <div
+                              v-for="(age, i) in room.adultAges"
+                              :key="'adult' + i + '-' + index"
+                              class="col-6 col-sm-4 col-md-3"
+                            >
+                              <q-input
+                                filled
+                                v-model="room.adultAges[i]"
+                                :label="'Adulto ' + (i + 1) + ' - Edad'"
+                                type="number"
+                              />
+
+                              <q-checkbox
+                                v-model="room.isForeigner[i]"
+                                label="Extranjero"
+                              />
+                            </div>
+                          </div>
+
+                          <div class="row" v-if="hasChildren[index]">
+                            <div class="col-12">
+                              <p class="age-input-label">Edad del niño:</p>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-3">
+                              <q-input
+                                filled
+                                v-model="room.childAge"
+                                label="Niño"
+                                type="number"
+                              />
                             </div>
                           </div>
                         </div>
 
-                        <!-- FIN EDADES -->
-                        <!-- Acomodación de la habitación -->
                         <q-select
                           outlined
                           v-model="room.accommodation"
@@ -646,7 +638,26 @@ const formatCurrency = (value) => {
 
 export default {
   setup() {
+    let cormacarena5a11Total = 0;
+    let cormacarena5a11Personas = 0;
+    let cormacarena12a65Total = 0;
+    let cormacarena12a65Personas = 0;
+    let cormacarenaExtranjeroTotal = 0;
+    let cormacarenaExtranjeroPersonas = 0;
+    let pqsNaturales5a24Total = 0;
+    let pqsNaturales5a24Personas = 0;
+    let pqsNaturales25a65Total = 0;
+    let pqsNaturales25a65Personas = 0;
+    let pqsNaturalesExtranjeroTotal = 0;
+    let pqsNaturalesExtranjeroPersonas = 0;
+    let alcaldiaNacionalTotal = 0;
+    let alcaldiaNacionalPersonas = 0;
+    let alcaldiaExtranjeroTotal = 0;
+    let alcaldiaExtranjeroPersonas = 0;
+    let defensaCivilTotal = 0;
+    let defensaCivilPersonas = 0;
     let sumaTotalAcomodacion = 0;
+    let totalImpuestos = 0;
     let sumaValorBrutohab = 0;
     let sumaTotalDescuento = 0;
     const peopleArray = computed(() => {
@@ -999,6 +1010,28 @@ export default {
     let totalAdultos = 0;
     let totalNiños = 0;
     return {
+      //impuestos
+      cormacarena5a11Personas,
+      cormacarena12a65Personas,
+      cormacarenaExtranjeroPersonas,
+      pqsNaturales5a24Personas,
+      pqsNaturales25a65Personas,
+      pqsNaturalesExtranjeroPersonas,
+      alcaldiaNacionalPersonas,
+      alcaldiaExtranjeroPersonas,
+      defensaCivilPersonas,
+      cormacarena5a11Total,
+      cormacarena12a65Total,
+      cormacarenaExtranjeroTotal,
+      pqsNaturales5a24Total,
+      pqsNaturales25a65Total,
+      pqsNaturalesExtranjeroTotal,
+      alcaldiaNacionalTotal,
+      alcaldiaExtranjeroTotal,
+      defensaCivilTotal,
+      totalImpuestos,
+      //fin de impuestos
+
       adultAgesComputed,
       mostrarCamposEdad,
       showAgeInputs,
@@ -3402,10 +3435,29 @@ export default {
       this.additionalNightSelected = false;
       this.additionalNightCount = 0;
       this.habitacionesDatos = [];
+      this.totalImpuestos = 0;
       this.sumaTotalAcomodacion = 0;
       this.sumaValorBrutohab = 0;
       this.sumaTotalDescuento = 0;
       this.childrenPriceNumber = 0;
+      this.cormacarena5a11Total = 0;
+      this.cormacarena12a65Total = 0;
+      this.cormacarenaExtranjeroTotal = 0;
+      this.pqsNaturales5a24Total = 0;
+      this.pqsNaturales25a65Total = 0;
+      this.pqsNaturalesExtranjeroTotal = 0;
+      this.alcaldiaNacionalTotal = 0;
+      this.alcaldiaExtranjeroTotal = 0;
+      this.defensaCivilTotal = 0;
+      this.cormacarena5a11Personas = 0;
+      this.cormacarena12a65Personas = 0;
+      this.cormacarenaExtranjeroPersonas = 0;
+      this.pqsNaturales5a24Personas = 0;
+      this.pqsNaturales25a65Personas = 0;
+      this.pqsNaturalesExtranjeroPersonas = 0;
+      this.alcaldiaNacionalPersonas = 0;
+      this.alcaldiaExtranjeroPersonas = 0;
+      this.defensaCivilPersonas = 0;
     },
     async obtenerInformacionTiquete(salida, destino) {
       try {
@@ -3847,20 +3899,31 @@ export default {
                 alcaldiaExtranjero: 0,
                 defensaCivil: 0,
               };
-
+              let impuestosHabitacionPersonas = {
+                cormacarena5a11: 0,
+                cormacarena12a65: 0,
+                cormacarenaExtranjero: 0,
+                pqsNaturales5a24: 0,
+                pqsNaturales25a65: 0,
+                pqsNaturalesExtranjero: 0,
+                alcaldiaNacional: 0,
+                alcaldiaExtranjero: 0,
+                defensaCivil: 0,
+              };
               console.log("Habitación actual:", room);
 
               // Verificar si hay edades para calcular impuestos
-              if (room.adultAges.length > 0 || room.childAge) {
-                // Calcular impuestos para cada adulto
+
+              if (room.adultAges.length > 0) {
+                // Calcular impuestos para cada persona (adultos y niños)
                 for (let i = 0; i < room.adultAges.length; i++) {
-                  const edadAdulto = room.adultAges[i];
+                  const edadPersona = room.adultAges[i];
                   const esExtranjero = room.isForeigner[i];
 
                   console.log(
-                    `Calculando impuestos para adulto ${
+                    `Calculando impuestos para la persona ${
                       i + 1
-                    } (edad: ${edadAdulto}, extranjero: ${esExtranjero})`
+                    } (edad: ${edadPersona}, extranjero: ${esExtranjero})`
                   );
 
                   for (const impuesto of impuestosData) {
@@ -3872,109 +3935,59 @@ export default {
                       if (esExtranjero) {
                         impuestosHabitacion.cormacarenaExtranjero +=
                           parseFloat(impuesto.EXTRANJERO) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (Extranjero): ${impuesto.EXTRANJERO} (acumulado)`
-                        );
-                      } else if (edadAdulto >= 5 && edadAdulto <= 11) {
+                        impuestosHabitacionPersonas.cormacarenaExtranjero++;
+                      } else if (edadPersona >= 5 && edadPersona <= 11) {
                         impuestosHabitacion.cormacarena5a11 +=
-                          parseFloat(impuesto["5 a 24 años"]) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (5 a 11 años): ${impuesto["5 a 11 años"]} (acumulado)`
-                        );
-                      } else if (edadAdulto >= 12 && edadAdulto <= 65) {
+                          parseFloat(impuesto["5 a 11 años"]) || 0;
+                        impuestosHabitacionPersonas.cormacarena5a11++;
+                      } else if (edadPersona >= 12 && edadPersona <= 65) {
                         impuestosHabitacion.cormacarena12a65 +=
                           parseFloat(impuesto["12 a 65 años"]) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (12 a 65 años): ${impuesto["12 a 65 años"]} (acumulado)`
-                        );
+                        impuestosHabitacionPersonas.cormacarena12a65++;
                       }
                     } else if (nombreImpuesto === "pqsNaturales") {
                       if (esExtranjero) {
                         impuestosHabitacion.pqsNaturalesExtranjero +=
                           parseFloat(impuesto.EXTRANJERO) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (Extranjero): ${impuesto.EXTRANJERO} (acumulado)`
-                        );
-                      } else if (edadAdulto >= 5 && edadAdulto <= 24) {
+                        impuestosHabitacionPersonas.pqsNaturalesExtranjero++;
+                      } else if (edadPersona >= 5 && edadPersona <= 24) {
                         impuestosHabitacion.pqsNaturales5a24 +=
-                          parseFloat(impuesto["5 a 23 años"]) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (5 a 24 años): ${impuesto["5 a 23 años"]} (acumulado)`
-                        );
-                      } else if (edadAdulto >= 25 && edadAdulto <= 65) {
+                          parseFloat(impuesto["5 a 24 años"]) || 0;
+                        impuestosHabitacionPersonas.pqsNaturales5a24++;
+                      } else if (edadPersona >= 25 && edadPersona <= 65) {
                         impuestosHabitacion.pqsNaturales25a65 +=
                           parseFloat(impuesto["25 a 65 años"]) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (25 a 65 años): ${impuesto["25 a 65 años"]} (acumulado)`
-                        );
+                        impuestosHabitacionPersonas.pqsNaturales25a65++;
                       }
                     } else if (nombreImpuesto === "alcaldia") {
                       if (esExtranjero) {
                         impuestosHabitacion.alcaldiaExtranjero +=
                           parseFloat(impuesto.EXTRANJERO) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (Extranjero): ${impuesto.EXTRANJERO} (acumulado)`
-                        );
-                      } else if (edadAdulto >= 5 && edadAdulto <= 65) {
+                        impuestosHabitacionPersonas.alcaldiaExtranjero++;
+                      } else if (edadPersona >= 5 && edadPersona <= 1000) {
                         // Solo para nacionales mayores de 12 años
                         impuestosHabitacion.alcaldiaNacional +=
                           parseFloat(impuesto["12 a 65 años"]) || 0;
-                        console.log(
-                          `  Impuesto ${nombreImpuesto} (Nacional): ${impuesto["12 a 65 años"]} (acumulado)`
-                        );
+                        impuestosHabitacionPersonas.alcaldiaNacional++;
                       }
                     } else if (nombreImpuesto === "defensaCivil") {
                       // Asumiendo que el impuesto de Defensa Civil se aplica a todos por igual
                       impuestosHabitacion.defensaCivil +=
                         parseFloat(impuesto["5 a 11 años"]) || 0;
-                      console.log(
-                        `  Impuesto ${nombreImpuesto}: ${impuesto["5 a 11 años"]} (acumulado)`
-                      );
+                      impuestosHabitacionPersonas.defensaCivil++;
                     }
-                  }
-                }
 
-                // Calcular impuesto para el niño (si existe)
-                if (
-                  room.childAge &&
-                  room.childAge >= 5 &&
-                  room.childAge <= 11
-                ) {
-                  console.log(
-                    `Calculando impuestos para el niño (edad: ${room.childAge})`
-                  );
-
-                  for (const impuesto of impuestosData) {
-                    const nombreImpuesto = impuesto.IMPUESTO;
-                    if (nombreImpuesto === "PQS NATURALES") {
-                      const valorImpuesto =
-                        parseFloat(impuesto["5 a 11 años"]) || 0;
-                      impuestosHabitacion.pqsNaturales5a24 += valorImpuesto;
-                      console.log(
-                        `  Impuesto ${nombreImpuesto} (5 a 24 años): ${valorImpuesto} (acumulado)`
-                      );
-                    } else if (
-                      nombreImpuesto === "ALCALDIA" ||
-                      nombreImpuesto === "CORMACARENA"
-                    ) {
-                      const valorImpuesto =
-                        parseFloat(impuesto["5 a 11 años"]) || 0;
-                      impuestosHabitacion[`${nombreImpuesto}5a11`] +=
-                        valorImpuesto;
-                      console.log(
-                        `  Impuesto ${nombreImpuesto} (5 a 11 años): ${valorImpuesto} (acumulado)`
-                      );
-                    } else if (nombreImpuesto === "DEFENSA CIVIL") {
-                      const valorImpuesto =
-                        parseFloat(impuesto["5 a 11 años"]) || 0;
-                      impuestosHabitacion.defensaCivil += valorImpuesto;
-                      console.log(
-                        `  Impuesto ${nombreImpuesto}: ${valorImpuesto} (acumulado)`
-                      );
-                    }
+                    console.log(
+                      `   Impuesto ${nombreImpuesto} (acumulado): ${impuestosHabitacion[nombreImpuesto]}`
+                    ); // Mostrar el acumulado de cada impuesto
                   }
                 }
               }
+
+              console.log(
+                "Impuestos totales por habitación:",
+                impuestosHabitacion
+              );
 
               // Convertir impuestos a null si son 0
               for (const impuesto in impuestosHabitacion) {
@@ -3987,22 +4000,12 @@ export default {
                 "Impuestos calculados para la habitación:",
                 impuestosHabitacion
               ); // Verificar impuestos calculados
-
-              //FIN IMPUESTOS CAÑO CRISTAL
-              //suma
-              let totalImpuestos = 0;
-              for (const impuesto in impuestosHabitacion) {
-                totalImpuestos += impuestosHabitacion[impuesto];
-              }
-
-              // Add to TotalAcomodacion
-              TotalAcomodacion += totalImpuestos;
-              valorBrutoTotal += totalImpuestos;
               console.log(
-                "TOTALACOMODACION DESPUES DE IMPUESTOS ",
-                TotalAcomodacion
+                "Número de personas por impuesto:",
+                impuestosHabitacionPersonas
               );
-              console.log("TOTALBRUTO DESPUES DE IMPUESTOS ", valorBrutoTotal);
+              //FIN IMPUESTOS CAÑO CRISTAL
+
               this.habitacionesDatos.push({
                 idCotizacion: "",
                 adultos: numAdultos,
@@ -4046,21 +4049,38 @@ export default {
 
                 //impuestos:
                 defensaCivil: impuestosHabitacion.defensaCivil,
+                defensaCivilPersonas: impuestosHabitacionPersonas.defensaCivil,
 
                 //2
                 alcaldiaNacional: impuestosHabitacion.alcaldiaNacional,
+                alcaldiaNacionalPersonas:
+                  impuestosHabitacionPersonas.alcaldiaNacional,
                 alcaldiaExtranjero: impuestosHabitacion.alcaldiaExtranjero,
+                alcaldiaExtranjeroPersonas:
+                  impuestosHabitacionPersonas.alcaldiaExtranjero,
 
                 //3
                 pqsNaturalesExtranjero:
                   impuestosHabitacion.pqsNaturalesExtranjero,
+                pqsNaturalesExtranjeroPersonas:
+                  impuestosHabitacionPersonas.pqsNaturalesExtranjero,
                 pqsNaturales25a65: impuestosHabitacion.pqsNaturales25a65,
+                pqsNaturales25a65Personas:
+                  impuestosHabitacionPersonas.pqsNaturales25a65,
                 pqsNaturales5a24: impuestosHabitacion.pqsNaturales5a24,
+                pqsNaturales5a24Personas:
+                  impuestosHabitacionPersonas.pqsNaturales5a24,
                 //3
                 cormacarenaExtranjero:
                   impuestosHabitacion.cormacarenaExtranjero,
+                cormacarenaExtranjeroPersonas:
+                  impuestosHabitacionPersonas.cormacarenaExtranjero,
                 cormacarena5a11: impuestosHabitacion.cormacarena5a11,
+                cormacarena5a11Personas:
+                  impuestosHabitacionPersonas.cormacarena5a11,
                 cormacarena12a65: impuestosHabitacion.cormacarena12a65,
+                cormacarena12a65Personas:
+                  impuestosHabitacionPersonas.cormacarena12a65,
                 // Agrega otros valores que desees enviar
               });
             } else {
@@ -4087,16 +4107,97 @@ export default {
         console.log("Total de adultos:", this.totalAdultos);
         console.log("Total de niños:", this.totalNiños);
 
+        //otros
+        //suma
+        //PENDIENTES IMPUESTOS
+        // let totalImpuestos = 0;
+        // for (const impuesto in impuestosHabitacion) {
+        //   totalImpuestos += impuestosHabitacion[impuesto];
+        // }
+
+        // //FIN IMPUESTOS CAÑO CRISTAL
+
+        // // Add to TotalAcomodacion
+        // TotalAcomodacion += totalImpuestos;
+        // valorBrutoTotal += totalImpuestos;
+        // console.log(
+        //   "TOTALACOMODACION DESPUES DE IMPUESTOS ",
+        //   TotalAcomodacion
+        // );
+        // console.log("TOTALBRUTO DESPUES DE IMPUESTOS ", valorBrutoTotal);
+        // fin otros
         // Iterar sobre el array habitacionesDatos
         this.habitacionesDatos.forEach((habitacion) => {
           // Sumar el valor de TotalAcomodacion de cada habitación a la suma total
           this.sumaTotalAcomodacion += habitacion.TotalAcomodacion;
           this.sumaValorBrutohab += habitacion.precioHabitacionTotal;
           this.sumaTotalDescuento += habitacion.descuento;
-        });
 
+          this.cormacarena5a11Total += habitacion.cormacarena5a11 || 0;
+
+          this.cormacarena12a65Total += habitacion.cormacarena12a65 || 0;
+          this.cormacarenaExtranjeroTotal +=
+            habitacion.cormacarenaExtranjero || 0;
+          this.pqsNaturales5a24Total += habitacion.pqsNaturales5a24 || 0;
+          this.pqsNaturales25a65Total += habitacion.pqsNaturales25a65 || 0;
+          this.pqsNaturalesExtranjeroTotal +=
+            habitacion.pqsNaturalesExtranjero || 0;
+          this.alcaldiaNacionalTotal += habitacion.alcaldiaNacional || 0;
+          this.alcaldiaExtranjeroTotal += habitacion.alcaldiaExtranjero || 0;
+          this.defensaCivilTotal += habitacion.defensaCivil || 0;
+
+          //numero de personas
+          this.cormacarena5a11Personas += habitacion.cormacarena5a11Personas;
+          this.cormacarena12a65Personas += habitacion.cormacarena12a65Personas;
+          this.cormacarenaExtranjeroPersonas +=
+            habitacion.cormacarenaExtranjeroPersonas;
+          this.pqsNaturales5a24Personas += habitacion.pqsNaturales5a24Personas;
+          this.pqsNaturales25a65Personas +=
+            habitacion.pqsNaturales25a65Personas;
+          this.pqsNaturalesExtranjeroPersonas +=
+            habitacion.pqsNaturalesExtranjeroPersonas;
+          this.alcaldiaNacionalPersonas += habitacion.alcaldiaNacionalPersonas;
+          this.alcaldiaExtranjeroPersonas +=
+            habitacion.alcaldiaExtranjeroPersonas;
+          this.defensaCivilPersonas +=
+            habitacion.pqsNaturalesExtranjeroPersonas;
+        });
+        // Suma total de impuestos (considerando valores nulos como 0)
+        this.totalImpuestos =
+          (this.cormacarena5a11Total || 0) +
+          (this.cormacarena12a65Total || 0) +
+          (this.cormacarenaExtranjeroTotal || 0) +
+          (this.pqsNaturales5a24Total || 0) +
+          (this.pqsNaturales25a65Total || 0) +
+          (this.pqsNaturalesExtranjeroTotal || 0) +
+          (this.alcaldiaNacionalTotal || 0) +
+          (this.alcaldiaExtranjeroTotal || 0) +
+          (this.defensaCivilTotal || 0);
+        //fin suma total impuestos
+
+        console.log(
+          "VALOR ANTES DE IMPUESTOS CAÑO CRISTAL",
+          "VALOR BRUTO",
+          this.sumaValorBrutohab,
+          "VALORCLIENTE",
+          this.sumaTotalAcomodacion
+        );
+        //sumas a valor bruto a cliente TOTAL IMPUESTOS
+        this.sumaValorBrutohab += this.totalImpuestos;
+        this.sumaTotalAcomodacion += this.totalImpuestos;
+
+        console.log("VALOR TOTAL IMPUESTOS", this.totalImpuestos);
+        console.log(
+          "VALOR DESPUES DE IMPUESTOS CAÑO CRISTAL",
+          "VALOR BRUTO",
+          this.sumaValorBrutohab,
+          "VALORCLIENTE",
+          this.sumaTotalAcomodacion
+        );
+        //suplemento
         this.sumaValorBrutohab += valorSuplemento;
         this.sumaTotalAcomodacion += valorSuplemento;
+
         // Imprimir la suma total
         console.log(
           "La suma total de TotalAcomodacion en todas las habitaciones es:",
@@ -4250,6 +4351,30 @@ export default {
           rteIca: rteIcaCalculado,
           totalComision: totalComision,
           correo: this.correo,
+
+          //VALORES IMPUESTOS
+
+          cormacarena5a11_Total: this.cormacarena5a11Total,
+          cormacarena12a65_Total: this.cormacarena12a65Total,
+          cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
+          pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
+          pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
+          pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
+          alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
+          alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
+          defensaCivil_Total: this.defensaCivilTotal,
+          //personas Impuestos Total
+          defensaCivil_numeroPersonas: this.defensaCivilPersonas,
+          alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
+          alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
+          pqsNaturalesExtranjero_numeroPersonas:
+            this.pqsNaturalesExtranjeroPersonas,
+          pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
+          pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
+          cormacarenaExtranjero_numeroPersonas:
+            this.cormacarenaExtranjeroPersonas,
+          cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
+          cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
         };
         console.log("formData", formData);
 
