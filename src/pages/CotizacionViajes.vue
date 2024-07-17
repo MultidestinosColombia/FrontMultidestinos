@@ -923,7 +923,13 @@ export default {
     const roomTypeOptions = ref([]);
     const clientOptions = ref([]);
     const OptionCorreo = ref([]);
-    const aerolineaOptions = ref(["Satena", "Avianca", "Latam", "JetSmart"]);
+    const aerolineaOptions = ref([
+      "Satena",
+      "Avianca",
+      "Latam",
+      "JetSmart",
+      "Clic",
+    ]);
     const selectedDeparture = ref("");
     const destination = ref(""); // Propiedad para el destino
     const programName = ref(""); // Propiedad para el nombre del programa
@@ -1892,7 +1898,6 @@ export default {
           "cormacarenaExtranjero",
           "cormacarena5a11",
           "cormacarena12a65",
-          "TOTAL IMPUESTOS",
         ];
 
         // Valores correspondientes
@@ -1903,20 +1908,19 @@ export default {
           cotizacion.tasa,
           cotizacion.ta,
           cotizacion.ivaTa,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          cotizacion.defensaCivil_Total,
+          cotizacion.alcaldiaNacional_Total,
+          cotizacion.alcaldiaExtranjero_Total,
+          cotizacion.pqsNaturalesExtranjero_Total,
+          cotizacion.pqsNaturales25a65_Total,
+          cotizacion.pqsNaturales5a24_Total,
+          cotizacion.cormacarenaExtranjero_Total,
+          cotizacion.cormacarena5a11_Total,
+          cotizacion.cormacarena12a65_Total,
           cotizacion.precioTrans,
         ];
         // Definir impuestosAdicionales FUERA del else if
         const impuestosAdicionales = [
-          "defensaCivil",
           "alcaldiaNacional",
           "alcaldiaExtranjero",
           "pqsNaturalesExtranjero",
@@ -1926,16 +1930,18 @@ export default {
           "cormacarena5a11",
           "cormacarena12a65",
         ];
-
-        // Calcular valores de impuestos adicionales y actualizar totalImpuestos
-        habitacion.forEach((habitacionData) => {
-          impuestosAdicionales.forEach((impuesto, index) => {
-            const valorImpuesto = parseInt(habitacionData[impuesto] || 0, 10); // Convertir a entero
-            valores[6 + index] = valorImpuesto; // Reemplazar el valor inicial con el valor calculado
-            valores[valores.length - 1] =
-              parseInt(valores[valores.length - 1], 10) + valorImpuesto; // Sumar al totalImpuestos (convertido a entero)
-          });
-        });
+        // Mapeo de nombres originales a nombres para mostrar
+        const nombreAMostrar = {
+          defensaCivil: "Defensa Civil",
+          alcaldiaNacional: "Alcaldía Nacional",
+          alcaldiaExtranjero: "Alcaldía Extranjero",
+          pqsNaturalesExtranjero: "PQS. Naturales Extranjero",
+          pqsNaturales25a65: "PQS. Naturales 25 a 65",
+          pqsNaturales5a24: "PQS. Naturales 5 a 24",
+          cormacarenaExtranjero: "Cormacarena Extranjero",
+          cormacarena5a11: "Cormacarena 5 a 11",
+          cormacarena12a65: "Cormacarena 12 a 65",
+        };
 
         if (cotizacion.suplemento > 0) {
           nombres.push("SUPLEMENTO");
@@ -1950,15 +1956,40 @@ export default {
           drawRow(y);
 
           // Primera columna: Nombre
-          doc.text(nombre, margins.left + cellPadding, y + cellHeight / 2, {
-            baseline: "middle",
-          });
+          // Obtener el nombre a mostrar usando el mapeo
+          const nombreAMostrarEnTabla = nombreAMostrar[nombre] || nombre; // Si no está en el mapeo, usar el original
 
-          // Segunda columna: Valor dividido por el total de pasajeros
+          // Primera columna: Nombre (usando el nombre a mostrar)
+          doc.text(
+            nombreAMostrarEnTabla,
+            margins.left + cellPadding,
+            y + cellHeight / 2,
+            {
+              // Cambiar "nombre" por "nombreAMostrarEnTabla"
+              baseline: "middle",
+            }
+          );
+
+          // Segunda columna: Valor dividido (adaptado para impuestos adicionales)
           const totalPasajeros = cotizacion.totalPasajeros;
           const valor = valores[index] || 0;
-          const valorDividido =
-            totalPasajeros !== 0 ? Math.trunc(valor / totalPasajeros) : "";
+          let valorDividido = "";
+
+          if (impuestosAdicionales.includes(nombre)) {
+            // Si es un impuesto adicional, dividir por el número de personas de ese impuesto
+            const propiedadNumeroPersonas = `${nombre}_numeroPersonas`;
+            const numeroPersonasImpuesto =
+              cotizacion[propiedadNumeroPersonas] || 0;
+            valorDividido =
+              numeroPersonasImpuesto !== 0
+                ? Math.trunc(valor / numeroPersonasImpuesto)
+                : "";
+          } else {
+            // Si no es un impuesto adicional, dividir por el total de pasajeros
+            valorDividido =
+              totalPasajeros !== 0 ? Math.trunc(valor / totalPasajeros) : "";
+          }
+
           doc.text(
             valorDividido.toString(),
             margins.left + cellWidth + cellPadding,
@@ -1969,13 +2000,19 @@ export default {
           // Tercera columna: Número total de pasajeros
           const totalPasajerosTexto =
             totalPasajeros !== 0 ? Math.trunc(totalPasajeros).toString() : "";
+          let textoTerceraColumna = "";
+          if (impuestosAdicionales.includes(nombre)) {
+            const propiedadNumeroPersonas = `${nombre}_numeroPersonas`;
+            textoTerceraColumna = cotizacion[propiedadNumeroPersonas] || "";
+          } else {
+            textoTerceraColumna = totalPasajerosTexto;
+          }
           doc.text(
-            totalPasajerosTexto,
+            textoTerceraColumna,
             margins.left + 2 * cellWidth + cellPadding,
             y + cellHeight / 2,
             { baseline: "middle" }
           );
-
           // Cuarta columna: Valor original
           const valorOriginalTexto =
             valor !== 0 ? Math.trunc(valor).toString() : "";
