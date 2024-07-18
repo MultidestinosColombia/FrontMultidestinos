@@ -537,6 +537,137 @@
                 </q-input>
               </div>
             </div>
+
+            <!-- ESCALA -->
+            <div class="row q-col-gutter-md">
+              <div class="col" style="margin-left: 10px">
+                <q-checkbox
+                  v-model="mostrarEscalas"
+                  label="Escala (Ida y Vuelta)"
+                />
+              </div>
+            </div>
+
+            <div v-if="mostrarEscalas">
+              <p style="text-align: center">
+                <span style="margin-left: 10px; font-weight: bold"
+                  >Información escala ida</span
+                >
+              </p>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-select
+                    v-model="aerolineaEscalaIda"
+                    label="Aerolinea"
+                    outlined
+                    :options="aerolineaOptions"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="vueloEscalaIda"
+                    label="Vuelo"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="horaSalidaEscalaIda"
+                    label="Hora de salida"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="horaLlegadaEscalaIda"
+                    label="Hora de llegada"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="claseEscalaIda"
+                    label="Clase"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <p style="text-align: center">
+                <span style="margin-left: 10px; font-weight: bold"
+                  >Información escala vuelta</span
+                >
+              </p>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-select
+                    v-model="aerolineaEscalaVuelta"
+                    label="Aerolinea"
+                    outlined
+                    :options="aerolineaOptions"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="vueloEscalaVuelta"
+                    label="Vuelo"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="horaSalidaEscalaVuelta"
+                    label="Hora de salida"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="horaLlegadaEscalaVuelta"
+                    label="Hora de llegada"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="claseEscalaVuelta"
+                    label="Clase"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+            </div>
+
             <!-- Suplemento y Campo de entrada para el suplemento -->
             <div class="row q-col-gutter-md">
               <div class="col">
@@ -800,6 +931,20 @@ export default {
     };
 
     const formatDate = (date) => format(new Date(date), "yyyy-MM-dd");
+
+    //VUELO ESCALA  DE VUEVLO
+
+    const mostrarEscalas = ref(false);
+    const aerolineaEscalaIda = ref(null);
+    const vueloEscalaIda = ref(null);
+    const horaLlegadaEscalaIda = ref(null);
+    const horaSalidaEscalaIda = ref(null);
+    const claseEscalaIda = ref(null);
+    const aerolineaEscalaVuelta = ref(null);
+    const vueloEscalaVuelta = ref(null);
+    const horaLlegadaEscalaVuelta = ref(null);
+    const horaSalidaEscalaVuelta = ref(null);
+    const claseEscalaVuelta = ref(null);
 
     //VUELO INFO DATA
 
@@ -1138,6 +1283,20 @@ export default {
         },
         // ...
       ],
+
+      //VUELO ESCALA
+      mostrarEscalas,
+      aerolineaEscalaIda,
+      vueloEscalaIda,
+      horaLlegadaEscalaIda,
+      horaSalidaEscalaIda,
+      claseEscalaIda,
+      aerolineaEscalaVuelta,
+      vueloEscalaVuelta,
+      horaLlegadaEscalaVuelta,
+      horaSalidaEscalaVuelta,
+      claseEscalaVuelta,
+
       //vuelo info
       aerolineaValue1,
       vueloValue1,
@@ -3456,6 +3615,16 @@ export default {
     },
     resetVariables() {
       // Reinicializar todas las variables utilizadas
+      this.aerolineaEscalaIda = "";
+      this.vueloEscalaIda = "";
+      this.horaLlegadaEscalaIda = "";
+      this.horaSalidaEscalaIda = "";
+      this.claseEscalaIda = "";
+      this.aerolineaEscalaVuelta = "";
+      this.vueloEscalaVuelta = "";
+      this.horaLlegadaEscalaVuelta = "";
+      this.horaSalidaEscalaVuelta = "";
+      this.claseEscalaVuelta = "";
       this.aerolineaValue1 = "";
       this.vueloValue1 = "";
       this.aerolineaValue2 = "";
@@ -4381,6 +4550,19 @@ export default {
           horaSalidaVuelta: this.horaSalidaValue2,
           claseVuelta: this.claseValue2,
           fechaFin: this.dateRange[1],
+
+          //VUELOS ESCALA
+          aerolineaEscalaIda: this.aerolineaEscalaIda || null,
+          vueloEscalaIda: this.vueloEscalaIda || null,
+          horaLlegadaEscalaIda: this.horaLlegadaEscalaIda || null,
+          horaSalidaEscalaIda: this.horaSalidaEscalaIda || null,
+          claseEscalaIda: this.claseEscalaIda || null,
+
+          aerolineaEscalaVuelta: this.aerolineaEscalaVuelta || null,
+          vueloEscalaVuelta: this.vueloEscalaVuelta || null,
+          horaLlegadaEscalaVuelta: this.horaLlegadaEscalaVuelta || null,
+          horaSalidaEscalaVuelta: this.horaSalidaEscalaVuelta || null,
+          claseEscalaVuelta: this.claseEscalaVuelta || null,
 
           //valores si es comision
           rteFuente: rteFuenteCalculado,
