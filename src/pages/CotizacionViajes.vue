@@ -1689,19 +1689,6 @@ export default {
         // Mover a la posición donde se empezará a dibujar la tabla
         currentY += 20;
 
-        // Calcular las dimensiones del recuadro del itinerario
-        const tableItinerarioWidth = pageWidth - margins.left - margins.right;
-        const tableItinerarioHeight = 10 + 18; // 15 para el espacio superior e inferior
-
-        // Dibujar el recuadro alrededor de la tabla
-        doc.rect(
-          margins.left,
-          currentY - 5,
-          tableItinerarioWidth,
-          tableItinerarioHeight,
-          "S"
-        );
-
         // Configuración de la tabla
         const columns = [
           "AEROLINEA",
@@ -1753,16 +1740,24 @@ export default {
               : "N/A", // Agregado para mostrar el record
           ],
         ];
-
         // Calcular el ancho de cada columna
         const columnWidth =
           (pageWidth - margins.left - margins.right) / columns.length;
 
-        // Dibujar encabezados de la tabla
-        doc.setFontSize(8);
-        columns.forEach((column, index) => {
-          doc.text(column, margins.left + index * columnWidth, currentY);
-        });
+        // Calcular las dimensiones del recuadro del itinerario DESPUÉS de agregar los datos
+        const tableItinerarioWidth = pageWidth - margins.left - margins.right;
+        const tableItinerarioHeight = 18 * data.length; // Altura basada en el número de filas de datos, sin espacio extra
+
+        // Dibujar el recuadro alrededor de la tabla
+        doc.rect(
+          margins.left,
+          currentY - 5, // Ajustar la posición vertical inicial del recuadro
+          tableItinerarioWidth,
+          tableItinerarioHeight,
+          "S"
+        );
+
+        // Calcular el ancho de cada columna
 
         // Dibujar contenido de la tabla
         data.forEach((row, rowIndex) => {
@@ -2698,19 +2693,6 @@ export default {
         // Mover a la posición donde se empezará a dibujar la tabla
         currentY += 20;
 
-        // Calcular las dimensiones del recuadro del itinerario
-        const tableItinerarioWidth = pageWidth - margins.left - margins.right;
-        const tableItinerarioHeight = 10 + 18; // 15 para el espacio superior e inferior
-
-        // Dibujar el recuadro alrededor de la tabla
-        doc.rect(
-          margins.left,
-          currentY - 5,
-          tableItinerarioWidth,
-          tableItinerarioHeight,
-          "S"
-        );
-
         // Configuración de la tabla
         const columns = [
           "AEROLINEA",
@@ -2724,48 +2706,77 @@ export default {
         ];
         const data = [
           [
-            cotizacion.aerolineaIda
-              ? cotizacion.aerolineaIda.toString()
-              : "N/A",
-            cotizacion.vueloIda ? cotizacion.vueloIda.toString() : "N/A",
+            cotizacion.aerolineaIda || "N/A",
+            cotizacion.vueloIda || "N/A",
             cotizacion.fechaInicio
               ? new Date(cotizacion.fechaInicio).toLocaleDateString()
               : "N/A",
-            cotizacion.ruta1 ? cotizacion.ruta1.toString() : "N/A",
-            cotizacion.claseIda ? cotizacion.claseIda.toString() : "N/A",
-            cotizacion.horaSalidaIda
-              ? cotizacion.horaSalidaIda.toString()
-              : "N/A",
-            cotizacion.horaLlegadaIda
-              ? cotizacion.horaLlegadaIda.toString()
-              : "N/A",
-            cotizacion.recordIda ? cotizacion.recordIda.toString() : "N/A", // Agregado para mostrar el record
-          ],
-          [
-            cotizacion.aerolineaVuelta
-              ? cotizacion.aerolineaVuelta.toString()
-              : "N/A",
-            cotizacion.vueloVuelta ? cotizacion.vueloVuelta.toString() : "N/A",
-            cotizacion.fechaFin
-              ? new Date(cotizacion.fechaFin).toLocaleDateString()
-              : "N/A",
-            cotizacion.ruta2 ? cotizacion.ruta2.toString() : "N/A",
-            cotizacion.claseVuelta ? cotizacion.claseVuelta.toString() : "N/A",
-            cotizacion.horaSalidaVuelta
-              ? cotizacion.horaSalidaVuelta.toString()
-              : "N/A",
-            cotizacion.horaLlegadaVuelta
-              ? cotizacion.horaLlegadaVuelta.toString()
-              : "N/A",
-            cotizacion.recordVuelta
-              ? cotizacion.recordVuelta.toString()
-              : "N/A", // Agregado para mostrar el record
+            cotizacion.ruta1 || "N/A",
+            cotizacion.claseIda || "N/A",
+            cotizacion.horaSalidaIda || "N/A",
+            cotizacion.horaLlegadaIda || "N/A",
+            cotizacion.recordIda || "N/A",
           ],
         ];
 
+        if (cotizacion.aerolineaEscalaIda != null) {
+          data.push([
+            cotizacion.aerolineaEscalaIda || "N/A",
+            cotizacion.vueloEscalaIda || "N/A",
+            cotizacion.fechaInicio
+              ? new Date(cotizacion.fechaInicio).toLocaleDateString()
+              : "N/A",
+            "Escala Ida", // Puedes ajustar esto según tu lógica
+            cotizacion.claseEscalaIda || "N/A",
+            cotizacion.horaSalidaEscalaIda || "N/A",
+            cotizacion.horaLlegadaEscalaIda || "N/A",
+            "", // No hay record para escalas
+          ]);
+
+          data.push([
+            cotizacion.aerolineaEscalaVuelta || "N/A",
+            cotizacion.vueloEscalaVuelta || "N/A",
+            cotizacion.fechaFin
+              ? new Date(cotizacion.fechaFin).toLocaleDateString()
+              : "N/A",
+            "Escala Vuelta", // Puedes ajustar esto según tu lógica
+            cotizacion.claseEscalaVuelta || "N/A",
+            cotizacion.horaSalidaEscalaVuelta || "N/A",
+            cotizacion.horaLlegadaEscalaVuelta || "N/A",
+            "", // No hay record para escalas
+          ]);
+        }
+
+        data.push([
+          cotizacion.aerolineaVuelta || "N/A",
+          cotizacion.vueloVuelta || "N/A",
+          cotizacion.fechaFin
+            ? new Date(cotizacion.fechaFin).toLocaleDateString()
+            : "N/A",
+          cotizacion.ruta2 || "N/A",
+          cotizacion.claseVuelta || "N/A",
+          cotizacion.horaSalidaVuelta || "N/A",
+          cotizacion.horaLlegadaVuelta || "N/A",
+          cotizacion.recordVuelta || "N/A",
+        ]);
         // Calcular el ancho de cada columna
         const columnWidth =
           (pageWidth - margins.left - margins.right) / columns.length;
+
+        // Calcular las dimensiones del recuadro del itinerario DESPUÉS de agregar los datos
+        const tableItinerarioWidth = pageWidth - margins.left - margins.right;
+        const tableItinerarioHeight = 10 + 9 * data.length; // Altura basada en el número de filas de datos
+
+        // Dibujar el recuadro alrededor de la tabla
+        doc.rect(
+          margins.left,
+          currentY - 5,
+          tableItinerarioWidth,
+          tableItinerarioHeight,
+          "S"
+        );
+        // Calcular el ancho de cada columna
+        // Calcular el ancho de cada columna
 
         // Dibujar encabezados de la tabla
         doc.setFontSize(8);
