@@ -8,7 +8,7 @@
 
         <q-toolbar-title></q-toolbar-title>
 
-        <div>Versión 0.1</div>
+        <div>Versión 0.2</div>
       </q-toolbar>
     </q-header>
 
