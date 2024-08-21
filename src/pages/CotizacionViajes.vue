@@ -4633,36 +4633,50 @@ export default {
     },
     // Método para manejar el cambio en la selección de hotel, programa y destino
 
-    handleSelectionChangeTipo(selectedValue) {
-      const newValue = selectedValue.value;
+    async handleSelectionChangeTipo(selectedValue) {
       // Actualizar los parámetros con los valores seleccionados
       this.params.hotel = this.hotel;
-      this.params.nombrePrograma = this.programName;
       this.params.destino = this.destination;
 
-      console.log(this.params);
-      // Realizar la búsqueda de tipos de habitación
-      axios
-        .post(
-          "https://backmultidestinos.onrender.com/hoteles/buscar",
-          this.params
-        )
-        .then((response) => {
-          // Obtener la lista de tipos de habitación de la respuesta del servidor
-          console.log("hola", response.data);
-          const tiposDeHabitacion = response.data.map(
-            (item) => item.tipoHabitacion
-          );
+      try {
+        // Llamar a la función obtenerTemporadas y asignar los resultados a this.programName
+        const temporadasResult = await obtenerTemporadas(
+          this.params.fechaInicio,
+          this.params.fechaFin
+        );
+        this.programName = temporadasResult;
 
-          // Eliminar duplicados utilizando un Set
-          const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
-          console.log(tiposDeHabitacionUnicos);
-          // Asignar los tipos de habitación únicos a la opción de tipo de habitación
-          this.roomTypeOptions = tiposDeHabitacionUnicos;
-        })
-        .catch((error) => {
-          console.error("Error al buscar hoteles:", error);
-        });
+        // Imprimir los resultados en la consola
+        console.log("Resultados de obtenerTemporadas:", temporadasResult);
+        // Actualizar params con el nuevo this.programName
+        this.params.nombrePrograma = this.programName;
+
+        // Realizar la petición POST al backend
+        axios
+          .post(
+            "https://backmultidestinos.onrender.com/hoteles/buscar",
+            this.params
+          )
+          .then((response) => {
+            // Obtener la lista de tipos de habitación de la respuesta del servidor
+            const tiposDeHabitacion = response.data.map(
+              (item) => item.tipoHabitacion
+            );
+
+            // Eliminar duplicados utilizando un Set
+            const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
+
+            // Asignar los tipos de habitación únicos a la opción de tipo de habitación
+            this.roomTypeOptions = tiposDeHabitacionUnicos;
+          })
+          .catch((error) => {
+            console.error("Error al buscar hoteles:", error);
+            // Manejar el error de la petición (puedes mostrar un mensaje al usuario)
+          });
+      } catch (error) {
+        console.error("Error al obtener temporadas:", error);
+        // Manejar el error de obtenerTemporadas (puedes mostrar un mensaje al usuario)
+      }
     },
     // Método para abrir el modal
     openModalPersonalizado() {

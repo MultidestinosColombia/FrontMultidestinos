@@ -695,7 +695,7 @@ export default {
       }
     },
     cargarClientes() {
-      fetch("https://backendmultidestinosexpress.onrender.com/cliente")
+      fetch("https://backmultidestinos.onrender.com/cliente")
         .then((response) => response.json())
         .then((data) => {
           // Manejar los datos obtenidos
