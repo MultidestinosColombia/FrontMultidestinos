@@ -71,13 +71,23 @@
                 </div>
 
                 <!-- Sección de nombre -->
-                <div class="col-12">
-                  <q-input
-                    label="Nombre"
-                    v-model="nombre"
-                    :rules="[(val) => !!val || 'El nombre es obligatorio']"
-                    class="q-mb-md"
-                  />
+                <div class="row q-col-gutter-md">
+                  <div class="col">
+                    <q-input
+                      label="Nombre"
+                      v-model="nombre"
+                      :rules="[(val) => !!val || 'El nombre es obligatorio']"
+                      class="q-mb-md"
+                    />
+                  </div>
+                  <div class="col">
+                    <q-input
+                      label="Contacto"
+                      v-model="contacto"
+                      class="q-mb-md"
+                      @keypress="validarEntrada"
+                    />
+                  </div>
                 </div>
 
                 <!-- Sección de direccion y ciudad -->
@@ -284,6 +294,16 @@
                 <div class="row q-col-gutter-md">
                   <div class="col">
                     <q-input
+                      label="Contacto"
+                      v-model="contactoEditar"
+                      class="q-mb-md"
+                    />
+                  </div>
+                  <div class="col"></div>
+                </div>
+                <div class="row q-col-gutter-md">
+                  <div class="col">
+                    <q-input
                       label="Teléfono"
                       v-model="telefonoEditar"
                       class="q-mb-md"
@@ -485,6 +505,7 @@ export default {
       ciudad: "",
       correos: [""],
       direccion: "",
+      contacto: "",
       telefono: "",
       nit: "",
       rnt: "",
@@ -496,6 +517,7 @@ export default {
       ciudadEditar: "",
       correoEditar: [],
       direccionEditar: "",
+      contactoEditar: "",
       telefonoEditar: "",
       nitEditar: "",
       rntEditar: "",
@@ -518,6 +540,12 @@ export default {
           label: "Dirección",
           align: "left",
           field: "direccion",
+        },
+        {
+          name: "contacto",
+          label: "Contacto",
+          align: "left",
+          field: "contacto",
         },
         {
           name: "telefono",
@@ -571,6 +599,7 @@ export default {
         this.ciudadEditar &&
         this.correoEditar &&
         this.direccionEditar &&
+        this.contactoEditar &&
         this.telefonoEditar &&
         this.nitEditar &&
         this.rntEditar &&
@@ -587,6 +616,16 @@ export default {
     this.cargarClientes();
   },
   methods: {
+    validarEntrada(event) {
+      // Obtener el código de la tecla presionada
+      const keyCode = event.keyCode || event.which;
+
+      // Verificar si es un número (códigos entre 48 y 57)
+      if (keyCode >= 48 && keyCode <= 57) {
+        // Prevenir que se escriba el número
+        event.preventDefault();
+      }
+    },
     agregarCorreoEditar() {
       if (this.nuevoCorreo && this.nuevoCorreo.trim() !== "") {
         // Agregar el nuevo correo al string correoEditar
@@ -705,6 +744,7 @@ export default {
             ciudad: cliente.ciudad ?? "",
             correo: cliente.correo ?? "",
             direccion: cliente.direccion ?? "",
+            contacto: cliente.contacto ?? "",
             telefono: cliente.telefono ?? "",
             nit: cliente.nit ?? "",
             rnt: cliente.rnt ?? "",
@@ -739,6 +779,7 @@ export default {
         ciudad: this.ciudad ? this.ciudad : null,
         correo: correosConcatenados ? correosConcatenados : null,
         direccion: this.direccion ? this.direccion : null,
+        contacto: this.contacto ? this.contacto : null,
         telefono: this.telefono ? this.telefono : null,
         nit: this.nit ? this.nit : null,
         rnt: this.rnt ? this.rnt : null,
@@ -808,6 +849,7 @@ export default {
           this.ciudadEditar = cliente.ciudad;
           this.correoEditar = cliente.correo;
           this.direccionEditar = cliente.direccion;
+          this.contactoEditar = cliente.contacto;
           this.telefonoEditar = cliente.telefono;
           this.nitEditar = cliente.nit;
           this.rntEditar = cliente.rnt;
@@ -836,6 +878,7 @@ export default {
         ciudad: this.ciudadEditar ? this.ciudadEditar : null,
         correo: this.correoEditar ? this.correoEditar : null,
         direccion: this.direccionEditar ? this.direccionEditar : null,
+        contacto: this.contactoEditar ? this.contactoEditar : null,
         telefono: this.telefonoEditar ? this.telefonoEditar : null,
         nit: this.nitEditar ? this.nitEditar : null,
         rnt: this.rntEditar ? this.rntEditar : null,
@@ -942,6 +985,7 @@ export default {
       this.ciudadEditar = "";
       this.correoEditar = "";
       this.direccionEditar = "";
+      this.contactoEditar = "";
       this.telefonoEditar = "";
       this.nitEditar = "";
       this.rntEditar = "";

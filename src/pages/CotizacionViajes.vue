@@ -225,7 +225,57 @@
                       />
                     </div>
                   </div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="transferInOut"
+                        label="¿Necesita agregar algún valor correspondiente a 'transfer in-out'?"
+                        :options="['Sí', 'No']"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                    <div class="col" v-if="transferInOut === 'Sí'">
+                      <q-input
+                        outlined
+                        v-model="transferInOutValue"
+                        label="Valor 'transfer in-out'"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                  </div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="numExtraValues"
+                        label="¿Cuántos valores extra necesita agregar (máximo 2)?"
+                        :options="[0, 1, 2]"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                  </div>
+                  <div v-if="numExtraValues >= 1" class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-input
+                        outlined
+                        v-model="extraValue1"
+                        label="Valor extra 1"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                  </div>
 
+                  <div v-if="numExtraValues === 2" class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-input
+                        outlined
+                        v-model="extraValue2"
+                        label="Valor extra 2"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                  </div>
                   <!-- Bucle para mostrar el formulario de cada habitación -->
                   <div v-for="(room, index) in rooms" :key="index">
                     <q-card
@@ -715,9 +765,7 @@
             <div class="col" v-if="activeTab === 'tab2'">
               <q-btn label="Atrás" @click="goBack" color="primary" />
             </div>
-            <div class="col" v-if="activeTab === 'tab1'">
-              <q-btn label="Siguiente" @click="goNext" color="primary" />
-            </div>
+
             <div class="col" v-if="activeTab === 'tab2'">
               <q-btn label="Registrar" @click="saveFormData" color="primary" />
             </div>
@@ -726,6 +774,9 @@
               v-if="activeTab === 'tab1' || activeTab === 'tab2'"
             >
               <q-btn label="Cerrar" @click="closeModal" color="red" />
+            </div>
+            <div class="col" v-if="activeTab === 'tab1'">
+              <q-btn label="Siguiente" @click="goNext" color="primary" />
             </div>
           </div>
         </q-card-section>
@@ -881,6 +932,7 @@
                         v-model="noche"
                         label="Duración"
                         :options="nochesOptions"
+                        @update:modelValue="handleSelectionChangeTipo"
                         class="q-mb-md q-ml-md"
                       />
                     </div>
@@ -1594,6 +1646,70 @@
 
     <!-- FIN DE FORMULARIO COTIZACION PERSONALIZADA -->
 
+    <!--modal liquidación -->
+
+    <q-dialog v-model="mostrarModalPasajeros" persistent>
+      <q-card style="min-width: 500px">
+        <q-card-section>
+          <div class="text-h6 q-mb-md">Datos de Pasajeros</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form @submit="procesarLiquidacion" class="q-gutter-md">
+            <div
+              v-for="(pasajero, index) in pasajeros"
+              :key="index"
+              class="q-pa-md q-mb-md bg-grey-2 rounded-borders"
+            >
+              <div class="text-subtitle1 q-mb-sm">Pasajero {{ index + 1 }}</div>
+
+              <q-input v-model="pasajero.nombre" label="Nombre" filled dense />
+              <div class="row">
+                <div class="col-6 q-pr-sm">
+                  <q-select
+                    v-model="pasajero.tipoDocumento"
+                    :options="opcionesTipoDocumento"
+                    label="Tipo de Documento"
+                    filled
+                    dense
+                  />
+                </div>
+                <div class="col-6">
+                  <q-input
+                    v-model="pasajero.numeroDocumento"
+                    label="Número de Documento"
+                    filled
+                    dense
+                  />
+                </div>
+              </div>
+              <q-input
+                v-model="pasajero.fechaNacimiento"
+                label="Fecha de Nacimiento"
+                filled
+                dense
+                type="date"
+                :rules="[
+                  (value) =>
+                    !value
+                      ? 'La fecha es requerida'
+                      : new Date(value) > new Date()
+                      ? 'La fecha no puede ser en el futuro'
+                      : true,
+                ]"
+              />
+            </div>
+
+            <q-card-actions align="right" class="bg-white text-teal">
+              <q-btn flat label="Cancelar" @click="cerrarModalPasajeros" />
+              <q-btn type="submit" label="Guardar" color="primary" />
+            </q-card-actions>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+    <!--fin modal liquidación -->
+
     <div>
       <br />
       <q-select v-model="selectedFilter" :options="['Todos', 'Cot', 'Cot-C']" />
@@ -1617,6 +1733,13 @@
               color="secondary"
               label="Enviar Cotización"
             />
+            <!-- <br />
+            <br />
+            <q-btn
+              @click="abrirModalPasajeros(props.row)"
+              color="green"
+              label="Pasar a Liquidación"
+            /> -->
           </q-td>
         </template>
       </q-table>
@@ -1650,6 +1773,14 @@ const formatCurrency = (value) => {
 
 export default {
   setup() {
+    //VALORES EXTRA
+    let numExtraValues = ref(0);
+
+    let extraValue1 = ref(0);
+    let extraValue2 = ref(0);
+    let transferInOut = ref(null); // Inicialmente nulo o 'No' si quieres que empiece así
+    let transferInOutValue = ref(0);
+    //FIN VALORES EXTRA
     let cormacarena5a11Total = 0;
     let cormacarena5a11Personas = 0;
     let cormacarena12a65Total = 0;
@@ -1683,6 +1814,10 @@ export default {
     // Definir un rango de opciones para el número de habitaciones
     const roomOptions = Array.from({ length: 10 }, (_, i) => i + 1);
     //otros
+    const mostrarModalPasajeros = ref(false);
+    const totalPasajero = ref(0);
+    const pasajeros = ref([]);
+    const cotizacionSeleccionada = ref(null);
     const children = ref([]);
     const hasChildren = ref([]);
     const numRooms = ref(1);
@@ -1692,7 +1827,8 @@ export default {
     const showAgeInputs = (index) => {
       return (
         destination.value === "La Macarena" &&
-        programName.value === "Caño Cristales"
+        (programName.value === "Caño Cristales" ||
+          programName.value === "Caño Cristales Semana Receso")
       );
     };
     const addRoom = () => {
@@ -1752,7 +1888,8 @@ export default {
     const mostrarCamposEdad = (index) => {
       return (
         destination.value === "La Macarena" &&
-        programName.value === "Caño Cristales"
+        (programName.value === "Caño Cristales" ||
+          programName.value === "Caño Cristales Semana Receso")
       );
     };
 
@@ -1928,14 +2065,12 @@ export default {
     const router = useRouter();
     const modalVisible = ref(false);
     const modalVisiblePersonalizado = ref(false);
+    const opcionesTipoDocumento = ref(["C.C", "T.I", "Pasaporte"]);
     const departureOptions = ref([
       "Bogota",
       "Cali",
       "Medellin",
-      "Amazonas",
-      "Guajira",
-      "Nariño",
-      "Guajira",
+      "Porcion Terrestre",
       "San Andres",
     ]); // Opciones iniciales de salida
     const destinationOptions = ref([]);
@@ -2019,7 +2154,11 @@ export default {
       accommodation.value = "";
       roomType.value = "";
       selectedClient.value = "";
-
+      transferInOut.value = "";
+      transferInOutValue.value = "";
+      extraValue1.value = "";
+      extraValue2.value = "";
+      numExtraValues.value = 0;
       // Limpiar campos de las habitaciones
       rooms.value.forEach((room) => {
         room.roomType = "";
@@ -2107,6 +2246,19 @@ export default {
     let totalAdultos = 0;
     let totalNiños = 0;
     return {
+      //valores  extra
+      transferInOut,
+      transferInOutValue,
+      numExtraValues,
+      extraValue1,
+      extraValue2,
+
+      //valores extra fin
+      opcionesTipoDocumento,
+      mostrarModalPasajeros,
+      totalPasajero,
+      pasajeros,
+      cotizacionSeleccionada,
       sortBy,
       sortOrder,
       selectedFilter,
@@ -2280,6 +2432,13 @@ export default {
         nombrePrograma: "",
         destino: "",
       },
+      paramsN: {
+        hotel: "",
+        nombrePrograma: "",
+        destino: "",
+        noches: "",
+        pertenece: "",
+      },
       userData,
       modalVisible,
       modalVisiblePersonalizado,
@@ -2324,9 +2483,261 @@ export default {
     hotel() {
       this.fetchOptions();
     },
+    horaLlegadaValue1(newValue) {
+      this.validarHora(newValue, this.horaSalidaValue1);
+    },
+    horaLlegadaValue2(newValue) {
+      this.validarHora(newValue, this.horaSalidaValue2);
+    },
   },
 
   methods: {
+    validarHora(horaLlegada, horaSalida) {
+      if (horaLlegada && horaSalida && horaLlegada < horaSalida) {
+        // Mostrar mensaje de error o realizar otra acción
+        this.$q.notify({
+          message:
+            "La hora de llegada no puede ser anterior a la hora de salida.",
+          color: "negative",
+          position: "top",
+          timeout: 2000,
+        });
+        // Opcional: Restablecer el valor
+      }
+    },
+    procesarLiquidacion() {
+      this.cerrarModalPasajeros();
+
+      const idCotizacion = this.cotizacionSeleccionada.idCotizacion;
+
+      // 1. Obtener datos de impuestos desde la API
+      axios
+        .get(
+          `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
+        )
+        .then((response) => {
+          const datosCotizacionAPI = response.data;
+          // Imprimir los datos de impuestos obtenidos de la API
+          console.log("Datos de impuestos desde la API:", datosCotizacionAPI);
+
+          // 2. Preparar los datos para la liquidación (incluyendo datos de impuestos de la API)
+          const datosLiquidacion = {
+            idCotizacion: this.cotizacionSeleccionada.idCotizacion,
+            salida: this.cotizacionSeleccionada.salida,
+            destino: this.cotizacionSeleccionada.destino,
+            nombrePrograma: this.cotizacionSeleccionada.nombrePrograma,
+            plan: this.cotizacionSeleccionada.plan,
+            hotel: this.cotizacionSeleccionada.hotel,
+            totalAdultos: this.cotizacionSeleccionada.totalAdultos,
+            totalNinos: this.cotizacionSeleccionada.totalNinos,
+            totalPasajeros: this.cotizacionSeleccionada.totalPasajeros,
+            precioBrutoTotal:
+              this.cotizacionSeleccionada.precioBrutoTotal.replace(
+                /[^\d.-]/g,
+                ""
+              ),
+            valorDescuento: this.cotizacionSeleccionada.valorDescuento,
+            ivaValor: this.cotizacionSeleccionada.ivaValor,
+            rteFuente: this.cotizacionSeleccionada.rteFuente,
+            rteIca: this.cotizacionSeleccionada.rteIca,
+            totalComision: this.cotizacionSeleccionada.totalComision,
+            totalPrecioCliente:
+              this.cotizacionSeleccionada.totalPrecioCliente.replace(
+                /[^\d.-]/g,
+                ""
+              ),
+            combus: this.cotizacionSeleccionada.combus,
+            tasa: this.cotizacionSeleccionada.tasa,
+            iva: this.cotizacionSeleccionada.iva,
+            ta: this.cotizacionSeleccionada.ta,
+            ivaTa: this.cotizacionSeleccionada.ivaTa,
+            otros: this.cotizacionSeleccionada.otros,
+            suplemento: this.cotizacionSeleccionada.suplemento,
+            precioTrans: this.cotizacionSeleccionada.precioTrans,
+            noches: this.cotizacionSeleccionada.noches,
+            totalPrecio: this.cotizacionSeleccionada.totalPrecio || 0,
+            notas: this.cotizacionSeleccionada.notas, //cambiar
+            cliente: this.cotizacionSeleccionada.cliente,
+            clientePorcentaje: this.cotizacionSeleccionada.clientePorcentaje,
+            nochesAdicionales: this.cotizacionSeleccionada.nochesAdicionales,
+            CreadorCotizacion: this.cotizacionSeleccionada.CreadorCotizacion,
+            fechaCreacion: this.cotizacionSeleccionada.fechaCreacion,
+            aerolineaIda: this.cotizacionSeleccionada.aerolineaIda,
+            vueloIda: this.cotizacionSeleccionada.vueloIda,
+            horaLlegadaIda: this.cotizacionSeleccionada.horaLlegadaIda,
+            horaSalidaIda: this.cotizacionSeleccionada.horaSalidaIda,
+            claseIda: this.cotizacionSeleccionada.claseIda,
+            fechaInicio: this.cotizacionSeleccionada.fechaInicio,
+            aerolineaVuelta: this.cotizacionSeleccionada.aerolineaVuelta,
+            vueloVuelta: this.cotizacionSeleccionada.vueloVuelta,
+            horaLlegadaVuelta: this.cotizacionSeleccionada.horaLlegadaVuelta,
+            horaSalidaVuelta: this.cotizacionSeleccionada.horaSalidaVuelta,
+            claseVuelta: this.cotizacionSeleccionada.claseVuelta,
+            fechaFin: this.cotizacionSeleccionada.fechaFin,
+            correo: this.cotizacionSeleccionada.correo,
+
+            // VALORES IMPUESTOS (desde la API)
+            cormacarena5a11_Total:
+              Number(datosCotizacionAPI[0].cormacarena5a11_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].cormacarena5a11_Total),
+            cormacarena12a65_Total:
+              Number(datosCotizacionAPI[0].cormacarena12a65_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].cormacarena12a65_Total),
+            cormacarenaExtranjero_Total:
+              Number(datosCotizacionAPI[0].cormacarenaExtranjero_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].cormacarenaExtranjero_Total),
+            pqsNaturales5a24_Total:
+              Number(datosCotizacionAPI[0].pqsNaturales5a24_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].pqsNaturales5a24_Total),
+            pqsNaturales25a65_Total:
+              Number(datosCotizacionAPI[0].pqsNaturales25a65_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].pqsNaturales25a65_Total),
+            pqsNaturalesExtranjero_Total:
+              Number(datosCotizacionAPI[0].pqsNaturalesExtranjero_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].pqsNaturalesExtranjero_Total),
+            alcaldiaNacional_Total:
+              Number(datosCotizacionAPI[0].alcaldiaNacional_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].alcaldiaNacional_Total),
+            alcaldiaExtranjero_Total:
+              Number(datosCotizacionAPI[0].alcaldiaExtranjero_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].alcaldiaExtranjero_Total),
+            defensaCivil_Total:
+              Number(datosCotizacionAPI[0].defensaCivil_Total) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].defensaCivil_Total),
+
+            // personas Impuestos Total (desde la API)
+            defensaCivil_numeroPersonas:
+              Number(datosCotizacionAPI[0].defensaCivil_numeroPersonas) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].defensaCivil_numeroPersonas),
+            alcaldiaNacional_numeroPersonas:
+              Number(datosCotizacionAPI[0].alcaldiaNacional_numeroPersonas) ===
+              0
+                ? null
+                : Number(datosCotizacionAPI[0].alcaldiaNacional_numeroPersonas),
+            alcaldiaExtranjero_numeroPersonas:
+              Number(
+                datosCotizacionAPI[0].alcaldiaExtranjero_numeroPersonas
+              ) === 0
+                ? null
+                : Number(
+                    datosCotizacionAPI[0].alcaldiaExtranjero_numeroPersonas
+                  ),
+            pqsNaturalesExtranjero_numeroPersonas:
+              Number(
+                datosCotizacionAPI[0].pqsNaturalesExtranjero_numeroPersonas
+              ) === 0
+                ? null
+                : Number(
+                    datosCotizacionAPI[0].pqsNaturalesExtranjero_numeroPersonas
+                  ),
+            pqsNaturales25a65_numeroPersonas:
+              Number(datosCotizacionAPI[0].pqsNaturales25a65_numeroPersonas) ===
+              0
+                ? null
+                : Number(
+                    datosCotizacionAPI[0].pqsNaturales25a65_numeroPersonas
+                  ),
+            pqsNaturales5a24_numeroPersonas:
+              Number(datosCotizacionAPI[0].pqsNaturales5a24_numeroPersonas) ===
+              0
+                ? null
+                : Number(datosCotizacionAPI[0].pqsNaturales5a24_numeroPersonas),
+            cormacarenaExtranjero_numeroPersonas:
+              Number(
+                datosCotizacionAPI[0].cormacarenaExtranjero_numeroPersonas
+              ) === 0
+                ? null
+                : Number(
+                    datosCotizacionAPI[0].cormacarenaExtranjero_numeroPersonas
+                  ),
+            cormacarena12a65_numeroPersonas:
+              Number(datosCotizacionAPI[0].cormacarena12a65_numeroPersonas) ===
+              0
+                ? null
+                : Number(datosCotizacionAPI[0].cormacarena12a65_numeroPersonas),
+            cormacarena5a11_numeroPersonas:
+              Number(datosCotizacionAPI[0].cormacarena5a11_numeroPersonas) === 0
+                ? null
+                : Number(datosCotizacionAPI[0].cormacarena5a11_numeroPersonas),
+
+            incluye: this.cotizacionSeleccionada.incluye,
+            noIncluye: this.cotizacionSeleccionada.noIncluye,
+          };
+
+          // 3. Crear la liquidación
+          axios
+            .post(
+              "https://backmultidestinos.onrender.com/liquidacion",
+              datosLiquidacion
+            )
+            .then((response) => {
+              const idLiquidacion = response.data.idLiquidacion;
+
+              // 4. Crear los pasajeros
+              const promesasPasajeros = this.pasajeros.map((pasajero) => {
+                pasajero.idLiquidacion = idLiquidacion;
+                return axios.post(
+                  "https://backmultidestinos.onrender.com/pasajero",
+                  pasajero
+                );
+              });
+
+              Promise.all(promesasPasajeros)
+                .then(() => {
+                  console.log("Liquidación y pasajeros creados exitosamente");
+
+                  // 5. Opcional: Actualizar el estado de la cotización
+                  // 6. Redirigir o actualizar la interfaz
+                })
+                .catch((error) => {
+                  console.error("Error al crear los pasajeros:", error);
+                  // Manejo de errores
+                });
+            })
+            .catch((error) => {
+              console.error("Error al crear la liquidación:", error);
+              // Manejo de errores
+            });
+        })
+        .catch((error) => {
+          console.error("Error al obtener datos de la cotización:", error);
+          // Manejo de errores
+        });
+    },
+
+    abrirModalPasajeros(cotizacion) {
+      this.cotizacionSeleccionada = cotizacion;
+      this.totalPasajeros = cotizacion.totalPasajeros;
+      this.pasajeros = [];
+
+      for (let i = 0; i < this.totalPasajeros; i++) {
+        this.pasajeros.push({
+          nombre: "",
+          tipoDocumento: "",
+          numeroDocumento: "",
+          fechaNacimiento: "",
+        });
+      }
+
+      this.mostrarModalPasajeros = true;
+    },
+    cerrarModalPasajeros() {
+      this.mostrarModalPasajeros = false;
+      // Opcional: Puedes reiniciar los datos de los pasajeros aquí si es necesario
+    },
+    async pasarALiquidacion() {
+      console.log("Pasando cotización a liquidación:", cotizacion);
+    },
     filteredCotizacionData() {
       const filter = this.selectedFilter;
       const data = [...this.cotizacionData]; // Copia para no modificar el original
@@ -2558,7 +2969,7 @@ export default {
         const imgY = margins.top + (headerHeight - imgHeight) / 2;
 
         // Dividir el texto del encabezado en dos partes: texto general y número de cotización
-        const headerTextGeneral = `PBX(601)7621133\nCALLE 64 No. 11-37 LOC 211\nEMAIL: MULTIDESTINOS_EXPRESS@YAHOO.COM`;
+        const headerTextGeneral = `PBX(601)7621133\nCALLE 64 No. 11-37 LOC 301\nEMAIL: MULTIDESTINOS_EXPRESS@YAHOO.COM`;
         const headerTextCotizacion = `Numero de cotización: ${idCotizacion}`;
 
         // Agregar imagen al encabezado
@@ -2748,62 +3159,97 @@ export default {
         ];
         const data = [
           [
-            cotizacion.aerolineaIda
-              ? cotizacion.aerolineaIda.toString()
-              : "N/A",
-            cotizacion.vueloIda ? cotizacion.vueloIda.toString() : "N/A",
+            cotizacion.aerolineaIda || "N/A",
+            cotizacion.vueloIda || "N/A",
             cotizacion.fechaInicio
-              ? new Date(cotizacion.fechaInicio).toLocaleDateString()
+              ? new Date(
+                  new Date(cotizacion.fechaInicio).getTime() +
+                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
+                ).toLocaleDateString()
               : "N/A",
-            cotizacion.ruta1 ? cotizacion.ruta1.toString() : "N/A",
-            cotizacion.claseIda ? cotizacion.claseIda.toString() : "N/A",
-            cotizacion.horaSalidaIda
-              ? cotizacion.horaSalidaIda.toString()
-              : "N/A",
-            cotizacion.horaLlegadaIda
-              ? cotizacion.horaLlegadaIda.toString()
-              : "N/A",
-            cotizacion.recordIda ? cotizacion.recordIda.toString() : "N/A", // Agregado para mostrar el record
-          ],
-          [
-            cotizacion.aerolineaVuelta
-              ? cotizacion.aerolineaVuelta.toString()
-              : "N/A",
-            cotizacion.vueloVuelta ? cotizacion.vueloVuelta.toString() : "N/A",
-            cotizacion.fechaFin
-              ? new Date(cotizacion.fechaFin).toLocaleDateString()
-              : "N/A",
-            cotizacion.ruta2 ? cotizacion.ruta2.toString() : "N/A",
-            cotizacion.claseVuelta ? cotizacion.claseVuelta.toString() : "N/A",
-            cotizacion.horaSalidaVuelta
-              ? cotizacion.horaSalidaVuelta.toString()
-              : "N/A",
-            cotizacion.horaLlegadaVuelta
-              ? cotizacion.horaLlegadaVuelta.toString()
-              : "N/A",
-            cotizacion.recordVuelta
-              ? cotizacion.recordVuelta.toString()
-              : "N/A", // Agregado para mostrar el record
+            cotizacion.ruta1 || "N/A",
+            cotizacion.claseIda || "N/A",
+            cotizacion.horaSalidaIda || "N/A",
+            cotizacion.horaLlegadaIda || "N/A",
+            cotizacion.recordIda || "N/A",
           ],
         ];
+
+        if (cotizacion.aerolineaEscalaIda != null) {
+          data.push([
+            cotizacion.aerolineaEscalaIda || "N/A",
+            cotizacion.vueloEscalaIda || "N/A",
+            cotizacion.fechaInicio
+              ? new Date(
+                  new Date(cotizacion.fechaInicio).getTime() +
+                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
+                ).toLocaleDateString()
+              : "N/A",
+            "Escala Ida", // Puedes ajustar esto según tu lógica
+            cotizacion.claseEscalaIda || "N/A",
+            cotizacion.horaSalidaEscalaIda || "N/A",
+            cotizacion.horaLlegadaEscalaIda || "N/A",
+            "", // No hay record para escalas
+          ]);
+
+          data.push([
+            cotizacion.aerolineaEscalaVuelta || "N/A",
+            cotizacion.vueloEscalaVuelta || "N/A",
+            cotizacion.fechaFin
+              ? new Date(
+                  new Date(cotizacion.fechaFin).getTime() +
+                    new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
+                ).toLocaleDateString()
+              : "N/A",
+            "Escala Vuelta", // Puedes ajustar esto según tu lógica
+            cotizacion.claseEscalaVuelta || "N/A",
+            cotizacion.horaSalidaEscalaVuelta || "N/A",
+            cotizacion.horaLlegadaEscalaVuelta || "N/A",
+            "", // No hay record para escalas
+          ]);
+        }
+
+        data.push([
+          cotizacion.aerolineaVuelta || "N/A",
+          cotizacion.vueloVuelta || "N/A",
+          cotizacion.fechaFin
+            ? new Date(
+                new Date(cotizacion.fechaFin).getTime() +
+                  new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
+              ).toLocaleDateString()
+            : "N/A",
+          cotizacion.ruta2 || "N/A",
+          cotizacion.claseVuelta || "N/A",
+          cotizacion.horaSalidaVuelta || "N/A",
+          cotizacion.horaLlegadaVuelta || "N/A",
+          cotizacion.recordVuelta || "N/A",
+        ]);
+
         // Calcular el ancho de cada columna
         const columnWidth =
           (pageWidth - margins.left - margins.right) / columns.length;
 
         // Calcular las dimensiones del recuadro del itinerario DESPUÉS de agregar los datos
         const tableItinerarioWidth = pageWidth - margins.left - margins.right;
-        const tableItinerarioHeight = 18 * data.length; // Altura basada en el número de filas de datos, sin espacio extra
+        const tableItinerarioHeight = 10 + 8 * data.length; // Altura de fila reducida a 8
 
         // Dibujar el recuadro alrededor de la tabla
         doc.rect(
           margins.left,
-          currentY - 5, // Ajustar la posición vertical inicial del recuadro
+          currentY, // No restamos 5 aquí
           tableItinerarioWidth,
           tableItinerarioHeight,
           "S"
         );
 
-        // Calcular el ancho de cada columna
+        // Dibujar encabezados de la tabla
+        doc.setFontSize(8);
+        columns.forEach((column, index) => {
+          doc.text(column, margins.left + index * columnWidth, currentY + 5); // Pequeño ajuste vertical
+        });
+
+        // Pequeño espacio antes de las filas de datos
+        currentY += 10; // Aumentamos un poco el espacio
 
         // Dibujar contenido de la tabla
         data.forEach((row, rowIndex) => {
@@ -2811,19 +3257,19 @@ export default {
             doc.text(
               cell,
               margins.left + cellIndex * columnWidth,
-              currentY + (rowIndex + 1) * 10
+              currentY + rowIndex * 8 // Altura de fila reducida a 8
             );
           });
         });
 
-        // Mover a la posición donde se empezará a dibujar la siguiente sección
-        currentY += tableItinerarioHeight - 10;
+        // Mover a la posición donde se empezará a dibujar la siguiente sección (ajustado)
+        currentY += tableItinerarioHeight + 5; // Ajustamos para incluir el espacio adicional
 
         //-----------------------------------------------------------------------------------------------------------
         // SECCIÓN: OBSERVACIONES
         const observationsText =
           "Esta cotización está sujeta a cambio y disponibilidad al momento de reservar (Sin servicio confirmado)";
-        const observationsTop = currentY + 10;
+        const observationsTop = currentY - 10;
         const observationsHeight = 30; // Altura del recuadro de observaciones
 
         // Dibujar el recuadro de observaciones con el título dentro
@@ -2835,6 +3281,7 @@ export default {
           observationsHeight
         );
         doc.setFontSize(12);
+
         doc.text("OBSERVACIONES:", margins.left + 2, observationsTop + 6);
         doc.setFontSize(10);
         doc.text(observationsText, margins.left + 2, observationsTop + 15, {
@@ -2842,15 +3289,30 @@ export default {
         });
         //------------------------------------------------------------------
         //INCLUYE
-        currentY += observationsHeight + 2;
+
+        let lineHeight = 6;
+
         // Ajustes de posición y tamaño
-        const incluyeTop = currentY + 10;
+        const incluyeTop = currentY + 25;
+
+        // Dividir el texto de hotel incluye por el carácter "¿" para obtener líneas individuales
         const incluyeLines = hotelincluye.split("¿");
-        const incluyeHeight = 32 + incluyeLines.length * 5; // Altura del recuadro de INCLUYE
-        const lineHeight = 6;
+
+        // Calcular la altura del recuadro de INCLUYE dinámicamente, incluyendo el título y el espacio adicional
+        const titleHeight1 = 6;
+        const extraSpaceBelowTitle = 5;
+        let textHeight = 0;
+        incluyeLines.forEach((line) => {
+          textHeight += doc.getTextDimensions(line.trim(), {
+            fontSize: 8,
+            maxWidth: pageWidth - margins.left - margins.right - 4,
+          }).h;
+        });
+        const incluyeHeight =
+          textHeight + titleHeight1 + extraSpaceBelowTitle + 10;
 
         // Dibujar el recuadro de INCLUYE con el título dentro y el texto
-        doc.setDrawColor(0); // Color del borde
+        doc.setDrawColor(0);
         doc.rect(
           margins.left,
           incluyeTop,
@@ -2861,53 +3323,22 @@ export default {
         doc.text("INCLUYE:", margins.left + 2, incluyeTop + 6);
         doc.setFontSize(8);
 
-        // Mostrar cada línea del texto de INCLUYE
-        incluyeLines.forEach((line, index) => {
-          const lineY = incluyeTop + 15 + index * lineHeight; // Ajusta el espacio entre líneas
-          doc.text(line, margins.left + 2, lineY, {
+        // Mostrar cada línea del texto de INCLUYE, comenzando debajo del título y el espacio adicional
+        let currentLineY = incluyeTop + titleHeight1 + extraSpaceBelowTitle;
+        incluyeLines.forEach((line) => {
+          doc.text(line.trim(), margins.left + 2, currentLineY, {
             maxWidth: pageWidth - margins.left - margins.right - 4,
           });
+          currentLineY += doc.getTextDimensions(line.trim(), {
+            fontSize: 8,
+            maxWidth: pageWidth - margins.left - margins.right - 4,
+          }).h;
         });
 
         // Añadir una nueva página
         doc.addPage();
-        currentY = margins.top; // Reiniciar la posición Y en la nueva página
-
-        // Sección: NO INCLUYE
-        const noIncluyeTop = currentY + 10;
-
-        // Dividir el texto de hotelnoinclye por el carácter "¿" para obtener líneas individuales
-        const noIncluyeLines = hotelnoincluye.split("¿");
-
-        // Calcular la altura requerida para el recuadro
-        const titleHeight = 5; // Espacio para el título
-        const noIncluyeHeight =
-          noIncluyeLines.length * lineHeight + titleHeight + 5; // Altura total requerida
-
-        // Dibujar el recuadro de NO INCLUYE con el título dentro y el texto
-        doc.setDrawColor(0); // Color del borde
-        doc.rect(
-          margins.left,
-          noIncluyeTop,
-          pageWidth - margins.left - margins.right,
-          noIncluyeHeight
-        );
-        doc.setFont("helvetica"); // Cambiar la fuente a helvetica
-        doc.setFontSize(10);
-        doc.setTextColor(0); // Color de texto negro
-        doc.text("NO INCLUYE:", margins.left + 2, noIncluyeTop + 6);
-        doc.setFontSize(8);
-
-        // Mostrar cada línea del texto de NO INCLUYE
-        noIncluyeLines.forEach((line, index) => {
-          const lineY = noIncluyeTop + titleHeight + 8 + index * lineHeight; // Ajustar el espacio entre líneas
-          doc.text(line.trim(), margins.left + 10, lineY, {
-            maxWidth: pageWidth - margins.left - margins.right - 10,
-          });
-        });
-
-        // Actualizar la posición Y para la próxima sección
-        currentY += noIncluyeHeight + 15; // Agregar un espacio adicional entre secciones
+        currentY = margins.top;
+        const titleHeight = 12;
         //------------------------------------
         // Sección: LIQUIDACIÓN
         // Título de la sección LIQUIDACIÓN
@@ -3146,6 +3577,26 @@ export default {
         if (cotizacion.suplemento > 0) {
           nombres.push("SUPLEMENTO");
           valores.push(cotizacion.suplemento);
+        }
+        if (cotizacion.extra1) {
+          // Verificar si existe cotizacion.extra1
+          if (cotizacion.extra1.includes("*")) {
+            // Comprobar si hay un asterisco
+            let partes = cotizacion.extra1.split("*"); // Dividir en dos partes
+            let variable1 = partes[0];
+            let variable2 = partes[1];
+
+            // Ahora puedes usar variable1 y variable2 como necesites
+            nombres.push("Valor Extra", "Valor Extra2");
+            valores.push(variable1, variable2);
+          } else {
+            // Si no hay asterisco
+            let valorUnico = cotizacion.extra1;
+
+            // Usar valorUnico
+            nombres.push("Valor Extra");
+            valores.push(valorUnico);
+          }
         }
 
         // Añadir los nombres y valores a la tabla
@@ -3566,7 +4017,7 @@ export default {
         const imgY = margins.top + (headerHeight - imgHeight) / 2;
 
         // Dividir el texto del encabezado en dos partes: texto general y número de cotización
-        const headerTextGeneral = `PBX(601)7621133\nCALLE 64 No. 11-37 LOC 211\nEMAIL: MULTIDESTINOS_EXPRESS@YAHOO.COM`;
+        const headerTextGeneral = `PBX(601)7621133\nCALLE 64 No. 11-37 LOC 301\nEMAIL: MULTIDESTINOS_EXPRESS@YAHOO.COM`;
         const headerTextCotizacion = `Numero de cotización: ${idCotizacion}`;
 
         // Agregar imagen al encabezado
@@ -3637,10 +4088,13 @@ export default {
           "VENDEDOR:",
         ];
         const campos = [
-          new Date(cotizacion.fechaCreacion).toLocaleDateString(),
+          new Date(
+            new Date(cotizacion.fechaCreacion).getTime() +
+              new Date(cotizacion.fechaCreacion).getTimezoneOffset() * 60000
+          ).toLocaleDateString(),
           cotizacion.cliente.toString(),
           clienteData.telefono ? clienteData.telefono.toString() : "N/A",
-          clienteData.nit ? clienteData.nit.toString() : "N/A",
+          "N/A",
           clienteData.nit ? clienteData.nit.toString() : "N/A",
           vendedorResponse.data.nombreCompleto
             ? vendedorResponse.data.nombreCompleto.toString()
@@ -3736,12 +4190,11 @@ export default {
           currentX += anchoDisponiblePorCampo2;
         }
         // SECCIÓN: ITINERARIO (Nuevo título)
-        currentY += 1;
-        doc.setFontSize(10);
-        doc.text("ITINERARIO: ", margins.left, currentY + 12);
+        currentY += 22; // Incrementar este valor para desplazar todo el itinerario hacia abajo
 
-        // Mover a la posición donde se empezará a dibujar la tabla
-        currentY += 20;
+        // Dibujar el título ANTES de calcular las dimensiones del recuadro
+        doc.setFontSize(10);
+        doc.text("ITINERARIO: ", margins.left, currentY - 10); // Ajustar la posición vertical
 
         // Configuración de la tabla
         const columns = [
@@ -3759,7 +4212,10 @@ export default {
             cotizacion.aerolineaIda || "N/A",
             cotizacion.vueloIda || "N/A",
             cotizacion.fechaInicio
-              ? new Date(cotizacion.fechaInicio).toLocaleDateString()
+              ? new Date(
+                  new Date(cotizacion.fechaInicio).getTime() +
+                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
+                ).toLocaleDateString()
               : "N/A",
             cotizacion.ruta1 || "N/A",
             cotizacion.claseIda || "N/A",
@@ -3774,7 +4230,10 @@ export default {
             cotizacion.aerolineaEscalaIda || "N/A",
             cotizacion.vueloEscalaIda || "N/A",
             cotizacion.fechaInicio
-              ? new Date(cotizacion.fechaInicio).toLocaleDateString()
+              ? new Date(
+                  new Date(cotizacion.fechaInicio).getTime() +
+                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
+                ).toLocaleDateString()
               : "N/A",
             "Escala Ida", // Puedes ajustar esto según tu lógica
             cotizacion.claseEscalaIda || "N/A",
@@ -3787,7 +4246,10 @@ export default {
             cotizacion.aerolineaEscalaVuelta || "N/A",
             cotizacion.vueloEscalaVuelta || "N/A",
             cotizacion.fechaFin
-              ? new Date(cotizacion.fechaFin).toLocaleDateString()
+              ? new Date(
+                  new Date(cotizacion.fechaFin).getTime() +
+                    new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
+                ).toLocaleDateString()
               : "N/A",
             "Escala Vuelta", // Puedes ajustar esto según tu lógica
             cotizacion.claseEscalaVuelta || "N/A",
@@ -3801,7 +4263,10 @@ export default {
           cotizacion.aerolineaVuelta || "N/A",
           cotizacion.vueloVuelta || "N/A",
           cotizacion.fechaFin
-            ? new Date(cotizacion.fechaFin).toLocaleDateString()
+            ? new Date(
+                new Date(cotizacion.fechaFin).getTime() +
+                  new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
+              ).toLocaleDateString()
             : "N/A",
           cotizacion.ruta2 || "N/A",
           cotizacion.claseVuelta || "N/A",
@@ -3809,13 +4274,17 @@ export default {
           cotizacion.horaLlegadaVuelta || "N/A",
           cotizacion.recordVuelta || "N/A",
         ]);
+
         // Calcular el ancho de cada columna
         const columnWidth =
           (pageWidth - margins.left - margins.right) / columns.length;
 
         // Calcular las dimensiones del recuadro del itinerario DESPUÉS de agregar los datos
         const tableItinerarioWidth = pageWidth - margins.left - margins.right;
-        const tableItinerarioHeight = 10 + 9 * data.length; // Altura basada en el número de filas de datos
+        const tableItinerarioHeight = 12 + 8 * data.length; // Altura de fila reducida a 8
+
+        // Ajustar la posición vertical del recuadro (reducir aún más el valor sumado)
+        currentY += 5; // Puedes seguir ajustando este valor si es necesario
 
         // Dibujar el recuadro alrededor de la tabla
         doc.rect(
@@ -3825,8 +4294,6 @@ export default {
           tableItinerarioHeight,
           "S"
         );
-        // Calcular el ancho de cada columna
-        // Calcular el ancho de cada columna
 
         // Dibujar encabezados de la tabla
         doc.setFontSize(8);
@@ -3834,20 +4301,24 @@ export default {
           doc.text(column, margins.left + index * columnWidth, currentY);
         });
 
+        // Pequeño espacio antes de las filas de datos
+        currentY += 5;
+
         // Dibujar contenido de la tabla
         data.forEach((row, rowIndex) => {
           row.forEach((cell, cellIndex) => {
             doc.text(
               cell,
               margins.left + cellIndex * columnWidth,
-              currentY + (rowIndex + 1) * 10
+              currentY + (rowIndex + 1) * 8 // Altura de fila reducida a 8
             );
           });
         });
 
-        // Mover a la posición donde se empezará a dibujar la siguiente sección
-        currentY += tableItinerarioHeight - 10;
+        // Mover a la posición donde se empezará a dibujar la siguiente sección (ajustado)
+        currentY += tableItinerarioHeight - 5;
 
+        // ... (resto del código)
         //-----------------------------------------------------------------------------------------------------------
         // SECCIÓN: OBSERVACIONES
         const observationsText =
@@ -3871,15 +4342,30 @@ export default {
         });
         //------------------------------------------------------------------
         //INCLUYE
-        currentY += observationsHeight + 2;
+
+        let lineHeight = 6;
+
         // Ajustes de posición y tamaño
-        const incluyeTop = currentY + 10;
+        const incluyeTop = currentY + 50;
+
+        // Dividir el texto de hotel incluye por el carácter "¿" para obtener líneas individuales
         const incluyeLines = hotelincluye.split("¿");
-        const incluyeHeight = 32 + incluyeLines.length * 5; // Altura del recuadro de INCLUYE
-        const lineHeight = 6;
+
+        // Calcular la altura del recuadro de INCLUYE dinámicamente, incluyendo el título y el espacio adicional
+        const titleHeight1 = 6;
+        const extraSpaceBelowTitle = 5;
+        let textHeight = 0;
+        incluyeLines.forEach((line) => {
+          textHeight += doc.getTextDimensions(line.trim(), {
+            fontSize: 8,
+            maxWidth: pageWidth - margins.left - margins.right - 4,
+          }).h;
+        });
+        const incluyeHeight =
+          textHeight + titleHeight1 + extraSpaceBelowTitle + 10;
 
         // Dibujar el recuadro de INCLUYE con el título dentro y el texto
-        doc.setDrawColor(0); // Color del borde
+        doc.setDrawColor(0);
         doc.rect(
           margins.left,
           incluyeTop,
@@ -3890,53 +4376,80 @@ export default {
         doc.text("INCLUYE:", margins.left + 2, incluyeTop + 6);
         doc.setFontSize(8);
 
-        // Mostrar cada línea del texto de INCLUYE
-        incluyeLines.forEach((line, index) => {
-          const lineY = incluyeTop + 15 + index * lineHeight; // Ajusta el espacio entre líneas
-          doc.text(line, margins.left + 2, lineY, {
+        // Mostrar cada línea del texto de INCLUYE, comenzando debajo del título y el espacio adicional
+        let currentLineY = incluyeTop + titleHeight1 + extraSpaceBelowTitle;
+        incluyeLines.forEach((line) => {
+          doc.text(line.trim(), margins.left + 2, currentLineY, {
             maxWidth: pageWidth - margins.left - margins.right - 4,
           });
+          currentLineY += doc.getTextDimensions(line.trim(), {
+            fontSize: 8,
+            maxWidth: pageWidth - margins.left - margins.right - 4,
+          }).h;
         });
 
         // Añadir una nueva página
         doc.addPage();
-        currentY = margins.top; // Reiniciar la posición Y en la nueva página
-
+        currentY = margins.top;
+        const titleHeight = 12;
         // Sección: NO INCLUYE
         const noIncluyeTop = currentY + 5;
 
-        // Dividir el texto de hotelnoinclye por el carácter "¿" para obtener líneas individuales
-        const noIncluyeLines = hotelnoincluye.split("¿");
+        // Dividir el texto de hotelnoinclye en líneas individuales, considerando los saltos de línea y los "¿"
+        const allNoIncluyeLines = hotelnoincluye
+          .split("\n")
+          .flatMap((paragraph) =>
+            paragraph.split("¿").map((line) => line.trim())
+          );
 
-        // Calcular la altura requerida para el recuadro
-        const titleHeight = 5; // Espacio para el título
-        const noIncluyeHeight =
-          noIncluyeLines.length * lineHeight + titleHeight + 5; // Altura total requerida
+        // Dibujar el recuadro de NO INCLUYE (sin definir la altura aún)
+        doc.setDrawColor(0);
+        doc.rect(
+          margins.left,
+          noIncluyeTop,
+          pageWidth - margins.left - margins.right,
+          0
+        );
 
-        // Dibujar el recuadro de NO INCLUYE con el título dentro y el texto
-        doc.setDrawColor(0); // Color del borde
+        // Escribir el título "NO INCLUYE:"
+        doc.setFont("helvetica");
+        doc.setFontSize(10);
+        doc.setTextColor(0);
+        doc.text("NO INCLUYE:", margins.left + 2, noIncluyeTop + 6);
+        doc.setFontSize(8);
+
+        // Reducir el valor de lineHeight para un espaciado más compacto (ajusta si es necesario)
+        lineHeight = 3;
+
+        // Mostrar cada línea y llevar un seguimiento de la altura máxima alcanzada
+        let maxLineY = noIncluyeTop + titleHeight;
+        let previousLineWasSplit = false;
+
+        allNoIncluyeLines.forEach((line, index) => {
+          if (line === "") return;
+
+          const lineSpacing = previousLineWasSplit
+            ? lineHeight / 3
+            : lineHeight;
+          const lineY = maxLineY + lineSpacing;
+
+          doc.text(line, margins.left + 10, lineY, {
+            maxWidth: pageWidth - margins.left - margins.right - 10,
+          });
+
+          maxLineY = lineY + lineHeight;
+          previousLineWasSplit = line.endsWith("¿");
+        });
+
+        // Ajustar la altura del recuadro y currentY
+        const noIncluyeHeight = maxLineY - noIncluyeTop;
         doc.rect(
           margins.left,
           noIncluyeTop,
           pageWidth - margins.left - margins.right,
           noIncluyeHeight
         );
-        doc.setFont("helvetica"); // Cambiar la fuente a helvetica
-        doc.setFontSize(10);
-        doc.setTextColor(0); // Color de texto negro
-        doc.text("NO INCLUYE:", margins.left + 2, noIncluyeTop + 6);
-        doc.setFontSize(8);
-
-        // Mostrar cada línea del texto de NO INCLUYE
-        noIncluyeLines.forEach((line, index) => {
-          const lineY = noIncluyeTop + titleHeight + 8 + index * lineHeight; // Ajustar el espacio entre líneas
-          doc.text(line.trim(), margins.left + 10, lineY, {
-            maxWidth: pageWidth - margins.left - margins.right - 10,
-          });
-        });
-
-        // Actualizar la posición Y para la próxima sección
-        currentY += noIncluyeHeight + 15; // Agregar un espacio adicional entre secciones
+        currentY = maxLineY + 15;
         //------------------------------------
         // Sección: LIQUIDACIÓN
         // Título de la sección LIQUIDACIÓN
@@ -4132,6 +4645,26 @@ export default {
         if (cotizacion.suplemento > 0) {
           nombres.push("SUPLEMENTO");
           valores.push(cotizacion.suplemento);
+        }
+        if (cotizacion.extra1) {
+          // Verificar si existe cotizacion.extra1
+          if (cotizacion.extra1.includes("*")) {
+            // Comprobar si hay un asterisco
+            let partes = cotizacion.extra1.split("*"); // Dividir en dos partes
+            let variable1 = partes[0];
+            let variable2 = partes[1];
+
+            // Ahora puedes usar variable1 y variable2 como necesites
+            nombres.push("Valor Extra", "Valor Extra2");
+            valores.push(variable1, variable2);
+          } else {
+            // Si no hay asterisco
+            let valorUnico = cotizacion.extra1;
+
+            // Usar valorUnico
+            nombres.push("Valor Extra");
+            valores.push(valorUnico);
+          }
         }
 
         // Añadir los nombres y valores a la tabla
@@ -4374,19 +4907,12 @@ export default {
         // Mover a la siguiente sección del documento si es necesario
         // Agregar recuadro con el título "Depósito y Condiciones de Pago"
         const recuadroX = margins.left;
-        const recuadroY = currentY + 5;
+        let recuadroY = currentY + 5;
         const recuadroWidth = 190;
         let recuadroHeight = 30; // Inicializamos con un valor base
 
         doc.setFontSize(7);
         doc.setLineWidth(0.5);
-
-        // Título del recuadro (sin cambios)
-        doc.text(
-          "Deposito y Condiciones de Pago",
-          recuadroX + 5,
-          recuadroY + 3
-        );
 
         // Reducir tamaño de fuente y ajustar espaciado entre líneas
         doc.setFontSize(6);
@@ -4407,9 +4933,16 @@ export default {
           doc.addPage();
           currentY = margins.top; // Reiniciar currentY en la nueva página
         }
-
+        // Actualizar recuadroY para que coincida con la posición actual
+        recuadroY = currentY;
         // Dibujar el recuadro
         doc.rect(recuadroX, currentY, recuadroWidth, recuadroHeight);
+        // Título del recuadro (sin cambios)
+        doc.text(
+          "Deposito y Condiciones de Pago",
+          recuadroX + 5,
+          recuadroY + 3
+        );
 
         // Escribir el texto dentro del recuadro
         splitLines.forEach((splitLine, splitIndex) => {
@@ -4633,50 +5166,38 @@ export default {
     },
     // Método para manejar el cambio en la selección de hotel, programa y destino
 
-    async handleSelectionChangeTipo(selectedValue) {
+    handleSelectionChangeTipo(selectedValue) {
+      const newValue = selectedValue.value;
       // Actualizar los parámetros con los valores seleccionados
-      this.params.hotel = this.hotel;
-      this.params.destino = this.destination;
+      this.paramsN.hotel = this.hotel;
+      this.paramsN.nombrePrograma = this.programName;
+      this.paramsN.destino = this.destination;
+      this.paramsN.noches = this.noche.label;
+      this.paramsN.pertenece = this.selectedDeparture;
+      console.log("noche escogida", this.noche.label);
+      console.log(this.paramsN);
+      // Realizar la búsqueda de tipos de habitación
+      axios
+        .post(
+          "https://backmultidestinos.onrender.com/hoteles/buscarN",
+          this.paramsN
+        )
+        .then((response) => {
+          // Obtener la lista de tipos de habitación de la respuesta del servidor
+          console.log("hola", response.data);
+          const tiposDeHabitacion = response.data.map(
+            (item) => item.tipoHabitacion
+          );
 
-      try {
-        // Llamar a la función obtenerTemporadas y asignar los resultados a this.programName
-        const temporadasResult = await obtenerTemporadas(
-          this.params.fechaInicio,
-          this.params.fechaFin
-        );
-        this.programName = temporadasResult;
-
-        // Imprimir los resultados en la consola
-        console.log("Resultados de obtenerTemporadas:", temporadasResult);
-        // Actualizar params con el nuevo this.programName
-        this.params.nombrePrograma = this.programName;
-
-        // Realizar la petición POST al backend
-        axios
-          .post(
-            "https://backmultidestinos.onrender.com/hoteles/buscar",
-            this.params
-          )
-          .then((response) => {
-            // Obtener la lista de tipos de habitación de la respuesta del servidor
-            const tiposDeHabitacion = response.data.map(
-              (item) => item.tipoHabitacion
-            );
-
-            // Eliminar duplicados utilizando un Set
-            const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
-
-            // Asignar los tipos de habitación únicos a la opción de tipo de habitación
-            this.roomTypeOptions = tiposDeHabitacionUnicos;
-          })
-          .catch((error) => {
-            console.error("Error al buscar hoteles:", error);
-            // Manejar el error de la petición (puedes mostrar un mensaje al usuario)
-          });
-      } catch (error) {
-        console.error("Error al obtener temporadas:", error);
-        // Manejar el error de obtenerTemporadas (puedes mostrar un mensaje al usuario)
-      }
+          // Eliminar duplicados utilizando un Set
+          const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
+          console.log(tiposDeHabitacionUnicos);
+          // Asignar los tipos de habitación únicos a la opción de tipo de habitación
+          this.roomTypeOptions = tiposDeHabitacionUnicos;
+        })
+        .catch((error) => {
+          console.error("Error al buscar hoteles:", error);
+        });
     },
     // Método para abrir el modal
     openModalPersonalizado() {
@@ -4930,7 +5451,6 @@ export default {
           console.log("preciosResponseArray data", preciosResponseArray.data);
           // corresponde a las habitaciones y precios
           const datosProcesados = [];
-
           // Iterar sobre cada objeto en preciosResponseArray
           preciosResponseArray.forEach((response) => {
             // Verificar si hay datos en esta respuesta
@@ -4944,6 +5464,7 @@ export default {
 
           // Ahora puedes usar datosProcesados para acceder a los datos de manera más conveniente
           console.log(datosProcesados);
+          this.plan = datosProcesados[0].plan;
 
           //TRANSPORTE Y IVAS Y OTROS
 
@@ -5201,7 +5722,10 @@ export default {
 
               // Verificar si hay edades para calcular impuestos
 
-              if (room.adultAges.length > 0) {
+              if (
+                room.adultAges.length > 0 &&
+                this.destination === "La Macarena"
+              ) {
                 // Calcular impuestos para cada persona (adultos y niños)
                 for (let i = 0; i < room.adultAges.length; i++) {
                   const edadPersona = room.adultAges[i];
@@ -5485,6 +6009,64 @@ export default {
         this.sumaValorBrutohab += valorSuplemento;
         this.sumaTotalAcomodacion += valorSuplemento;
 
+        console.log(
+          "valor de sumaValorBrutohab antes de extras",
+          this.sumaValorBrutohab
+        );
+        console.log(
+          "valor de sumaTotalAcomodacion antes de extras",
+          this.sumaTotalAcomodacion
+        );
+        //valores extras
+
+        this.sumaValorBrutohab +=
+          parseFloat(
+            this.extraValue1 === "" || this.extraValue1 === null
+              ? "0"
+              : this.extraValue1
+          ) ??
+          0 +
+            parseFloat(
+              this.extraValue2 === "" || this.extraValue2 === null
+                ? "0"
+                : this.extraValue2
+            ) ??
+          0 +
+            parseFloat(
+              this.transferInOutValue === "" || this.transferInOutValue === null
+                ? "0"
+                : this.transferInOutValue
+            ) ??
+          0;
+
+        this.sumaTotalAcomodacion +=
+          parseFloat(
+            this.extraValue1 === "" || this.extraValue1 === null
+              ? "0"
+              : this.extraValue1
+          ) ??
+          0 +
+            parseFloat(
+              this.extraValue2 === "" || this.extraValue2 === null
+                ? "0"
+                : this.extraValue2
+            ) ??
+          0 +
+            parseFloat(
+              this.transferInOutValue === "" || this.transferInOutValue === null
+                ? "0"
+                : this.transferInOutValue
+            ) ??
+          0;
+
+        console.log(
+          "valor de sumaValorBrutohab despues de extras",
+          this.sumaValorBrutohab
+        );
+        console.log(
+          "valor de sumaTotalAcomodacion despues de extras",
+          this.sumaTotalAcomodacion
+        );
         // Imprimir la suma total
         console.log(
           "La suma total de TotalAcomodacion en todas las habitaciones es:",
@@ -5584,7 +6166,15 @@ export default {
 
         console.log("totalNoche:", totalNoche); // Imprime el resultado de la suma
 
+        const extraValuesString =
+          this.numExtraValues === 0
+            ? null
+            : [this.extraValue1, this.extraValue2]
+                .filter((value) => value !== null && value !== "")
+                .join(this.numExtraValues === 2 ? "*" : ""); // Usamos el separador solo si hay dos valores
         // SI APLICA RTE FUENTE O NO.
+        console.log("extraValue1", this.extraValue1);
+        console.log("extraValuesString", extraValuesString);
 
         const formData = {
           // idCotizacion: idCotizacion,
@@ -5592,7 +6182,7 @@ export default {
           destino: this.destination,
           nombrePrograma: this.programName,
           noches: totalNoche,
-          // plan: this.plan,
+          plan: this.plan,
           hotel: this.hotel,
           totalAdultos: this.totalAdultos,
           totalNinos: this.totalNiños,
@@ -5611,8 +6201,6 @@ export default {
           precioTrans: precioTrans, // Este es el valor real, no una cadena literal
 
           suplemento: valorSuplemento,
-          totalPrecio: "",
-          notas: "",
 
           // esto siempre va.
           cliente: this.selectedClient,
@@ -5675,6 +6263,10 @@ export default {
             this.cormacarenaExtranjeroPersonas,
           cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
           cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
+          transfer: this.transferInOutValue || null,
+          extra1: extraValuesString || null,
+          incluye: null,
+          noIncluye: null,
         };
         console.log("formData", formData);
 
@@ -5732,7 +6324,7 @@ export default {
         this.resetVariables();
         // Llama al método para cerrar el modal
         this.closeModal();
-        window.location.reload();
+        // window.location.reload(); QUITAR
         // Manejar la respuesta del servidor si es necesario
       } catch (error) {
         console.error("Error al guardar la cotización:", error);
@@ -6491,8 +7083,6 @@ export default {
           precioTrans: precioTrans, // Este es el valor real, no una cadena literal
 
           suplemento: valorSuplemento,
-          totalPrecio: "",
-          notas: "",
 
           // esto siempre va.
           cliente: this.selectedClient,
@@ -6561,9 +7151,11 @@ export default {
           incluye: this.textoIncluye
             ? this.textoIncluye.replace(/\n/g, "¿")
             : null,
-          noIncluye: this.textoNoIncluye
+          noIncluye: this.textoNoIncluye //cambiar esto a incluye y no incluye
             ? this.textoNoIncluye.replace(/\n/g, "¿")
             : null,
+          extra1: null,
+          transfer: null,
         };
         console.log("formData", formData);
 
@@ -6636,5 +7228,14 @@ export default {
 };
 </script>
 
+<style>
+.q-field__control {
+  overflow: hidden;
+}
 
-
+.q-field__control-container .q-field__native {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

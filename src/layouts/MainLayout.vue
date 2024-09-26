@@ -48,6 +48,12 @@
             </q-item-section>
             <q-item-section>Control Clientes</q-item-section>
           </q-item>
+          <!-- <q-item clickable @click="goPage('/ControlPlanes')">
+            <q-item-section avatar>
+              <q-icon name="add_box" />
+            </q-item-section>
+            <q-item-section>Control Planes</q-item-section>
+          </q-item> -->
           <!-- <q-item clickable @click="goPage('/cotizacion')">
             <q-item-section avatar>
               <q-icon name="logout" />

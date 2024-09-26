@@ -1,3 +1,4 @@
+import DetallesPlanView from "pages/DetallesPlanView.vue";
 const routes = [
   {
     path: "/cotizacion",
@@ -15,6 +16,15 @@ const routes = [
       {
         path: "/ControlClient",
         component: () => import("pages/ControlClient.vue"),
+      },
+      {
+        path: "/ControlPlanes",
+        component: () => import("pages/ControlPlanes.vue"),
+      },
+      {
+        path: "/planes/:id", // Nueva ruta para los detalles del plan
+        name: "DetallesPlan",
+        component: DetallesPlanView,
       },
     ],
   },
