@@ -1,12 +1,12 @@
 import DetallesPlanView from "pages/DetallesPlanView.vue";
 const routes = [
   {
-    path: "/cotizacion",
+    path: "/home",
     component: () => import("layouts/MainLayout.vue"),
     children: [
       {
-        path: "/cotizacion",
-        component: () => import("pages/CotizacionViajes.vue"),
+        path: "/home",
+        component: () => import("pages/homeSystem.vue"),
       },
 
       {
@@ -17,6 +17,15 @@ const routes = [
         path: "/ControlClient",
         component: () => import("pages/ControlClient.vue"),
       },
+      {
+        path: "/cotizacion",
+        component: () => import("pages/CotizacionViajes.vue"),
+      },
+      {
+        path: "/liquidacion",
+        component: () => import("pages/LiquidacionViajes.vue"),
+      },
+
       {
         path: "/ControlPlanes",
         component: () => import("pages/ControlPlanes.vue"),

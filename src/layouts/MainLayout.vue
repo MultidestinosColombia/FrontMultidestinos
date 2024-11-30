@@ -8,7 +8,7 @@
 
         <q-toolbar-title></q-toolbar-title>
 
-        <div>Versión 0.2</div>
+        <div>Versión 0.3</div>
       </q-toolbar>
     </q-header>
 
@@ -25,11 +25,23 @@
     >
       <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
         <q-list padding>
-          <q-item clickable @click="goPage('/cotizacion')">
+          <q-item clickable @click="goPage('/home')">
             <q-item-section avatar>
               <q-icon name="home" />
             </q-item-section>
+            <q-item-section>Inicio</q-item-section>
+          </q-item>
+          <q-item clickable @click="goPage('/cotizacion')">
+            <q-item-section avatar>
+              <q-icon name="description" />
+            </q-item-section>
             <q-item-section>Cotización</q-item-section>
+          </q-item>
+          <q-item clickable @click="goPage('/liquidacion')">
+            <q-item-section avatar>
+              <q-icon name="task" />
+            </q-item-section>
+            <q-item-section>Liquidacion</q-item-section>
           </q-item>
 
           <q-item
@@ -42,18 +54,20 @@
             </q-item-section>
             <q-item-section>Control Usuarios</q-item-section>
           </q-item>
+
           <q-item clickable @click="goPage('/ControlClient')">
             <q-item-section avatar>
               <q-icon name="group" />
             </q-item-section>
             <q-item-section>Control Clientes</q-item-section>
           </q-item>
-          <!-- <q-item clickable @click="goPage('/ControlPlanes')">
+
+          <q-item clickable @click="goPage('/ControlPlanes')">
             <q-item-section avatar>
               <q-icon name="add_box" />
             </q-item-section>
             <q-item-section>Control Planes</q-item-section>
-          </q-item> -->
+          </q-item>
           <!-- <q-item clickable @click="goPage('/cotizacion')">
             <q-item-section avatar>
               <q-icon name="logout" />

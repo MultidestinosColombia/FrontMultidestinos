@@ -135,6 +135,32 @@
                     <div class="col">
                       <q-select
                         outlined
+                        v-model="hotel"
+                        label="Hotel"
+                        :options="hotelOptions"
+                        @update:modelValue="handleSelectionChangeTipo"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="programName"
+                        label="Nombre del Programa"
+                        :options="matchingPrograms"
+                        option-label="nombrePrograma"
+                        class="q-mb-md"
+                        :error="!programName && !autofillingProgramName"
+                        error-message="UPS... NO HAY TARIFA PARA ESTA TEMPORADA"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Plan y Hotel -->
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-select
+                        outlined
                         v-model="selectedClient"
                         label="Cliente"
                         :options="clientOptions"
@@ -147,34 +173,31 @@
                     <div class="col">
                       <q-select
                         outlined
-                        v-model="programName"
-                        label="Nombre del Programa"
-                        :options="programNameOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Plan y Hotel -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
                         v-model="noche"
                         label="Duración"
                         :options="nochesOptions"
                         class="q-mb-md q-ml-md"
                       />
                     </div>
+                  </div>
+                  <div class="row q-col-gutter-md">
                     <div class="col">
+                      <!-- Checkbox para Noche adicional -->
+                      <q-checkbox
+                        v-model="asesorExternoCheck"
+                        label="¿Asesor Externo?"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                    <div class="col">
+                      <!-- Campo de entrada para el número de noches adicionales -->
                       <q-select
                         outlined
-                        v-model="hotel"
-                        label="Hotel"
-                        :options="hotelOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md"
+                        v-model="selectedUser"
+                        :options="dropdownOptions"
+                        label="Selecciona un usuario"
+                        class="q-mb-md q-ml-md"
+                        :disable="!asesorExternoCheck"
                       />
                     </div>
                   </div>
@@ -1663,8 +1686,15 @@
             >
               <div class="text-subtitle1 q-mb-sm">Pasajero {{ index + 1 }}</div>
 
-              <q-input v-model="pasajero.nombre" label="Nombre" filled dense />
-              <div class="row">
+              <q-input
+                v-model="pasajero.nombre"
+                label="Nombre"
+                filled
+                dense
+                class="q-mb-md"
+              />
+
+              <div class="row q-mb-md">
                 <div class="col-6 q-pr-sm">
                   <q-select
                     v-model="pasajero.tipoDocumento"
@@ -1674,6 +1704,7 @@
                     dense
                   />
                 </div>
+
                 <div class="col-6">
                   <q-input
                     v-model="pasajero.numeroDocumento"
@@ -1683,6 +1714,7 @@
                   />
                 </div>
               </div>
+
               <q-input
                 v-model="pasajero.fechaNacimiento"
                 label="Fecha de Nacimiento"
@@ -1697,8 +1729,28 @@
                       ? 'La fecha no puede ser en el futuro'
                       : true,
                 ]"
+                class="q-mb-lg"
               />
             </div>
+            <q-checkbox v-model="tieneTelefono" label="¿Tiene teléfono?" />
+            <q-input
+              v-if="tieneTelefono"
+              v-model="telefono"
+              label="Teléfono"
+              filled
+              dense
+              class="q-mb-md"
+            />
+
+            <q-checkbox v-model="tieneNumero" label="¿Tiene correo?" />
+            <q-input
+              v-if="tieneNumero"
+              v-model="correoPasajero"
+              label="Correo"
+              filled
+              dense
+              class="q-mb-md"
+            />
 
             <q-card-actions align="right" class="bg-white text-teal">
               <q-btn flat label="Cancelar" @click="cerrarModalPasajeros" />
@@ -1712,13 +1764,51 @@
 
     <div>
       <br />
-      <q-select v-model="selectedFilter" :options="['Todos', 'Cot', 'Cot-C']" />
+      <div class="row">
+        <div class="col-6">
+          <q-select
+            v-model="selectedFilter"
+            :options="['Todos', 'Cot', 'Cot-C']"
+            label="Filtrar por Tipo"
+            filled
+            dense
+            clearable
+            emit-value
+            map-options
+          />
+        </div>
+        <div class="col-6">
+          <q-select
+            v-model="filterStatus"
+            :options="statusOptions"
+            label="Filtrar por Status"
+            filled
+            dense
+            clearable
+            emit-value
+            map-options
+          />
+        </div>
+      </div>
+      <br />
+
       <q-table
         :rows="filteredCotizacionData()"
         :columns="columns"
         v-model:sortBy="sortBy"
         v-model:sortOrder="sortOrder"
       >
+        <template v-slot:body-cell-status="props">
+          <q-td :props="props">
+            <q-chip
+              :color="getStatusColor(props.row.status)"
+              text-color="white"
+              square
+            >
+              {{ props.row.status }}
+            </q-chip>
+          </q-td>
+        </template>
         <template v-slot:body-cell-cotizacion="props">
           <q-td :props="props">
             <q-btn
@@ -1733,13 +1823,13 @@
               color="secondary"
               label="Enviar Cotización"
             />
-            <!-- <br />
+            <br />
             <br />
             <q-btn
               @click="abrirModalPasajeros(props.row)"
               color="green"
               label="Pasar a Liquidación"
-            /> -->
+            />
           </q-td>
         </template>
       </q-table>
@@ -1752,6 +1842,7 @@
 <script>
 import numeral from "numeral";
 import { Notify } from "quasar";
+import { QChip } from "quasar";
 import { jsPDF } from "jspdf";
 import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
@@ -1774,8 +1865,9 @@ const formatCurrency = (value) => {
 export default {
   setup() {
     //VALORES EXTRA
+    let selectedUser = ref(null);
     let numExtraValues = ref(0);
-
+    let autofillingProgramName = ref(true);
     let extraValue1 = ref(0);
     let extraValue2 = ref(0);
     let transferInOut = ref(null); // Inicialmente nulo o 'No' si quieres que empiece así
@@ -1803,6 +1895,8 @@ export default {
     let totalImpuestos = 0;
     let sumaValorBrutohab = 0;
     let sumaTotalDescuento = 0;
+    let matchingPrograms = ref([]);
+
     const sortBy = ref("idCotizacion");
     const sortOrder = ref("desc");
     const peopleArray = computed(() => {
@@ -1810,6 +1904,7 @@ export default {
     });
     const cotizacionCounter = ref(0);
     const additionalNightSelected = ref(false);
+    const asesorExternoCheck = ref(false);
     const additionalNightCount = ref(null);
     // Definir un rango de opciones para el número de habitaciones
     const roomOptions = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -1824,6 +1919,12 @@ export default {
     const rooms = ref([]);
     const nochesOptionsRaw = ref([]);
     const selectedFilter = ref("Todos");
+    const filterStatus = ref(null); // Valor nulo inicialmente para mostrar todas las filas
+    const statusOptions = [
+      { label: "Aprobado", value: "Aprobado" },
+      { label: "Rechazado", value: "Rechazado" },
+      { label: "Pendiente", value: "Pendiente" },
+    ];
     const showAgeInputs = (index) => {
       return (
         destination.value === "La Macarena" &&
@@ -2061,6 +2162,10 @@ export default {
         val >= dateRange.value[0] ||
         "La fecha de fin no puede ser anterior a la fecha de inicio",
     ];
+    const tieneTelefono = ref(false); // Inicialmente, el pasajero no tiene teléfono
+    const telefono = ref("");
+    const tieneNumero = ref(false); // Inicialmente, el pasajero no tiene número
+    const correoPasajero = ref("");
     const userData = ref(null);
     const router = useRouter();
     const modalVisible = ref(false);
@@ -2246,6 +2351,15 @@ export default {
     let totalAdultos = 0;
     let totalNiños = 0;
     return {
+      tieneTelefono, // Inicialmente, el pasajero no tiene teléfono
+      telefono,
+      tieneNumero, // Inicialmente, el pasajero no tiene número
+      correoPasajero,
+      filterStatus,
+      statusOptions,
+      selectedUser,
+      matchingPrograms,
+      autofillingProgramName,
       //valores  extra
       transferInOut,
       transferInOutValue,
@@ -2303,6 +2417,7 @@ export default {
       sumaValorBrutohab,
       habitacionesDatos,
       additionalNightSelected,
+      asesorExternoCheck,
       additionalNightCount,
       // Definir un rango de opciones para el número de habitaciones
       handleNumRoomsChange,
@@ -2318,6 +2433,12 @@ export default {
       formatDate: (date) => format(new Date(date), "yyyy-MM-dd"),
 
       columns: [
+        {
+          name: "status",
+          label: "Status",
+          align: "left",
+          field: "status",
+        },
         {
           name: "idCotizacion",
           label: "Id-cotización",
@@ -2432,6 +2553,13 @@ export default {
         nombrePrograma: "",
         destino: "",
       },
+      paramsH: {
+        hotel: "",
+
+        destino: "",
+        noches: "",
+        pertenece: "",
+      },
       paramsN: {
         hotel: "",
         nombrePrograma: "",
@@ -2480,6 +2608,11 @@ export default {
   },
 
   watch: {
+    selectedDeparture: "fetchProgramName",
+    destination: "fetchProgramName",
+    noche: "fetchProgramName",
+    hotel: "fetchProgramName",
+    dateRange: "fetchProgramName",
     hotel() {
       this.fetchOptions();
     },
@@ -2490,8 +2623,173 @@ export default {
       this.validarHora(newValue, this.horaSalidaValue2);
     },
   },
-
+  mounted() {
+    this.dataUsuario(); // Llamar al método para obtener los datos al montar el componente
+  },
   methods: {
+    async dataUsuario() {
+      // Reemplaza esta URL con la URL de tu API
+      const apiUrl = "https://backmultidestinos.onrender.com/user/";
+
+      axios
+        .get(apiUrl)
+        .then((response) => {
+          const users = response.data;
+          // Filtrar usuarios con rol "Asesor"
+          const asesores = users.filter((user) => user.rol === "Asesor");
+          this.dropdownOptions = asesores.map((user) => ({
+            label: user.nombreCompleto,
+            value: user.id,
+          }));
+        })
+        .catch((error) => {
+          console.error("Error al obtener los datos de usuario:", error);
+        });
+    },
+    getStatusColor(status) {
+      switch (status) {
+        case "Pendiente":
+          return "orange";
+        case "Aprobado":
+          return "green";
+        case "Finalizado":
+          return "red";
+        default:
+          return "grey";
+      }
+    },
+    async fetchProgramName() {
+      console.log("Iniciando fetchProgramName...");
+      this.autofillingProgramName = true;
+      try {
+        this.paramsH.hotel = this.hotel;
+        this.paramsH.destino = this.destination;
+        this.paramsH.noches = this.noche.label;
+        this.paramsH.pertenece = this.selectedDeparture;
+
+        console.log("Enviando datos al servidor:", this.paramsH);
+
+        const response = await axios.post(
+          "https://backmultidestinos.onrender.com/hoteles/buscarH",
+          this.paramsH
+        );
+
+        console.log("Respuesta del servidor sobre el programa:", response);
+
+        this.programNameOptions = response.data;
+        console.log("Opciones de nombre de programa:", this.programNameOptions);
+
+        // 1. Filtrar programas con fechas válidas (no nulas)
+        let validPrograms = this.programNameOptions.filter((program) => {
+          const isValid =
+            program.FechaInicio !== null && program.FechaFin !== null;
+          console.log(
+            `Programa ${program.nombrePrograma} tiene fechas válidas: ${isValid}`
+          );
+          return isValid;
+        });
+
+        console.log("Programas con fechas válidas:", validPrograms);
+
+        // 2. Filtrar los programas que coincidan con las fechas (comparación de rango)
+        let selectedStartDate = new Date(this.dateRange[0]);
+        let selectedEndDate = new Date(this.dateRange[1]);
+
+        // Imprimir fechas seleccionadas por el usuario
+        console.log("Fecha de inicio seleccionada:", selectedStartDate);
+        console.log("Fecha de fin seleccionada:", selectedEndDate);
+
+        if (isNaN(selectedStartDate) || isNaN(selectedEndDate)) {
+          console.error("Error: Fecha inválida en dateRange.");
+          this.$q.notify({
+            message: "Error: Fecha inválida seleccionada.",
+            color: "negative",
+          });
+          return;
+        }
+
+        selectedStartDate.setHours(0, 0, 0, 0); // Normalizar la fecha de inicio
+        selectedEndDate.setHours(0, 0, 0, 0); // Normalizar la fecha de fin
+
+        validPrograms = validPrograms.filter((program) => {
+          let startDate = new Date(program.FechaInicio);
+          let endDate = new Date(program.FechaFin);
+
+          if (isNaN(startDate) || isNaN(endDate)) {
+            console.error(
+              `Error: Fecha inválida en el programa ${program.nombrePrograma}.`
+            );
+            return false;
+          }
+
+          startDate.setHours(0, 0, 0, 0); // Normalizar la fecha de inicio del programa
+          endDate.setHours(0, 0, 0, 0); // Normalizar la fecha de fin del programa
+
+          // Imprimir fechas del programa
+          console.log("Fecha de inicio del programa:", startDate);
+          console.log("Fecha de fin del programa:", endDate);
+
+          // Verificar si las fechas del programa están dentro del rango seleccionado
+          const match =
+            startDate <= selectedEndDate && endDate >= selectedStartDate;
+
+          console.log(
+            `Programa ${program.nombrePrograma} coincide con las fechas: ${match}`
+          );
+
+          return match;
+        });
+
+        console.log("Programas que coinciden con las fechas:", validPrograms);
+
+        // 3. Eliminar programas duplicados basándose en el nombre del programa
+        validPrograms = validPrograms.filter(
+          (program, index, self) =>
+            index ===
+            self.findIndex((p) => p.nombrePrograma === program.nombrePrograma)
+        );
+
+        console.log(
+          "Programas coincidentes (sin duplicados y con fechas válidas):",
+          validPrograms
+        );
+
+        // 4. Asignar los programas válidos y manejar las opciones
+        this.matchingPrograms = validPrograms;
+
+        if (this.matchingPrograms.length === 1) {
+          this.programName = this.matchingPrograms[0].nombrePrograma;
+          console.log("Nombre del programa seleccionado:", this.programName);
+        } else if (this.matchingPrograms.length > 1) {
+          this.matchingProgramOptions = this.matchingPrograms.map(
+            (program) => program.nombrePrograma
+          );
+          console.log(
+            "Opciones de programas coincidentes:",
+            this.matchingProgramOptions
+          );
+        } else {
+          this.programName = null;
+          console.log("No hay programas coincidentes.");
+        }
+
+        // Obtener la lista de tipos de habitación de la respuesta del servidor
+        const tiposDeHabitacion = response.data.map(
+          (item) => item.tipoHabitacion
+        );
+
+        // Eliminar duplicados utilizando un Set
+        const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
+        console.log("Tipos de habitación únicos:", tiposDeHabitacionUnicos);
+
+        // Asignar los tipos de habitación únicos a la opción de tipo de habitación
+        this.roomTypeOptions = tiposDeHabitacionUnicos;
+      } catch (error) {
+        console.error("Error al obtener nombres de programa:", error);
+      } finally {
+        this.autofillingProgramName = false;
+      }
+    },
     validarHora(horaLlegada, horaSalida) {
       if (horaLlegada && horaSalida && horaLlegada < horaSalida) {
         // Mostrar mensaje de error o realizar otra acción
@@ -2510,17 +2808,19 @@ export default {
 
       const idCotizacion = this.cotizacionSeleccionada.idCotizacion;
 
-      // 1. Obtener datos de impuestos desde la API
+      // 1. Obtener datos de la cotización desde la API (incluyendo el campo tieneImpuestos)
       axios
         .get(
           `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
         )
         .then((response) => {
           const datosCotizacionAPI = response.data;
-          // Imprimir los datos de impuestos obtenidos de la API
-          console.log("Datos de impuestos desde la API:", datosCotizacionAPI);
+          console.log(
+            "Datos de la cotización desde la API:",
+            datosCotizacionAPI
+          );
 
-          // 2. Preparar los datos para la liquidación (incluyendo datos de impuestos de la API)
+          // 2. Preparar los datos para la liquidación
           const datosLiquidacion = {
             idCotizacion: this.cotizacionSeleccionada.idCotizacion,
             salida: this.cotizacionSeleccionada.salida,
@@ -2555,8 +2855,7 @@ export default {
             suplemento: this.cotizacionSeleccionada.suplemento,
             precioTrans: this.cotizacionSeleccionada.precioTrans,
             noches: this.cotizacionSeleccionada.noches,
-            totalPrecio: this.cotizacionSeleccionada.totalPrecio || 0,
-            notas: this.cotizacionSeleccionada.notas, //cambiar
+            notas: this.cotizacionSeleccionada.notas,
             cliente: this.cotizacionSeleccionada.cliente,
             clientePorcentaje: this.cotizacionSeleccionada.clientePorcentaje,
             nochesAdicionales: this.cotizacionSeleccionada.nochesAdicionales,
@@ -2575,103 +2874,14 @@ export default {
             claseVuelta: this.cotizacionSeleccionada.claseVuelta,
             fechaFin: this.cotizacionSeleccionada.fechaFin,
             correo: this.cotizacionSeleccionada.correo,
-
-            // VALORES IMPUESTOS (desde la API)
-            cormacarena5a11_Total:
-              Number(datosCotizacionAPI[0].cormacarena5a11_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].cormacarena5a11_Total),
-            cormacarena12a65_Total:
-              Number(datosCotizacionAPI[0].cormacarena12a65_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].cormacarena12a65_Total),
-            cormacarenaExtranjero_Total:
-              Number(datosCotizacionAPI[0].cormacarenaExtranjero_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].cormacarenaExtranjero_Total),
-            pqsNaturales5a24_Total:
-              Number(datosCotizacionAPI[0].pqsNaturales5a24_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].pqsNaturales5a24_Total),
-            pqsNaturales25a65_Total:
-              Number(datosCotizacionAPI[0].pqsNaturales25a65_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].pqsNaturales25a65_Total),
-            pqsNaturalesExtranjero_Total:
-              Number(datosCotizacionAPI[0].pqsNaturalesExtranjero_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].pqsNaturalesExtranjero_Total),
-            alcaldiaNacional_Total:
-              Number(datosCotizacionAPI[0].alcaldiaNacional_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].alcaldiaNacional_Total),
-            alcaldiaExtranjero_Total:
-              Number(datosCotizacionAPI[0].alcaldiaExtranjero_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].alcaldiaExtranjero_Total),
-            defensaCivil_Total:
-              Number(datosCotizacionAPI[0].defensaCivil_Total) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].defensaCivil_Total),
-
-            // personas Impuestos Total (desde la API)
-            defensaCivil_numeroPersonas:
-              Number(datosCotizacionAPI[0].defensaCivil_numeroPersonas) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].defensaCivil_numeroPersonas),
-            alcaldiaNacional_numeroPersonas:
-              Number(datosCotizacionAPI[0].alcaldiaNacional_numeroPersonas) ===
-              0
-                ? null
-                : Number(datosCotizacionAPI[0].alcaldiaNacional_numeroPersonas),
-            alcaldiaExtranjero_numeroPersonas:
-              Number(
-                datosCotizacionAPI[0].alcaldiaExtranjero_numeroPersonas
-              ) === 0
-                ? null
-                : Number(
-                    datosCotizacionAPI[0].alcaldiaExtranjero_numeroPersonas
-                  ),
-            pqsNaturalesExtranjero_numeroPersonas:
-              Number(
-                datosCotizacionAPI[0].pqsNaturalesExtranjero_numeroPersonas
-              ) === 0
-                ? null
-                : Number(
-                    datosCotizacionAPI[0].pqsNaturalesExtranjero_numeroPersonas
-                  ),
-            pqsNaturales25a65_numeroPersonas:
-              Number(datosCotizacionAPI[0].pqsNaturales25a65_numeroPersonas) ===
-              0
-                ? null
-                : Number(
-                    datosCotizacionAPI[0].pqsNaturales25a65_numeroPersonas
-                  ),
-            pqsNaturales5a24_numeroPersonas:
-              Number(datosCotizacionAPI[0].pqsNaturales5a24_numeroPersonas) ===
-              0
-                ? null
-                : Number(datosCotizacionAPI[0].pqsNaturales5a24_numeroPersonas),
-            cormacarenaExtranjero_numeroPersonas:
-              Number(
-                datosCotizacionAPI[0].cormacarenaExtranjero_numeroPersonas
-              ) === 0
-                ? null
-                : Number(
-                    datosCotizacionAPI[0].cormacarenaExtranjero_numeroPersonas
-                  ),
-            cormacarena12a65_numeroPersonas:
-              Number(datosCotizacionAPI[0].cormacarena12a65_numeroPersonas) ===
-              0
-                ? null
-                : Number(datosCotizacionAPI[0].cormacarena12a65_numeroPersonas),
-            cormacarena5a11_numeroPersonas:
-              Number(datosCotizacionAPI[0].cormacarena5a11_numeroPersonas) === 0
-                ? null
-                : Number(datosCotizacionAPI[0].cormacarena5a11_numeroPersonas),
-
+            impuestosLiq: datosCotizacionAPI[0].tieneImpuestos, // Usar el valor de tieneImpuestos de la cotización
+            extra: this.cotizacionSeleccionada.extra,
+            transfer: this.cotizacionSeleccionada.transfer,
             incluye: this.cotizacionSeleccionada.incluye,
             noIncluye: this.cotizacionSeleccionada.noIncluye,
+            status: "Pendiente",
+            telefono: this.telefono || null,
+            correoPasajero: this.correoPasajero || null,
           };
 
           // 3. Crear la liquidación
@@ -2683,9 +2893,62 @@ export default {
             .then((response) => {
               const idLiquidacion = response.data.idLiquidacion;
 
-              // 4. Crear los pasajeros
+              // 4. Crear los impuestos si tieneImpuestos es true
+              if (datosCotizacionAPI[0].tieneImpuestos) {
+                const datosImpuestos = {
+                  idLiquidacion: idLiquidacion,
+                  defensaCivil: datosCotizacionAPI[0].defensaCivil_Total,
+                  cormacarena5a11: datosCotizacionAPI[0].cormacarena5a11_Total,
+                  cormacarena12a65:
+                    datosCotizacionAPI[0].cormacarena12a65_Total,
+                  cormacarenaExtranjero:
+                    datosCotizacionAPI[0].cormacarenaExtranjero_Total,
+                  pqsNaturales5a24:
+                    datosCotizacionAPI[0].pqsNaturales5a24_Total,
+                  pqsNaturales25a65:
+                    datosCotizacionAPI[0].pqsNaturales25a65_Total,
+                  pqsNaturalesExtranjero:
+                    datosCotizacionAPI[0].pqsNaturalesExtranjero_Total,
+                  alcaldiaNacional:
+                    datosCotizacionAPI[0].alcaldiaNacional_Total,
+                  alcaldiaExtranjero:
+                    datosCotizacionAPI[0].alcaldiaExtranjero_Total,
+                  cormacarena5a11Personas:
+                    datosCotizacionAPI[0].cormacarena5a11_numeroPersonas,
+                  cormacarena12a65Personas:
+                    datosCotizacionAPI[0].cormacarena12a65_numeroPersonas,
+                  cormacarenaExtranjeroPersonas:
+                    datosCotizacionAPI[0].cormacarenaExtranjero_numeroPersonas,
+                  pqsNaturales5a24Personas:
+                    datosCotizacionAPI[0].pqsNaturales5a24_numeroPersonas,
+                  pqsNaturales25a65Personas:
+                    datosCotizacionAPI[0].pqsNaturales25a65_numeroPersonas,
+                  pqsNaturalesExtranjeroPersonas:
+                    datosCotizacionAPI[0].pqsNaturalesExtranjero_numeroPersonas,
+                  alcaldiaNacionalPersonas:
+                    datosCotizacionAPI[0].alcaldiaNacional_numeroPersonas,
+                  alcaldiaExtranjeroPersonas:
+                    datosCotizacionAPI[0].alcaldiaExtranjero_numeroPersonas,
+                  defensaCivilPersonas:
+                    datosCotizacionAPI[0].defensaCivil_numeroPersonas,
+                };
+
+                axios
+                  .post(
+                    "https://backmultidestinos.onrender.com/impuestosLiq",
+                    datosImpuestos
+                  )
+                  .then(() => {
+                    console.log("Impuestos creados exitosamente");
+                  })
+                  .catch((error) => {
+                    console.error("Error al crear los impuestos:", error);
+                  });
+              }
+
+              // 5. Crear los pasajeros (dentro del .then() de la creación de la liquidación)
               const promesasPasajeros = this.pasajeros.map((pasajero) => {
-                pasajero.idLiquidacion = idLiquidacion;
+                pasajero.idLiquidacion = idLiquidacion; // Asignar idLiquidacion aquí
                 return axios.post(
                   "https://backmultidestinos.onrender.com/pasajero",
                   pasajero
@@ -2696,22 +2959,35 @@ export default {
                 .then(() => {
                   console.log("Liquidación y pasajeros creados exitosamente");
 
-                  // 5. Opcional: Actualizar el estado de la cotización
-                  // 6. Redirigir o actualizar la interfaz
+                  // 6. Actualizar el estado de la cotización a "Aprobado"
+                  axios
+                    .post(
+                      `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`,
+                      {
+                        status: "Aprobado",
+                      }
+                    )
+                    .then(() => {
+                      console.log("Cotización actualizada a 'Aprobado'");
+                      // 7. Redirigir o actualizar la interfaz
+                    })
+                    .catch((error) => {
+                      console.error(
+                        "Error al actualizar la cotización:",
+                        error
+                      );
+                    });
                 })
                 .catch((error) => {
                   console.error("Error al crear los pasajeros:", error);
-                  // Manejo de errores
                 });
             })
             .catch((error) => {
               console.error("Error al crear la liquidación:", error);
-              // Manejo de errores
             });
         })
         .catch((error) => {
           console.error("Error al obtener datos de la cotización:", error);
-          // Manejo de errores
         });
     },
 
@@ -2728,7 +3004,10 @@ export default {
           fechaNacimiento: "",
         });
       }
-
+      this.tieneTelefono = false; // Inicialmente, el pasajero no tiene teléfono
+      this.telefono = "";
+      this.tieneNumero = false; // Inicialmente, el pasajero no tiene número
+      this.correoPasajero = "";
       this.mostrarModalPasajeros = true;
     },
     cerrarModalPasajeros() {
@@ -2778,15 +3057,15 @@ export default {
         return 0;
       });
 
-      // Filtrar por el filtro seleccionado
+      // Filtrar por tipo y status
       return data.filter((row) => {
-        if (filter === "Todos") {
-          return true;
-        } else if (filter === "Cot-C") {
-          return row.idCotizacion.includes("-C");
-        } else if (filter === "Cot") {
-          return !row.idCotizacion.includes("-C");
-        }
+        const tipoMatch =
+          filter === "Todos" ||
+          (filter === "Cot-C" && row.idCotizacion.includes("-C")) ||
+          (filter === "Cot" && !row.idCotizacion.includes("-C"));
+        const statusMatch =
+          this.filterStatus === null || row.status === this.filterStatus;
+        return tipoMatch && statusMatch;
       });
     },
     customSort(rows, sortBy, descending) {
@@ -2884,18 +3163,30 @@ export default {
         });
       }
     },
+    checkPageOverflow(doc, currentY, elementHeight, marginBottom = 10) {
+      const pageHeight = doc.internal.pageSize.height;
+      if (currentY + elementHeight > pageHeight - marginBottom) {
+        doc.addPage();
+        return margins.top; // Reiniciar currentY en la nueva página
+      }
+      return currentY;
+    },
     async descargarCotizacionCano(idCotizacion) {
       try {
         // Realizar las solicitudes HTTP para obtener los datos
 
-        const [habitacionResponse, cotizacionResponse] = await Promise.all([
-          axios.get(
-            `https://backmultidestinos.onrender.com/habitacionCotizacion/${idCotizacion}`
-          ),
-          axios.get(
-            `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
-          ),
-        ]);
+        const [habitacionResponse, cotizacionResponse, impuestoResponse] =
+          await Promise.all([
+            axios.get(
+              `https://backmultidestinos.onrender.com/habitacionCotizacion/${idCotizacion}`
+            ),
+            axios.get(
+              `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
+            ),
+            axios.get(
+              `https://backmultidestinos.onrender.com/ImpuestoCot/${idCotizacion}`
+            ),
+          ]);
 
         // Verificar si las solicitudes fueron exitosas
         if (
@@ -2910,7 +3201,8 @@ export default {
 
         // Obtener los datos de las respuestas
         const cotizacion = cotizacionResponse.data[0];
-        console.log("cotizacion", cotizacion);
+        const impuesto = impuestoResponse.data[0];
+        console.log("impuesto", impuesto);
         const habitacion = habitacionResponse.data;
         console.log("habitacion", habitacion);
 
@@ -3539,15 +3831,15 @@ export default {
           cotizacion.tasa,
           cotizacion.ta,
           cotizacion.ivaTa,
-          cotizacion.defensaCivil_Total,
-          cotizacion.alcaldiaNacional_Total,
-          cotizacion.alcaldiaExtranjero_Total,
-          cotizacion.pqsNaturalesExtranjero_Total,
-          cotizacion.pqsNaturales25a65_Total,
-          cotizacion.pqsNaturales5a24_Total,
-          cotizacion.cormacarenaExtranjero_Total,
-          cotizacion.cormacarena5a11_Total,
-          cotizacion.cormacarena12a65_Total,
+          impuesto.defensaCivil_Total,
+          impuesto.alcaldiaNacional_Total,
+          impuesto.alcaldiaExtranjero_Total,
+          impuesto.pqsNaturalesExtranjero_Total,
+          impuesto.pqsNaturales25a65_Total,
+          impuesto.pqsNaturales5a24_Total,
+          impuesto.cormacarenaExtranjero_Total,
+          impuesto.cormacarena5a11_Total,
+          impuesto.cormacarena12a65_Total,
           cotizacion.precioTrans,
         ];
         // Definir impuestosAdicionales FUERA del else if
@@ -3630,7 +3922,7 @@ export default {
             // Si es un impuesto adicional, dividir por el número de personas de ese impuesto
             const propiedadNumeroPersonas = `${nombre}_numeroPersonas`;
             const numeroPersonasImpuesto =
-              cotizacion[propiedadNumeroPersonas] || 0;
+              impuesto[propiedadNumeroPersonas] || 0;
             valorDividido =
               numeroPersonasImpuesto !== 0
                 ? Math.trunc(valor / numeroPersonasImpuesto)
@@ -3654,7 +3946,7 @@ export default {
           let textoTerceraColumna = "";
           if (impuestosAdicionales.includes(nombre)) {
             const propiedadNumeroPersonas = `${nombre}_numeroPersonas`;
-            textoTerceraColumna = cotizacion[propiedadNumeroPersonas] || "";
+            textoTerceraColumna = impuesto[propiedadNumeroPersonas] || "";
           } else {
             textoTerceraColumna = totalPasajerosTexto;
           }
@@ -4884,7 +5176,7 @@ export default {
           { baseline: "middle" }
         ); // Segunda línea
         // Convertir a números antes de sumar
-        const suplemento = parseFloat(cotizacion.suplemento) || 0;
+        const suplemento = 0;
         const totalPrecioCliente =
           parseFloat(cotizacion.totalPrecioCliente) || 0;
 
@@ -6175,7 +6467,11 @@ export default {
         // SI APLICA RTE FUENTE O NO.
         console.log("extraValue1", this.extraValue1);
         console.log("extraValuesString", extraValuesString);
-
+        if (this.programName !== "Caño Cristales") {
+          this.tieneImpuestos = false; // No tiene impuestos
+        } else {
+          this.tieneImpuestos = true; // Tiene impuestos
+        }
         const formData = {
           // idCotizacion: idCotizacion,
           salida: this.selectedDeparture,
@@ -6239,34 +6535,37 @@ export default {
           rteIca: rteIcaCalculado,
           totalComision: totalComision,
           correo: this.correo,
-
+          // tiene impuesttos?
           //VALORES IMPUESTOS
 
-          cormacarena5a11_Total: this.cormacarena5a11Total,
-          cormacarena12a65_Total: this.cormacarena12a65Total,
-          cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
-          pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
-          pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
-          pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
-          alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
-          alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
-          defensaCivil_Total: this.defensaCivilTotal,
-          //personas Impuestos Total
-          defensaCivil_numeroPersonas: this.defensaCivilPersonas,
-          alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
-          alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
-          pqsNaturalesExtranjero_numeroPersonas:
-            this.pqsNaturalesExtranjeroPersonas,
-          pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
-          pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
-          cormacarenaExtranjero_numeroPersonas:
-            this.cormacarenaExtranjeroPersonas,
-          cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
-          cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
+          // cormacarena5a11_Total: this.cormacarena5a11Total,
+          // cormacarena12a65_Total: this.cormacarena12a65Total,
+          // cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
+          // pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
+          // pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
+          // pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
+          // alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
+          // alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
+          // defensaCivil_Total: this.defensaCivilTotal,
+          // //personas Impuestos Total
+          // defensaCivil_numeroPersonas: this.defensaCivilPersonas,
+          // alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
+          // alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
+          // pqsNaturalesExtranjero_numeroPersonas:
+          //   this.pqsNaturalesExtranjeroPersonas,
+          // pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
+          // pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
+          // cormacarenaExtranjero_numeroPersonas:
+          //   this.cormacarenaExtranjeroPersonas,
+          // cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
+          // cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
           transfer: this.transferInOutValue || null,
+          asesorExterno: this.selectedUser.value || null,
           extra1: extraValuesString || null,
           incluye: null,
           noIncluye: null,
+          status: "pendiente",
+          tieneImpuestos: this.tieneImpuestos,
         };
         console.log("formData", formData);
 
@@ -6291,6 +6590,39 @@ export default {
         }
         console.log("Respuesta del servidor:", cotizacionResponse.data);
         console.log("idCotizacion1", this.idCotizacion);
+
+        const formImpuestos = {
+          idCotizacion: this.idCotizacion,
+          cormacarena5a11_Total: this.cormacarena5a11Total,
+          cormacarena12a65_Total: this.cormacarena12a65Total,
+          cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
+          pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
+          pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
+          pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
+          alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
+          alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
+          defensaCivil_Total: this.defensaCivilTotal,
+          //personas Impuestos Total
+          defensaCivil_numeroPersonas: this.defensaCivilPersonas,
+          alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
+          alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
+          pqsNaturalesExtranjero_numeroPersonas:
+            this.pqsNaturalesExtranjeroPersonas,
+          pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
+          pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
+          cormacarenaExtranjero_numeroPersonas:
+            this.cormacarenaExtranjeroPersonas,
+          cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
+          cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
+        };
+
+        if (this.programName == "Caño Cristales") {
+          const cotizacionImpuesto = await axios.post(
+            "https://backmultidestinos.onrender.com/ImpuestoCot",
+            formImpuestos
+          );
+          // ... procesar la respuesta de cotizacionImpuesto si es necesario
+        }
 
         // Obtener el idCotizacion generado
         // Realizar las solicitudes para guardar las habitaciones

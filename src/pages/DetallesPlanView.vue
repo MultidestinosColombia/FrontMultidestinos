@@ -53,6 +53,14 @@
 
     <div class="text-h6 q-mt-lg">Hoteles Asociados</div>
 
+    <div class="row justify-end q-gutter-sm q-mb-md">
+      <q-btn
+        label="Agregar Hotel"
+        color="primary"
+        @click="abrirModal('agregar')"
+      />
+    </div>
+
     <q-table
       v-if="hotelesRelacionados.length > 0"
       :rows="hotelesRelacionados"
@@ -70,17 +78,192 @@
           <span v-html="props.value"></span>
         </q-td>
       </template>
+      <template v-slot:body-cell-acciones="props">
+        <q-td :props="props" class="text-center">
+          <q-btn
+            icon="edit"
+            color="primary"
+            flat
+            round
+            dense
+            @click="abrirModal('editar', props.row)"
+          />
+        </q-td>
+      </template>
     </q-table>
     <div v-else class="text-grey q-mt-md">
       No hay hoteles asociados a este plan.
     </div>
+
+    <q-dialog v-model="mostrarModal">
+      <q-card style="width: 700px; max-width: 80vw">
+        <q-card-section>
+          <div class="text-h6">
+            {{ modoModal === "agregar" ? "Agregar Hotel" : "Editar Hotel" }}
+          </div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-form @submit="guardarHotel">
+            <div class="row q-gutter-md">
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.hotel"
+                  label="Hotel"
+                  :disable="modoModal === 'editar'"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.plan"
+                  label="Plan"
+                  :disable="modoModal === 'editar'"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.noches"
+                  label="Noches"
+                  :disable="modoModal === 'editar'"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.tipoHabitacion"
+                  label="Tipo de Habitación"
+                />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.sencilla" label="Sencilla" />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.doble" label="Doble" />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.triple" label="Triple" />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.cuadruple" label="Cuádruple" />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.quintuple" label="Quíntuple" />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.sextuple" label="Séxtuple" />
+              </div>
+              <div class="col-6">
+                <q-input v-model="hotelForm.niño" label="Niño" />
+              </div>
+              <div class="col-6">
+                <q-input
+                  v-model="hotelForm.nocheAdicionalsencilla"
+                  label="Noche Adicional Sencilla"
+                />
+              </div>
+              <div class="col-6">
+                <q-input
+                  v-model="hotelForm.nocheAdicionaldoble"
+                  label="Noche Adicional Doble"
+                />
+              </div>
+              <div class="col-6">
+                <q-input
+                  v-model="hotelForm.nocheAdicionaltriple"
+                  label="Noche Adicional Triple"
+                />
+              </div>
+              <div class="col-6">
+                <q-input
+                  v-model="hotelForm.nocheAdicionalcuadruple"
+                  label="Noche Adicional Cuádruple"
+                />
+              </div>
+              <div class="col-6">
+                <q-input
+                  v-model="hotelForm.nocheAdicionalniño"
+                  label="Noche Adicional Niño"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.incluye"
+                  type="textarea"
+                  label="Incluye"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.noIncluye"
+                  type="textarea"
+                  label="No Incluye"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.FechaInicio"
+                  label="Fecha de Inicio"
+                  filled
+                  type="date"
+                />
+              </div>
+              <div class="col-12">
+                <q-input
+                  v-model="hotelForm.FechaFin"
+                  label="Fecha de Fin"
+                  filled
+                  type="date"
+                />
+              </div>
+            </div>
+          </q-form>
+        </q-card-section>
+        <q-card-actions align="right" class="q-px-md">
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+          <q-btn
+            flat
+            label="Guardar"
+            color="primary"
+            type="submit"
+            @click="guardarHotel"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script>
+import { Notify } from "quasar";
 export default {
   data() {
     return {
+      mostrarModal: false,
+      modoModal: "agregar",
+      hotelForm: {
+        id: null,
+        pertenece: null,
+        destino: null,
+        nombrePrograma: null,
+        hotel: null,
+        plan: null,
+        noches: null,
+        tipoHabitacion: null,
+        sencilla: null,
+        doble: null,
+        triple: null,
+        cuadruple: null,
+        quintuple: null,
+        sextuple: null,
+        niño: null,
+        nocheAdicionalsencilla: null,
+        nocheAdicionaldoble: null,
+        nocheAdicionaltriple: null,
+        nocheAdicionalcuadruple: null,
+        nocheAdicionalniño: null,
+        incluye: null,
+        noIncluye: null,
+        FechaInicio: null,
+        FechaFin: null,
+      },
       planId: this.$route.params.id,
       plan: null,
       hoteles: [],
@@ -260,6 +443,20 @@ export default {
           format: (val) => (val || "N/A").replace(/¿/g, "<br>"), // Reemplaza "¿" por "<br>"
           html: true, // Renderiza el contenido como HTML
         },
+        {
+          name: "FechaInicio",
+          label: "Fecha Inicio",
+          field: "FechaInicio",
+          format: (val) => this.formatearFecha(val) || "N/A",
+        },
+        {
+          name: "FechaFin",
+          label: "Fecha Fin",
+          field: "FechaFin",
+          format: (val) => this.formatearFecha(val) || "N/A",
+        },
+
+        { name: "acciones", label: "Acciones", field: "id" },
       ],
     };
   },
@@ -267,6 +464,16 @@ export default {
     this.cargarDetallesPlan();
   },
   methods: {
+    formatearFecha(fechaISO) {
+      if (!fechaISO) return null;
+      const fecha = new Date(fechaISO);
+      return fecha.toLocaleDateString("es-ES", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: "UTC", // Indicar que la fecha ISO está en UTC
+      });
+    },
     cargarDetallesPlan() {
       // Lógica para obtener los detalles del plan desde la API
       fetch(`https://backmultidestinos.onrender.com/planes/${this.planId}`)
@@ -320,6 +527,92 @@ export default {
           hotel.nombrePrograma === this.plan.nombrePrograma
         );
       });
+    },
+
+    //AGREGAR:
+    abrirModal(modo, hotel = null) {
+      this.modoModal = modo;
+
+      if (modo === "agregar") {
+        this.hotelForm = {
+          id: null,
+          pertenece: this.plan.pertenece,
+          destino: this.plan.destino,
+          nombrePrograma: this.plan.nombrePrograma,
+          hotel: null,
+          plan: null,
+          noches: null,
+          tipoHabitacion: null,
+          FechaInicio: null,
+          FechaFin: null,
+          sencilla: null,
+          doble: null,
+          triple: null,
+          cuadruple: null,
+          quintuple: null,
+          sextuple: null,
+          niño: null,
+          nocheAdicionalsencilla: null,
+          nocheAdicionaldoble: null,
+          nocheAdicionaltriple: null,
+          nocheAdicionalcuadruple: null,
+          nocheAdicionalniño: null,
+          incluye: null,
+          noIncluye: null,
+        };
+      } else if (modo === "editar" && hotel) {
+        this.hotelForm = {
+          ...hotel,
+          FechaInicio: hotel.FechaInicio
+            ? hotel.FechaInicio.split("T")[0] // Extrae solo "YYYY-MM-DD"
+            : null,
+          FechaFin: hotel.FechaFin ? hotel.FechaFin.split("T")[0] : null,
+        };
+      }
+
+      this.mostrarModal = true;
+    },
+
+    guardarHotel() {
+      let url = "https://backmultidestinos.onrender.com/hoteles";
+      let method = "POST";
+
+      if (this.modoModal === "editar") {
+        url = `${url}/${this.hotelForm.id}`;
+        method = "PUT";
+      }
+      let hotelData = { ...this.hotelForm };
+      hotelData.incluye = (hotelData.incluye || "").replace(/\n/g, "¿");
+      hotelData.noIncluye = (hotelData.noIncluye || "").replace(/\n/g, "¿");
+      fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(this.hotelForm),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Error al guardar el hotel");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          this.mostrarModal = false;
+          this.cargarHoteles(); // Recarga la lista de hoteles
+          Notify.create({
+            message: "Hotel guardado con éxito",
+            color: "positive",
+          });
+        })
+        .catch((error) => {
+          console.error("Error al guardar hotel:", error);
+          Notify.create({
+            message:
+              "Error al guardar el hotel. Por favor, inténtalo de nuevo más tarde.",
+            color: "negative",
+          });
+        });
     },
   },
 };

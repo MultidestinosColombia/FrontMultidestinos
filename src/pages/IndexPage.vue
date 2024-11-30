@@ -93,7 +93,7 @@ const login = async () => {
           // Guardamos los datos del usuario en el almacenamiento local
           LocalStorage.set("userData", userData);
           console.log("Datos del usuario guardados:", userData); // Agrega este console.log para verificar
-          router.push("/cotizacion");
+          router.push("/home");
         } else {
           // Si la respuesta de la API para obtener los datos del usuario falla, mostramos un mensaje de error
           Notify.create({
