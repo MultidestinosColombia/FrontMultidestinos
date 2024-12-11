@@ -88,6 +88,14 @@
             dense
             @click="abrirModal('editar', props.row)"
           />
+          <q-btn
+            icon="delete"
+            color="negative"
+            flat
+            round
+            dense
+            @click="eliminarHotel(props.row.id)"
+          />
         </q-td>
       </template>
     </q-table>
@@ -120,11 +128,7 @@
                 />
               </div>
               <div class="col-12">
-                <q-input
-                  v-model="hotelForm.noches"
-                  label="Noches"
-                  :disable="modoModal === 'editar'"
-                />
+                <q-input v-model="hotelForm.noches" label="Noches" />
               </div>
               <div class="col-12">
                 <q-input
@@ -228,14 +232,39 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <q-dialog v-model="mostrarDialogoEliminar">
+      <q-card>
+        <q-card-section class="row items-center">
+          <q-avatar icon="warning" color="warning" text-color="white" />
+          <span class="q-ml-sm"
+            >¿Estás seguro de que quieres eliminar este hotel?</span
+          >
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+          <q-btn
+            flat
+            label="Eliminar"
+            color="negative"
+            @click="confirmarEliminarHotel"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script>
+import { onMounted, ref, nextTick, reactive } from "vue";
+import { LocalStorage } from "quasar";
+import axios from "axios";
 import { Notify } from "quasar";
 export default {
   data() {
     return {
+      mostrarDialogoEliminar: false,
+      hotelAEliminar: null,
       mostrarModal: false,
       modoModal: "agregar",
       hotelForm: {
@@ -464,6 +493,39 @@ export default {
     this.cargarDetallesPlan();
   },
   methods: {
+    eliminarHotel(hotelId) {
+      this.hotelAEliminar = hotelId; // Guardar el ID del hotel a eliminar
+      this.mostrarDialogoEliminar = true; // Mostrar el diálogo de confirmación
+    },
+
+    confirmarEliminarHotel() {
+      this.mostrarDialogoEliminar = false; // Ocultar el diálogo
+
+      fetch(
+        `https://backmultidestinos.onrender.com/hoteles/${this.hotelAEliminar}`,
+        {
+          method: "DELETE",
+        }
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Error al eliminar el hotel");
+          }
+          this.cargarHoteles();
+          Notify.create({
+            message: "Hotel eliminado con éxito",
+            color: "positive",
+          });
+        })
+        .catch((error) => {
+          console.error("Error al eliminar hotel:", error);
+          Notify.create({
+            message:
+              "Error al eliminar el hotel. Por favor, inténtalo de nuevo más tarde.",
+            color: "negative",
+          });
+        });
+    },
     formatearFecha(fechaISO) {
       if (!fechaISO) return null;
       const fecha = new Date(fechaISO);
