@@ -1510,7 +1510,79 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
         }
         // Mover a la posición donde se empezará a dibujar la siguiente sección
         currentY += recuadroHeight + 5; // Agregar un espacio adicional después del recuadro
+        // Array para almacenar las respuestas de costos de hotel
+        const costosHotelResponses = [];
 
+        // Iterar sobre los tipos de habitación
+        for (const habitacionData of habitacion) {
+          // Crear el objeto de parámetros
+          const params = {
+            pertenece: cotizacion.salida,
+            destino: cotizacion.destino,
+            nombrePrograma: cotizacion.nombrePrograma,
+            hotel: cotizacion.hotel,
+            noches: cotizacion.noches + " noches",
+            tipoHabitacion: habitacionData.tipoHabitacion,
+          };
+
+          // Realizar la solicitud POST y guardar la respuesta
+          const response = await axios.post(
+            "https://backmultidestinos.onrender.com/costosHotel/buscar",
+            params
+          );
+          console.log("hola", response);
+          costosHotelResponses.push(response.data);
+        }
+
+        // Procesar las respuestas de costos de hotel
+        console.log("costosHotelResponses", costosHotelResponses);
+
+        //------------------------------------------------------------------
+
+        // ... (código existente)
+
+        //------------------------------------------------------------------
+        // SECCIÓN: COSTOS DE HOTEL
+        doc.setFontSize(10);
+        doc.text("COSTOS DE HOTEL:", margins.left, currentY);
+        currentY += 5; // Espacio después del título
+
+        // Incluir el nombre del hotel
+        doc.setFont("helvetica", "bold");
+        doc.text(cotizacion.hotel, margins.left, currentY); // Asumiendo que cotizacion.hotel tiene el nombre del hotel
+        doc.setFont("helvetica", "normal");
+        currentY += 8;
+
+        // Mostrar la información de cada habitación como un elemento de una lista
+        costosHotelResponses.forEach((costosHotel, index) => {
+          const habitacionData = habitacion[index];
+
+          doc.setFontSize(8);
+          doc.text(
+            `• Tipo de habitación: ${habitacionData.tipoHabitacion}`,
+            margins.left,
+            currentY
+          );
+          currentY += 6;
+
+          // Obtener el valor de la columna correspondiente a la acomodación
+          const acomodacion = habitacionData.acomodacion.toLowerCase();
+          let valor = costosHotel[0][acomodacion] || "N/A";
+
+          // Formatear el valor si es un número
+          if (typeof valor === "number") {
+            valor = numeral(valor).format("$0,0");
+          }
+
+          doc.text(
+            `  - Acomodación: ${habitacionData.acomodacion}`,
+            margins.left + 10,
+            currentY
+          );
+          currentY += 6;
+          doc.text(`  - Valor: ${valor}`, margins.left + 10, currentY);
+          currentY += 8;
+        });
         // Obtener el Blob del PDF
         const pdfBlob = doc.output("blob");
         // Guardar el documento como archivo PDF

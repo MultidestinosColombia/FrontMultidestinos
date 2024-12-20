@@ -5248,6 +5248,8 @@ export default {
         // Mover a la posición donde se empezará a dibujar la siguiente sección
         currentY += recuadroHeight + 5; // Agregar un espacio adicional después del recuadro
 
+        // ... (resto del código para generar el PDF)
+
         // Obtener el Blob del PDF
         const pdfBlob = doc.output("blob");
         // Guardar el documento como archivo PDF
