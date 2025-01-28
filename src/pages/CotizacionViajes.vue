@@ -806,866 +806,612 @@
       </q-card>
     </q-dialog>
     <!-- FIN DE FORMULARIO COTIZACION NORMAL -->
+
+
     <!-- COMIENZO DE FORMULARIO COTIZACION PERSONALIZADA -->
 
-    <q-dialog
-      v-model="modalVisiblePersonalizado"
-      content-css="max-width: 600px;"
+    <q-dialog v-model="modalVisiblePersonalizado" persistent>
+  <q-card class="full-width" style="max-width: 900px;">
+    <q-toolbar class="bg-primary text-white">
+      <q-toolbar-title>
+        Personalizar Viaje
+      </q-toolbar-title>
+      <q-btn flat round dense icon="close" @click="closeModalPersonalizado" />
+    </q-toolbar>
+
+    <q-tabs
+      v-model="activeTab"
+      inline-label
+      class="bg-grey-2"
+      active-color="primary"
+      indicator-color="primary"
     >
-      <q-card>
-        <q-card-section class="q-pa-md">
-          <!-- Contenido de las pestañas -->
-          <div v-show="activeTab === 'tab1'">
-            <!-- primera formulario -->
-            <q-card
-              :style="{
-                border: '0',
-                borderRadius: '100%',
-                boxShadow: 'none',
-              }"
-            >
-              <q-card-section class="q-pa-md">
-                <!-- FECHA INICIO -->
-                <div class="row q-col-gutter-md">
-                  <!-- Fecha de inicio -->
-                  <div class="col" style="margin-left: 10px">
-                    <q-input
-                      filled
-                      v-model="dateRange[0]"
-                      mask="date"
-                      :rules="startDateRules"
-                      label="Fecha de inicio"
-                    >
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy
-                            cover
-                            transition-show="scale"
-                            transition-hide="scale"
-                          >
-                            <q-date v-model="dateRange[0]">
-                              <div class="row items-center justify-end">
-                                <q-btn
-                                  v-close-popup
-                                  label="Close"
-                                  color="primary"
-                                  flat
-                                />
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-                  <!-- Fecha de fin -->
-                  <div class="col">
-                    <q-input
-                      filled
-                      v-model="dateRange[1]"
-                      mask="date"
-                      :rules="endDateRules"
-                      label="Fecha de fin"
-                    >
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy
-                            cover
-                            transition-show="scale"
-                            transition-hide="scale"
-                          >
-                            <q-date v-model="dateRange[1]">
-                              <div class="row items-center justify-end">
-                                <q-btn
-                                  v-close-popup
-                                  label="Close"
-                                  color="primary"
-                                  flat
-                                />
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-                </div>
-                <div class="q-gutter-md">
-                  <!-- Salida -->
-                  <q-select
-                    outlined
-                    v-model="selectedDeparture"
-                    label="Salida"
-                    :options="departureOptions"
-                    @update:modelValue="handleDepartureChange"
-                    class="q-mb-md q-ml-md"
-                  />
+      <q-tab name="tab1" icon="info" label="Detalles del Viaje" />
+      <q-tab name="tab2" icon="flight" label="Información de Vuelo" />
+    </q-tabs>
 
-                  <!-- Destino -->
-                  <q-select
-                    outlined
-                    v-model="destination"
-                    label="Destino"
-                    :options="destinationOptions"
-                    @update:modelValue="updateOptionsByDestination"
-                    class="q-mb-md relative-position"
-                  >
-                    <template #append>
-                      <div
-                        class="error-message"
-                        v-show="!destinationOptions.length"
-                        style="color: red; font-size: 15px; align-items: center"
-                      >
-                        Ups... no hay información
-                      </div>
-                    </template>
-                  </q-select>
-
-                  <!-- Cliente y Nombre del Programa -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="selectedClient"
-                        label="Cliente"
-                        :options="clientOptions"
-                        filter
-                        use-input
-                        class="q-mb-md q-ml-md"
-                        @update:modelValue="fetchOptionCorreo"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="programName"
-                        label="Nombre del Programa"
-                        :options="programNameOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Plan y Hotel -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="noche"
-                        label="Duración"
-                        :options="nochesOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="hotel"
-                        label="Hotel"
-                        :options="hotelOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-                  <!-- noche adicional -->
-                  <div
-                    class="row q-col-gutter-md"
-                    v-if="!shouldHideAdditionalNightSection()"
-                  >
-                    <div class="col">
-                      <!-- Checkbox para Noche adicional -->
-                      <q-checkbox
-                        v-model="additionalNightSelected"
-                        label="Noche adicional"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <!-- Campo de entrada para el número de noches adicionales -->
-                      <q-input
-                        filled
-                        v-model="additionalNightCount"
-                        label="Noches adicionales"
-                        type="number"
-                        :disable="!additionalNightSelected"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-                  <!-- Número de habitaciones -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="correo"
-                        label="Correo Cliente"
-                        :options="OptionCorreo"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="numRooms"
-                        label="Número de habitaciones"
-                        :options="roomOptions"
-                        class="q-mb-md q-ml-md"
-                        @update:modelValue="handleNumRoomsChange"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Bucle para mostrar el formulario de cada habitación -->
-                  <div v-for="(room, index) in rooms" :key="index">
-                    <q-card
-                      :style="{
-                        border: '0',
-                        borderRadius: '10px',
-                        boxShadow: 'none',
-                        marginTop: '20px',
-                      }"
-                    >
-                      <q-card-section class="q-pa-md">
-                        <p style="text-align: center">
-                          <span style="margin-left: 10px; font-weight: bold">
-                            Habitación {{ index + 1 }}
-                          </span>
-                        </p>
-                        <div class="row q-col-gutter-md">
-                          <div class="col">
-                            <q-select
-                              outlined
-                              v-model="room.roomType"
-                              label="Tipo de Habitación"
-                              :options="roomTypeOptions"
-                              class="q-mb-md"
-                            />
-                          </div>
-                          <div class="col">
-                            <q-select
-                              outlined
-                              v-model="room.adults"
-                              label="Adultos"
-                              :options="adultsOptions"
-                              class="q-mb-md"
-                            />
-                          </div>
-                        </div>
-
-                        <div class="row q-col-gutter-md">
-                          <div class="col">
-                            <q-checkbox
-                              v-model="hasChildren[index]"
-                              label="¿Niños?"
-                              @update:modelValue="handleChildrenChange(index)"
-                            />
-                          </div>
-                          <div class="col">
-                            <q-input
-                              filled
-                              v-model="room.numChildren"
-                              label="Niños"
-                              readonly
-                              :disable="!hasChildren[index]"
-                            />
-                          </div>
-                        </div>
-
-                        <div v-if="mostrarCamposEdad(index)">
-                          <div class="row">
-                            <div class="col-12">
-                              <p class="age-input-label">
-                                Edades y nacionalidad de los adultos:
-                              </p>
-                            </div>
-
-                            <div
-                              v-for="(age, i) in room.adultAges"
-                              :key="'adult' + i + '-' + index"
-                              class="col-6 col-sm-4 col-md-3"
-                            >
-                              <q-input
-                                filled
-                                v-model="room.adultAges[i]"
-                                :label="'Adulto ' + (i + 1) + ' - Edad'"
-                                type="number"
-                              />
-
-                              <q-checkbox
-                                v-model="room.isForeigner[i]"
-                                label="Extranjero"
-                              />
-                            </div>
-                          </div>
-
-                          <div class="row" v-if="hasChildren[index]">
-                            <div class="col-12">
-                              <p class="age-input-label">Edad del niño:</p>
-                            </div>
-                            <div class="col-6 col-sm-4 col-md-3">
-                              <q-input
-                                filled
-                                v-model="room.childAge"
-                                label="Niño"
-                                type="number"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <q-select
-                          outlined
-                          v-model="room.accommodation"
-                          label="Acomodación"
-                          :options="accommodationOptions"
-                          class="q-mb-md"
-                        />
-                        <q-input
-                          filled
-                          v-model="room.valor"
-                          label="Valor Persona"
-                          type="number"
-                        />
-                      </q-card-section>
-                    </q-card>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-            <div>
-              <!-- Contenido de la primera pestaña -->
-            </div>
-          </div>
-          <div v-show="activeTab === 'tab2'">
-            <!-- segunda pestaña -->
-
-            <!-- Aerolina-->
-
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Información ida</span
-              >
-            </p>
-
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-select
-                    v-model="aerolineaValue1"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- Vuelo-->
-              <div class="col">
-                <q-input
-                  v-model="vueloValue1"
-                  label="Vuelo"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- hora salida -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
+    <q-tab-panels v-model="activeTab" animated>
+      <q-tab-panel name="tab1">
+        <q-card-section>
+          <div class="row q-col-gutter-md">
+            <!-- Fechas -->
+            <div class="col-12 q-mb-md">
+              <div class="row q-col-gutter-md">
+                <div class="col-6">
                   <q-input
-                    v-model="horaSalidaValue1"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="horaLlegadaValue1"
-                  label="Hora de llegada"
-                  outlined
-                  type="time"
-                  step="1800"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- CLASE -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="claseValue1"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- FECHA-->
-              <div class="col" style="margin-left: 10px">
-                <q-input
-                  filled
-                  v-model="dateRange[0]"
-                  mask="date"
-                  :rules="startDateRules"
-                  label="Fecha de inicio"
-                >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="dateRange[0]">
-                          <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Close"
-                              color="primary"
-                              flat
-                            />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Información vuelta</span
-              >
-            </p>
-
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-select
-                    v-model="aerolineaValue2"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- Vuelo-->
-              <div class="col">
-                <q-input
-                  v-model="vueloValue2"
-                  label="Vuelo"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- hora salida -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="horaSalidaValue2"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="horaLlegadaValue2"
-                  label="Hora de llegada"
-                  outlined
-                  type="time"
-                  step="1800"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- CLASE -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="claseValue2"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- FECHA-->
-              <!-- Fecha de fin -->
-              <div class="col">
-                <q-input
-                  filled
-                  v-model="dateRange[1]"
-                  mask="date"
-                  :rules="endDateRules"
-                  label="Fecha de fin"
-                >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="dateRange[1]">
-                          <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Close"
-                              color="primary"
-                              flat
-                            />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <!--IMPUESTOS VUELO MANUAL-->
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Impuestos</span
-              >
-            </p>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="Combus"
-                    label="Combus"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="Tasa"
-                  label="Tasa"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="Iva"
-                    label="Iva"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="Ta"
-                  label="Ta"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="IvaTa"
-                    label="IvaTa"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="Otros"
-                  label="Otros"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="precioTransp"
-                    label="Precio Transporte"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="textoIncluye"
-                    label="Incluye"
                     filled
-                    type="textarea"
-                    autogrow
+                    v-model="dateRange[0]"
+                    mask="date"
+                    :rules="startDateRules"
+                    label="Fecha de inicio"
                   >
-                    <template v-slot:control>
-                      <q-editor
-                        v-model="textoIncluye"
-                        toolbar-color="primary"
-                      />
+                    <template v-slot:append>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy>
+                          <q-date v-model="dateRange[0]" />
+                        </q-popup-proxy>
+                      </q-icon>
+                    </template>
+                  </q-input>
+                </div>
+                <div class="col-6">
+                  <q-input
+                    filled
+                    v-model="dateRange[1]"
+                    mask="date"
+                    :rules="endDateRules"
+                    label="Fecha de fin"
+                  >
+                    <template v-slot:append>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy>
+                          <q-date v-model="dateRange[1]" />
+                        </q-popup-proxy>
+                      </q-icon>
                     </template>
                   </q-input>
                 </div>
               </div>
-
-              <div class="col">
-                <q-input
-                  v-model="textoNoIncluye"
-                  label="No Incluye"
-                  filled
-                  type="textarea"
-                  autogrow
-                >
-                  <template v-slot:control>
-                    <q-editor
-                      v-model="textoNoIncluye"
-                      toolbar-color="primary"
-                    />
-                  </template>
-                </q-input>
-              </div>
             </div>
 
-            <!--FIN IMPUESTO VUELO MANUAL-->
-            <!-- ESCALA -->
-            <div class="row q-col-gutter-md">
-              <div class="col" style="margin-left: 10px">
-                <q-checkbox
-                  v-model="mostrarEscalas"
-                  label="Escala (Ida y Vuelta)"
-                />
-              </div>
-            </div>
-
-            <div v-if="mostrarEscalas">
-              <p style="text-align: center">
-                <span style="margin-left: 10px; font-weight: bold"
-                  >Información escala ida</span
-                >
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-select
-                    v-model="aerolineaEscalaIda"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="vueloEscalaIda"
-                    label="Vuelo"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="horaSalidaEscalaIda"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="horaLlegadaEscalaIda"
-                    label="Hora de llegada"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="claseEscalaIda"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <p style="text-align: center">
-                <span style="margin-left: 10px; font-weight: bold"
-                  >Información escala vuelta</span
-                >
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-select
-                    v-model="aerolineaEscalaVuelta"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="vueloEscalaVuelta"
-                    label="Vuelo"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="horaSalidaEscalaVuelta"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="horaLlegadaEscalaVuelta"
-                    label="Hora de llegada"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="claseEscalaVuelta"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Suplemento y Campo de entrada para el suplemento -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-checkbox v-model="supplementChecked" label="Suplemento?" />
-                </div>
-              </div>
-            </div>
-
-            <div v-if="supplementChecked">
-              <q-input
-                v-model="numberOfPeople"
-                label="Número de personas"
+            <!-- Salida y Destino -->
+            <div class="col-6">
+              <q-select
                 outlined
-                type="number"
-                class="q-mb-md"
+                v-model="selectedDeparture"
+                label="Salida"
+                :options="departureOptions"
+                :rules="[val => !!val || 'Campo requerido']"
+                @update:model-value="handleDepartureChange"
               />
+            </div>
+            <div class="col-6">
+              <q-select
+                outlined
+                v-model="destination"
+                label="Destino"
+                :options="destinationOptions"
+                :rules="[val => !!val || 'Campo requerido']"
+                @update:model-value="updateOptionsByDestination"
+              />
+            </div>
 
-              <div v-for="person in peopleArray" :key="person">
-                <q-input
-                  v-model="supplementValues[person - 1]"
-                  :label="`Suplemento persona ${person}`"
-                  outlined
-                  type="number"
-                  class="q-mb-md"
-                />
+            <!-- Nueva Sección -->
+            <div class="col-12">
+              <div class="row q-col-gutter-md">
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    v-model="selectedClient"
+                    label="Cliente"
+                    :options="clientOptions"
+                    filter
+                    use-input
+                    class="q-mb-md"
+                    :rules="[val => !!val || 'Campo requerido']"
+                    @update:modelValue="fetchOptionCorreo"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    v-model="programName"
+                    label="Nombre del Programa"
+                    :options="programNameOptions"
+                    :rules="[val => !!val || 'Campo requerido']"
+                    @update:modelValue="handleSelectionChangeTipo"
+                    class="q-mb-md"
+                  />
+                </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Botones de navegación -->
-          <div class="row q-mt-md justify-center">
-            <div class="col" v-if="activeTab === 'tab2'">
-              <q-btn label="Atrás" @click="goBack" color="primary" />
-            </div>
-            <div class="col" v-if="activeTab === 'tab1'">
-              <q-btn label="Siguiente" @click="goNext" color="primary" />
-            </div>
-            <div class="col" v-if="activeTab === 'tab2'">
-              <q-btn
-                label="Registrar"
-                @click="saveFormDataPersonalizado"
-                color="primary"
-              />
-            </div>
-            <div
-              class="col"
-              v-if="activeTab === 'tab1' || activeTab === 'tab2'"
-            >
-              <q-btn
-                label="Cerrar"
-                @click="closeModalPersonalizado"
-                color="red"
-              />
+              <!-- Plan y Hotel -->
+              <div class="row q-col-gutter-md">
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    v-model="noche"
+                    label="Duración"
+                    :options="nochesOptions"
+                    :rules="[val => !!val || 'Campo requerido']"
+                    @update:modelValue="handleSelectionChangeTipo"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    v-model="hotel"
+                    label="Hotel"
+                    :options="hotelOptions"
+                    :rules="[val => !!val || 'Campo requerido']"
+                    @update:modelValue="handleSelectionChangeTipo"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- noche adicional -->
+              <div
+                class="row q-col-gutter-md"
+                v-if="!shouldHideAdditionalNightSection()"
+              >
+                <div class="col-6">
+                  <!-- Checkbox para Noche adicional -->
+                  <q-checkbox
+                    v-model="additionalNightSelected"
+                    label="Noche adicional"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col-6">
+                  <!-- Campo de entrada para el número de noches adicionales -->
+                  <q-input
+                    filled
+                    v-model="additionalNightCount"
+                    label="Noches adicionales"
+                    type="number"
+                    :disable="!additionalNightSelected"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- Número de habitaciones -->
+              <div class="row q-col-gutter-md">
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    v-model="correo"
+                    label="Correo Cliente"
+                    :rules="[val => !!val || 'Campo requerido']"
+                    :options="OptionCorreo"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    v-model="numRooms"
+                    label="Número de habitaciones"
+                    :rules="[val => !!val || 'Campo requerido']"
+                    :options="roomOptions"
+                    class="q-mb-md"
+                    @update:modelValue="handleNumRoomsChange"
+                  />
+                </div>
+              </div>
+
+              <!-- Bucle para mostrar el formulario de cada habitación -->
+              <div v-for="(room, index) in rooms" :key="index">
+                <q-card
+                  :style="{
+                    border: '0',
+                    borderRadius: '10px',
+                    boxShadow: 'none',
+                    marginTop: '20px',
+                  }"
+                >
+                  <q-card-section class="q-pa-md">
+                    <p style="text-align: center">
+                      <span style="margin-left: 10px; font-weight: bold">
+                        Habitación {{ index + 1 }}
+                      </span>
+                    </p>
+                    <div class="row q-col-gutter-md">
+                      <div class="col-6">
+                        <q-select
+                          outlined
+                          v-model="room.roomType"
+                          label="Tipo de Habitación"
+                          :rules="[val => !!val || 'Campo requerido']"
+                          :options="roomTypeOptions"
+                          class="q-mb-md"
+                        />
+                      </div>
+                      <div class="col-6">
+                        <q-select
+                          outlined
+                          v-model="room.adults"
+                          label="Adultos"
+                          :rules="[val => !!val || 'Campo requerido']"
+                          :options="adultsOptions"
+                          class="q-mb-md"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="row q-col-gutter-md">
+                      <div class="col-6">
+                        <q-checkbox
+                          v-model="hasChildren[index]"
+                          label="¿Niños?"
+                          @update:modelValue="handleChildrenChange(index)"
+                        />
+                      </div>
+                      <div class="col-6">
+                        <q-input
+                          filled
+                          v-model="room.numChildren"
+                          label="Niños"
+                          readonly
+                          :disable="!hasChildren[index]"
+                        />
+                      </div>
+                    </div>
+
+                    <div v-if="mostrarCamposEdad(index)">
+                      <div class="row">
+                        <div class="col-12">
+                          <p class="age-input-label">
+                            Edades y nacionalidad de los adultos:
+                          </p>
+                        </div>
+
+                        <div
+                          v-for="(age, i) in room.adultAges"
+                          :key="'adult' + i + '-' + index"
+                          class="col-6 col-sm-4 col-md-3"
+                        >
+                          <q-input
+                            filled
+                            v-model="room.adultAges[i]"
+                            :label="'Adulto ' + (i + 1) + ' - Edad'"
+                            type="number"
+                          />
+                          <q-checkbox
+                            v-model="room.isForeigner[i]"
+                            label="Extranjero"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="row" v-if="hasChildren[index]">
+                        <div class="col-12">
+                          <p class="age-input-label">Edad del niño:</p>
+                        </div>
+                        <div class="col-6 col-sm-4 col-md-3">
+                          <q-input
+                            filled
+                            v-model="room.childAge"
+                            label="Niño"
+                            type="number"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <q-select
+                      outlined
+                      v-model="room.accommodation"
+                      label="Acomodación"
+                      :rules="[val => !!val || 'Campo requerido']"
+                      :options="accommodationOptions"
+                      class="q-mb-md"
+                    />
+                    <q-input
+                      filled
+                      v-model="room.valor"
+                      label="Valor Persona"
+                      type="number"
+                    />
+                  </q-card-section>
+                </q-card>
+              </div>
             </div>
           </div>
         </q-card-section>
-      </q-card>
-    </q-dialog>
+      </q-tab-panel>
+      <q-tab-panel name="tab2">
+        <q-card-section>
+          <!-- Sección de vuelos con diseño similar -->
+          <div class="row q-col-gutter-md">
+            <!-- Vuelo de Ida -->
+            <div class="col-6">
+              <q-card flat bordered>
+                <q-card-section>
+                  <div class="text-h6 q-mb-md">Vuelo de Ida</div>
+                  <q-select outlined v-model="aerolineaValue1" label="Aerolínea" :rules="[val => !!val || 'Campo requerido']" :options="aerolineaOptions" />
+                  <q-input outlined v-model="vueloValue1" label="Número de Vuelo" :rules="[val => !!val || 'Campo requerido']" />
+                  <!-- Información ida -->
+                  <p class="text-center">
+                    <span class="font-weight-bold" style="margin-left: 10px;">Información ida</span>
+                  </p>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <div class="q-mb-md q-ml-md">
+                        <q-select v-model="aerolineaValue1" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="col">
+                      <q-input v-model="vueloValue1" label="Vuelo" outlined type="text" class="q-mb-md" />
+                    </div>
+                  </div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <div class="q-mb-md q-ml-md">
+                        <q-input v-model="horaSalidaValue1" label="Hora de salida" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="col">
+                      <q-input v-model="horaLlegadaValue1" label="Hora de llegada" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
+                    </div>
+                  </div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <div class="q-mb-md q-ml-md">
+                        <q-input v-model="claseValue1" label="Clase" :rules="[val => !!val || 'Campo requerido']" outlined type="text" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="col" style="margin-left: 10px">
+                      <q-input filled v-model="dateRange[0]" mask="date" :rules="startDateRules" label="Fecha de inicio">
+                        <template v-slot:append>
+                          <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-date v-model="dateRange[0]">
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Close" color="primary" flat />
+                                </div>
+                              </q-date>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                    </div>
+                  </div>
+                  <div v-if="mostrarEscalas">
+                    <!-- Información escala ida -->
+                    <p class="text-center">
+                      <span class="font-weight-bold" style="margin-left: 10px;">Información escala ida</span>
+                    </p>
+                    <div class="row q-col-gutter-md">
+                      <div class="col">
+                        <q-select v-model="aerolineaEscalaIda" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
+                      </div>
+                      <div class="col">
+                        <q-input v-model="vueloEscalaIda" label="Vuelo" outlined type="text" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="row q-col-gutter-md">
+                      <div class="col">
+                        <q-input v-model="horaSalidaEscalaIda" label="Hora de salida" outlined type="time" step="1800" class="q-mb-md" />
+                      </div>
+                      <div class="col">
+                        <q-input v-model="horaLlegadaEscalaIda" label="Hora de llegada" outlined type="time" step="1800" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="row q-col-gutter-md">
+                      <div class="col">
+                        <q-input v-model="claseEscalaIda" label="Clase" outlined type="text" class="q-mb-md" />
+                      </div>
+                    </div>
+                  </div>
+                </q-card-section>
+              </q-card>
+            </div>
+            <!-- Vuelo de Vuelta -->
+            <div class="col-6">
+              <q-card flat bordered>
+                <q-card-section>
+                  <div class="text-h6 q-mb-md">Vuelo de Vuelta</div>
+                  <q-select outlined v-model="aerolineaValue2" label="Aerolínea" :rules="[val => !!val || 'Campo requerido']" :options="aerolineaOptions" />
+                  <q-input outlined v-model="vueloValue2"  label="Número de Vuelo" :rules="[val => !!val || 'Campo requerido']" />
+                  <!-- Información vuelta -->
+                  <p class="text-center">
+                    <span class="font-weight-bold" style="margin-left: 10px;">Información vuelta</span>
+                  </p>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <div class="q-mb-md q-ml-md">
+                        <q-select v-model="aerolineaValue2" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="col">
+                      <q-input v-model="vueloValue2" label="Vuelo" outlined type="text" class="q-mb-md" />
+                    </div>
+                  </div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <div class="q-mb-md q-ml-md">
+                        <q-input v-model="horaSalidaValue2" label="Hora de salida" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="col">
+                      <q-input v-model="horaLlegadaValue2" label="Hora de llegada" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
+                    </div>
+                  </div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <div class="q-mb-md q-ml-md">
+                        <q-input v-model="claseValue2" label="Clase" :rules="[val => !!val || 'Campo requerido']"  outlined type="text" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="col">
+                      <q-input filled v-model="dateRange[1]" mask="date" :rules="endDateRules" label="Fecha de fin">
+                        <template v-slot:append>
+                          <q-icon name="event" class="cursor-pointer">
+                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                              <q-date v-model="dateRange[1]">
+                                <div class="row items-center justify-end">
+                                  <q-btn v-close-popup label="Close" color="primary" flat />
+                                </div>
+                              </q-date>
+                            </q-popup-proxy>
+                          </q-icon>
+                        </template>
+                      </q-input>
+                    </div>
+                  </div>
+                  <div v-if="mostrarEscalas">
+                    <!-- Información escala vuelta -->
+                    <p class="text-center">
+                      <span class="font-weight-bold" style="margin-left: 10px;">Información escala vuelta</span>
+                    </p>
+                    <div class="row q-col-gutter-md">
+                      <div class="col">
+                        <q-select v-model="aerolineaEscalaVuelta" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
+                      </div>
+                      <div class="col">
+                        <q-input v-model="vueloEscalaVuelta" label="Vuelo" outlined type="text" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="row q-col-gutter-md">
+                      <div class="col">
+                        <q-input v-model="horaSalidaEscalaVuelta" label="Hora de salida" outlined type="time" step="1800" class="q-mb-md" />
+                      </div>
+                      <div class="col">
+                        <q-input v-model="horaLlegadaEscalaVuelta" label="Hora de llegada" outlined type="time" step="1800" class="q-mb-md" />
+                      </div>
+                    </div>
+                    <div class="row q-col-gutter-md">
+                      <div class="col">
+                        <q-input v-model="claseEscalaVuelta" label="Clase" outlined type="text" class="q-mb-md" />
+                      </div>
+                    </div>
+                  </div>
+                </q-card-section>
+              </q-card>
+            </div>
+          </div>
+          <!-- Sección de Impuestos -->
+          <div class="col-6 q-mt-lg">
+            <q-card flat bordered>
+              <p class="text-center">
+                <span class="font-weight-bold" style="margin-left: 10px;">Impuestos</span>
+              </p>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <div class="q-mb-md q-ml-md">
+                    <q-input v-model="Combus" label="Combus" outlined type="text" class="q-mb-md" />
+                  </div>
+                </div>
+                <div class="col">
+                  <q-input v-model="Tasa" label="Tasa" outlined type="text" class="q-mb-md" />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <div class="q-mb-md q-ml-md">
+                    <q-input v-model="Iva" label="Iva" outlined type="text" class="q-mb-md" />
+                  </div>
+                </div>
+                <div class="col">
+                  <q-input v-model="Ta" label="Ta" outlined type="text" class="q-mb-md" />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <div class="q-mb-md q-ml-md">
+                    <q-input v-model="IvaTa" label="IvaTa" outlined type="text" class="q-mb-md" />
+                  </div>
+                </div>
+                <div class="col">
+                  <q-input v-model="Otros" label="Otros" outlined type="text" class="q-mb-md" />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <div class="q-mb-md q-ml-md">
+                    <q-input v-model="precioTransp" label="Precio Transporte" outlined type="text" class="q-mb-md" />
+                  </div>
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <div class="q-mb-md q-ml-md">
+                    <q-input v-model="textoIncluye" label="Incluye" filled type="textarea" autogrow>
+                      <template v-slot:control>
+                        <q-editor v-model="textoIncluye" toolbar-color="primary" />
+                      </template>
+                    </q-input>
+                  </div>
+                </div>
+                <div class="col">
+                  <q-input v-model="textoNoIncluye" label="No Incluye" filled type="textarea" autogrow>
+                    <template v-slot:control>
+                      <q-editor v-model="textoNoIncluye" toolbar-color="primary" />
+                    </template>
+                  </q-input>
+                </div>
+              </div>
+              <!-- Escala -->
+              <div class="row q-col-gutter-md">
+                <div class="col" style="margin-left: 10px">
+                  <q-checkbox v-model="mostrarEscalas" label="Escala (Ida y Vuelta)" />
+                </div>
+              </div>
+              <!-- Suplemento -->
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <div class="q-mb-md q-ml-md">
+                    <q-checkbox v-model="supplementChecked" label="Suplemento?" />
+                  </div>
+                </div>
+              </div>
+              <div v-if="supplementChecked">
+                <q-input v-model="numberOfPeople" label="Número de personas" outlined type="number" class="q-mb-md" />
+                <div v-for="person in peopleArray" :key="person">
+                  <q-input v-model="supplementValues[person - 1]" :label="`Suplemento persona ${person}`" outlined type="number" class="q-mb-md" />
+                </div>
+              </div>
+            </q-card>
+          </div>
+        </q-card-section>
+      </q-tab-panel>
+    </q-tab-panels>
+
+    <q-card-actions align="right">
+      <q-btn
+        v-if="activeTab === 'tab2'"
+        flat
+        color="primary"
+        @click="goBack"
+      >
+        Atrás
+      </q-btn>
+      <q-btn
+        v-if="activeTab === 'tab1'"
+        color="primary"
+        @click="goNext"
+      >
+        Siguiente
+      </q-btn>
+      <q-btn
+        v-if="activeTab === 'tab2'"
+        color="primary"
+        @click="saveFormDataPersonalizado"
+      >
+        Guardar
+      </q-btn>
+      <q-btn
+        color="red"
+        @click="closeModalPersonalizado"
+      >
+        Cerrar
+      </q-btn>
+    </q-card-actions>
+  </q-card>
+</q-dialog>
 
     <!-- FIN DE FORMULARIO COTIZACION PERSONALIZADA -->
 

@@ -196,5 +196,21 @@ module.exports = configure(function (/* ctx */) {
       // extendBexScriptsConf (esbuildConf) {}
       // extendBexManifestJson (json) {}
     },
+    framework: {
+      components: [
+        'QBtn',
+        'QDialog',
+        'QCard',
+        'QCardSection',
+        'QCardActions',
+        'QIcon',
+        'QSeparator',
+        'QSpinnerDots'
+      ],
+      plugins: ['Notify'],
+      notifications: true
+    },
   };
 });
+
+
