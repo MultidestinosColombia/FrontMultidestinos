@@ -1194,7 +1194,7 @@ export default {
 
         for (let i = 0; i < batches.length; i += CONCURRENT_BATCHES) {
           const batchPromises = batches.slice(i, i + CONCURRENT_BATCHES).map(async (batch) => {
-            const response = await fetch("http://localhost:8010/hoteles/procesar-lote", {
+            const response = await fetch("https://backmultidestinos.onrender.com/hoteles/procesar-lote", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ hoteles: batch }),
@@ -1295,7 +1295,7 @@ export default {
             return hotel;
           });
 
-          const response = await fetch("http://localhost:8010/hoteles/procesar-lote", {
+          const response = await fetch("https://backmultidestinos.onrender.com/hoteles/procesar-lote", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ hoteles: batch }),

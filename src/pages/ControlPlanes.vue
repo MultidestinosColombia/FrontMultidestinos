@@ -3172,7 +3172,7 @@ export default {
     },
     // --- TRANSPORTES ---
     cargarTransportes() {
-      fetch("http://localhost:8010/transporte")
+      fetch("https://backmultidestinos.onrender.com/transporte")
         .then((response) => {
           if (!response.ok) {
             throw new Error("Error al obtener los transportes desde la API");
@@ -3228,7 +3228,7 @@ export default {
         porcionTerrestreAlta: this.nuevoTransportePorcionTerrestreAlta,
       };
 
-      fetch("http://localhost:8010/transporte", {
+      fetch("https://backmultidestinos.onrender.com/transporte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTransporte),
@@ -3370,7 +3370,7 @@ export default {
       };
 
       fetch(
-        `http://localhost:8010/transporte/${updatedTransporte.id}`,
+        `https://backmultidestinos.onrender.com/transporte/${updatedTransporte.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -3727,7 +3727,7 @@ export default {
           });
 
           // Utilizar el endpoint procesar-lote para manejar tanto creaciones como actualizaciones
-          const response = await fetch("http://localhost:8010/planes/procesar-lote", {
+          const response = await fetch("https://backmultidestinos.onrender.com/planes/procesar-lote", {
               method: "POST",
               headers: {
                   "Content-Type": "application/json"
@@ -4063,7 +4063,7 @@ export default {
 
         for (let i = 0; i < batches.length; i += CONCURRENT_BATCHES) {
           const batchPromises = batches.slice(i, i + CONCURRENT_BATCHES).map(async (batch) => {
-            const response = await fetch("http://localhost:8010/transporte/procesar-lote", {
+            const response = await fetch("https://backmultidestinos.onrender.com/transporte/procesar-lote", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ transportes: batch }),
@@ -4170,7 +4170,7 @@ export default {
             return transporte;
           });
 
-          const response = await fetch("http://localhost:8010/transporte/procesar-lote", {
+          const response = await fetch("https://backmultidestinos.onrender.com/transporte/procesar-lote", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ transportes: batch }),
