@@ -903,8 +903,8 @@ export default {
     },
 
     //---------------------------------------------Descarga del Formato --------------------------------------------------//
-    // Abre el modal para descargar formato
-    abrirModalFormato() {
+     // Abre el modal para descargar formato
+     abrirModalFormato() {
       this.MostrarFormato = true;
     },
 
@@ -916,17 +916,12 @@ export default {
         let datosExistentes = [];
 
         if (tipo === "existente") {
-          const response = await fetch(
-            "https://backmultidestinos.onrender.com/hoteles",
-            {
-              headers: { Accept: "application/json" },
-            }
-          );
+          const response = await fetch("https://backmultidestinos.onrender.com/hoteles", {
+            headers: { Accept: "application/json" },
+          });
 
           if (!response.ok) {
-            throw new Error(
-              `Error en la respuesta del servidor: ${response.status}`
-            );
+            throw new Error(`Error en la respuesta del servidor: ${response.status}`);
           }
 
           datosExistentes = await response.json();
@@ -967,26 +962,15 @@ export default {
         hoja["!cols"] = columnasConId.map(() => ({ wch: 20 }));
 
         const libro = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(
-          libro,
-          hoja,
-          tipo === "existente" ? "DatosExistentes" : "NuevoFormato"
-        );
+        XLSX.utils.book_append_sheet(libro, hoja, tipo === "existente" ? "DatosExistentes" : "NuevoFormato");
 
-        const excelBuffer = XLSX.write(libro, {
-          bookType: "xlsx",
-          type: "array",
-          compression: true,
-        });
-        const blob = new Blob([excelBuffer], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
+        const excelBuffer = XLSX.write(libro, { bookType: "xlsx", type: "array", compression: true });
+        const blob = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 
         const fechaFormateada = new Date().toISOString().split("T")[0];
-        const nombreArchivo =
-          tipo === "existente"
-            ? `formato_hoteles_existentes_${fechaFormateada}.xlsx`
-            : `formato_hoteles_nuevos_${fechaFormateada}.xlsx`;
+        const nombreArchivo = tipo === "existente"
+          ? `formato_hoteles_existentes_${fechaFormateada}.xlsx`
+          : `formato_hoteles_nuevos_${fechaFormateada}.xlsx`;
 
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -998,21 +982,11 @@ export default {
 
         setTimeout(() => URL.revokeObjectURL(url), 100);
 
-        this.$q.notify({
-          type: "positive",
-          message: "Formato descargado exitosamente",
-          position: "top",
-          timeout: 3000,
-        });
+        this.$q.notify({ type: "positive", message: "Formato descargado exitosamente", position: "top", timeout: 3000 });
         this.MostrarFormato = false;
       } catch (error) {
         console.error("Error al descargar el formato:", error);
-        this.$q.notify({
-          type: "negative",
-          message: `Error al descargar el formato: ${error.message}`,
-          position: "top",
-          timeout: 5000,
-        });
+        this.$q.notify({ type: "negative", message: `Error al descargar el formato: ${error.message}`, position: "top", timeout: 5000 });
       } finally {
         this.descargando = false;
       }
@@ -1020,149 +994,106 @@ export default {
 
     // Lee el archivo Excel y devuelve los datos en formato JSON
     async leerArchivoExcel(archivo) {
-      return new Promise((resolve, reject) => {
-        if (!archivo) {
-          return reject(new Error("No se ha seleccionado un archivo."));
+  return new Promise((resolve, reject) => {
+    if (!archivo) {
+      return reject(new Error("No se ha seleccionado un archivo."));
+    }
+
+    if (archivo.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+      return reject(new Error("El archivo no es un archivo Excel válido. Asegúrate de seleccionar un archivo .xlsx."));
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+
+        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+          throw new Error("El archivo Excel está vacío o no contiene hojas válidas.");
         }
 
-        if (
-          archivo.type !==
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ) {
-          return reject(
-            new Error(
-              "El archivo no es un archivo Excel válido. Asegúrate de seleccionar un archivo .xlsx."
-            )
-          );
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        if (firstSheet["!autofilter"]) {
+          delete firstSheet["!autofilter"];
         }
 
-        const reader = new FileReader();
+        let jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false, defval: null });
 
-        reader.onload = (e) => {
-          try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: "array" });
+        if (jsonData.length === 0) {
+          throw new Error("El archivo Excel no contiene datos válidos.");
+        }
 
-            if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-              throw new Error(
-                "El archivo Excel está vacío o no contiene hojas válidas."
-              );
-            }
-
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-            if (firstSheet["!autofilter"]) {
-              delete firstSheet["!autofilter"];
-            }
-
-            let jsonData = XLSX.utils.sheet_to_json(firstSheet, {
-              raw: false,
-              defval: null,
-            });
-
-            if (jsonData.length === 0) {
-              throw new Error("El archivo Excel no contiene datos válidos.");
-            }
-
-            let lastValidId = 0;
-            jsonData = jsonData.map((row) => {
-              if (!row.id || isNaN(Number(row.id))) {
-                row.id = ++lastValidId;
-              } else {
-                row.id = Number(row.id);
-                lastValidId = Math.max(lastValidId, row.id);
-              }
-
-              const parseCurrency = (value) =>
-                value ? Number(String(value).replace(/\./g, "")) : null;
-              const parseDate = (value) => {
-                if (!value) return null;
-                const date = new Date(value);
-                if (isNaN(date.getTime())) {
-                  if (value.includes(" A ")) {
-                    const [startDate, endDate] = value
-                      .split(" A ")
-                      .map((dateStr) => new Date(dateStr.trim()));
-                    if (
-                      isNaN(startDate.getTime()) ||
-                      isNaN(endDate.getTime())
-                    ) {
-                      throw new Error(`Invalid date range value: ${value}`);
-                    }
-                    return {
-                      startDate: startDate.toISOString().split("T")[0],
-                      endDate: endDate.toISOString().split("T")[0],
-                    };
-                  }
-                  throw new Error(`Invalid date value: ${value}`);
-                }
-                return date.toISOString().split("T")[0];
-              };
-
-              const fechaInicio = parseDate(row.FechaInicio);
-              const fechaFin = parseDate(row.FechaFin);
-              return {
-                id: row.id,
-                pertenece: row.pertenece != null ? String(row.pertenece) : null,
-                destino: row.destino != null ? String(row.destino) : null,
-                nombrePrograma:
-                  row.nombrePrograma != null
-                    ? String(row.nombrePrograma)
-                    : null,
-                hotel: row.hotel != null ? String(row.hotel) : null,
-                plan: row.plan != null ? String(row.plan) : null,
-                noches: row.noches != null ? String(row.noches) : null,
-                tipoHabitacion:
-                  row.tipoHabitacion != null
-                    ? String(row.tipoHabitacion)
-                    : null,
-                sencilla: parseCurrency(row.sencilla),
-                doble: parseCurrency(row.doble),
-                triple: parseCurrency(row.triple),
-                cuadruple: parseCurrency(row.cuadruple),
-                quintuple: parseCurrency(row.quintuple),
-                sextuple: parseCurrency(row.sextuple),
-                niño: parseCurrency(row.niño),
-                nocheAdicionalsencilla: parseCurrency(
-                  row.nocheAdicionalsencilla
-                ),
-                nocheAdicionaldoble: parseCurrency(row.nocheAdicionaldoble),
-                nocheAdicionaltriple: parseCurrency(row.nocheAdicionaltriple),
-                nocheAdicionalcuadruple: parseCurrency(
-                  row.nocheAdicionalcuadruple
-                ),
-                nocheAdicionalniño: parseCurrency(row.nocheAdicionalniño),
-                incluye: row.incluye != null ? String(row.incluye) : null,
-                noIncluye: row.noIncluye != null ? String(row.noIncluye) : null,
-                FechaInicio:
-                  fechaInicio && fechaInicio.startDate
-                    ? fechaInicio.startDate
-                    : fechaInicio,
-                FechaFin:
-                  fechaInicio && fechaInicio.endDate
-                    ? fechaInicio.endDate
-                    : fechaFin,
-              };
-            });
-
-            resolve(jsonData);
-          } catch (error) {
-            reject(
-              new Error("Error al procesar el archivo Excel: " + error.message)
-            );
+        let lastValidId = 0;
+        jsonData = jsonData.map((row) => {
+          if (!row.id || isNaN(Number(row.id))) {
+            row.id = ++lastValidId;
+          } else {
+            row.id = Number(row.id);
+            lastValidId = Math.max(lastValidId, row.id);
           }
-        };
 
-        reader.onerror = () => {
-          reject(
-            new Error(
-              "Error al leer el archivo. Verifica que el archivo no esté corrupto o vacío."
-            )
-          );
-        };
+          const parseCurrency = (value) => value ? Number(String(value).replace(/\./g, "")) : null;
+          const parseDate = (value) => {
+            if (!value) return null;
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+              if (value.includes(" A ")) {
+                const [startDate, endDate] = value.split(" A ").map(dateStr => new Date(dateStr.trim()));
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                  throw new Error(`Invalid date range value: ${value}`);
+                }
+                return { startDate: startDate.toISOString().split("T")[0], endDate: endDate.toISOString().split("T")[0] };
+              }
+              throw new Error(`Invalid date value: ${value}`);
+            }
+            return date.toISOString().split("T")[0];
+          };
 
-        reader.readAsArrayBuffer(archivo);
-      });
-    },
+          const fechaInicio = parseDate(row.FechaInicio);
+          const fechaFin = parseDate(row.FechaFin);
+          return {
+            id: row.id,
+            pertenece: row.pertenece != null ? String(row.pertenece) : null,
+            destino: row.destino != null ? String(row.destino) : null,
+            nombrePrograma: row.nombrePrograma != null ? String(row.nombrePrograma) : null,
+            hotel: row.hotel != null ? String(row.hotel) : null,
+            plan: row.plan != null ? String(row.plan) : null,
+            noches: row.noches != null ? String(row.noches) : null,
+            tipoHabitacion: row.tipoHabitacion != null ? String(row.tipoHabitacion) : null,
+            sencilla: parseCurrency(row.sencilla),
+            doble: parseCurrency(row.doble),
+            triple: parseCurrency(row.triple),
+            cuadruple: parseCurrency(row.cuadruple),
+            quintuple: parseCurrency(row.quintuple),
+            sextuple: parseCurrency(row.sextuple),
+            niño: parseCurrency(row.niño),
+            nocheAdicionalsencilla: parseCurrency(row.nocheAdicionalsencilla),
+            nocheAdicionaldoble: parseCurrency(row.nocheAdicionaldoble),
+            nocheAdicionaltriple: parseCurrency(row.nocheAdicionaltriple),
+            nocheAdicionalcuadruple: parseCurrency(row.nocheAdicionalcuadruple),
+            nocheAdicionalniño: parseCurrency(row.nocheAdicionalniño),
+            incluye: row.incluye != null ? String(row.incluye) : null,
+            noIncluye: row.noIncluye != null ? String(row.noIncluye) : null,
+            FechaInicio: fechaInicio && fechaInicio.startDate ? fechaInicio.startDate : fechaInicio,
+            FechaFin: fechaInicio && fechaInicio.endDate ? fechaInicio.endDate : fechaFin,
+          };
+        });
+
+        resolve(jsonData);
+      } catch (error) {
+        reject(new Error("Error al procesar el archivo Excel: " + error.message));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Error al leer el archivo. Verifica que el archivo no esté corrupto o vacío."));
+    };
+
+    reader.readAsArrayBuffer(archivo);
+  });
+},
 
     // Importa nuevos datos desde el archivo Excel
     async importarDatosNuevo() {
@@ -1180,9 +1111,7 @@ export default {
         const datos = await this.leerArchivoExcel(this.archivoExcel);
 
         if (datos.length === 0) {
-          throw new Error(
-            "El archivo no contiene datos válidos para importar."
-          );
+          throw new Error("El archivo no contiene datos válidos para importar.");
         }
 
         const datosNuevos = datos.map((plan) => {
@@ -1202,20 +1131,10 @@ export default {
         }
 
         this.mostrarModalImportar = false;
-        this.$q.notify({
-          type: "positive",
-          message: "Importación completada exitosamente",
-          position: "top",
-          timeout: 5000,
-        });
+        this.$q.notify({ type: "positive", message: "Importación completada exitosamente", position: "top", timeout: 5000 });
       } catch (error) {
         console.error("Error al importar datos:", error);
-        this.$q.notify({
-          type: "negative",
-          message: `Error: ${error.message}`,
-          position: "top",
-          timeout: 5000,
-        });
+        this.$q.notify({ type: "negative", message: `Error: ${error.message}`, position: "top", timeout: 5000 });
       } finally {
         this.procesando = false;
         this.progreso = 0; // Reiniciar el progreso
@@ -1234,36 +1153,23 @@ export default {
         console.log("Iniciando la actualización de datos...");
 
         // Mostrar notificación inicial
-        this.$q.notify({
-          type: "info",
-          message: `Progreso: 0% - Tiempo restante estimado: Calculando...`,
-          position: "top",
-          timeout: 1000,
-        });
+        this.$q.notify({ type: "info", message: `Progreso: 0% - Tiempo restante estimado: Calculando...`, position: "top", timeout: 1000 });
 
         const datos = await this.leerArchivoExcel(this.archivoExcel);
 
         if (datos.length === 0) {
-          throw new Error(
-            "El archivo no contiene datos válidos para actualizar."
-          );
+          throw new Error("El archivo no contiene datos válidos para actualizar.");
         }
 
         // Obtener todos los datos existentes de una sola vez
-        const responseExistentes = await fetch(
-          "https://backmultidestinos.onrender.com/hoteles"
-        );
+        const responseExistentes = await fetch("https://backmultidestinos.onrender.com/hoteles");
         if (!responseExistentes.ok) {
-          throw new Error(
-            `Error al obtener los datos existentes: ${responseExistentes.status}`
-          );
+          throw new Error(`Error al obtener los datos existentes: ${responseExistentes.status}`);
         }
         const hotelesExistentes = await responseExistentes.json();
 
         // Crear un mapa para búsqueda rápida
-        const mapaExistentes = new Map(
-          hotelesExistentes.map((hotel) => [hotel.id, hotel])
-        );
+        const mapaExistentes = new Map(hotelesExistentes.map((hotel) => [hotel.id, hotel]));
 
         // Procesar todos los datos en memoria
         const datosActualizados = datos.map((hotel) => {
@@ -1287,63 +1193,44 @@ export default {
         const startTime = Date.now();
 
         for (let i = 0; i < batches.length; i += CONCURRENT_BATCHES) {
-          const batchPromises = batches
-            .slice(i, i + CONCURRENT_BATCHES)
-            .map(async (batch) => {
-              const response = await fetch(
-                "http://localhost:8010/hoteles/procesar-lote",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ hoteles: batch }),
-                }
-              );
-
-              if (!response.ok) {
-                throw new Error(`Error en el lote: ${response.statusText}`);
-              }
-
-              completados += batch.length;
-              this.progreso = (completados / datosActualizados.length) * 100;
-
-              // Calcular el tiempo estimado restante en segundos
-              const elapsedTime = Date.now() - startTime;
-              const remainingTime =
-                (elapsedTime / completados) *
-                (datosActualizados.length - completados);
-              const remainingSeconds = (remainingTime / 1000).toFixed(2);
-
-              // Notificar progreso y tiempo restante
-              this.$q.notify({
-                type: "info",
-                message: `Progreso: ${Math.floor(
-                  this.progreso
-                )}% - Tiempo restante estimado: ${remainingSeconds} segundos`,
-                position: "top",
-                timeout: 6000,
-              });
-
-              return response.json();
+          const batchPromises = batches.slice(i, i + CONCURRENT_BATCHES).map(async (batch) => {
+            const response = await fetch("http://localhost:8010/hoteles/procesar-lote", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ hoteles: batch }),
             });
+
+            if (!response.ok) {
+              throw new Error(`Error en el lote: ${response.statusText}`);
+            }
+
+            completados += batch.length;
+            this.progreso = (completados / datosActualizados.length) * 100;
+
+            // Calcular el tiempo estimado restante en segundos
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = (elapsedTime / completados) * (datosActualizados.length - completados);
+            const remainingSeconds = (remainingTime / 1000).toFixed(2);
+
+            // Notificar progreso y tiempo restante
+            this.$q.notify({
+              type: "info",
+              message: `Progreso: ${Math.floor(this.progreso)}% - Tiempo restante estimado: ${remainingSeconds} segundos`,
+              position: "top",
+              timeout: 6000,
+            });
+
+            return response.json();
+          });
 
           await Promise.all(batchPromises);
         }
 
         this.mostrarModalImportar = false;
-        this.$q.notify({
-          type: "positive",
-          message: "Actualización completada exitosamente",
-          position: "top",
-          timeout: 10000,
-        });
+        this.$q.notify({ type: "positive", message: "Actualización completada exitosamente", position: "top", timeout: 10000 });
       } catch (error) {
         console.error("Error en la importación:", error);
-        this.$q.notify({
-          type: "negative",
-          message: `Error: ${error.message}`,
-          position: "top",
-          timeout: 5000,
-        });
+        this.$q.notify({ type: "negative", message: `Error: ${error.message}`, position: "top", timeout: 5000 });
       } finally {
         this.procesando = false;
         this.progreso = 0;
@@ -1353,20 +1240,14 @@ export default {
     // Guarda los datos en la base de datos
     async guardarEnBaseDeDatos(datos, tipo) {
       try {
-        const responseExistentes = await fetch(
-          "https://backmultidestinos.onrender.com/hoteles"
-        );
+        const responseExistentes = await fetch("https://backmultidestinos.onrender.com/hoteles");
         if (!responseExistentes.ok) {
-          throw new Error(
-            `Error al obtener los datos. Estado: ${responseExistentes.status}`
-          );
+          throw new Error(`Error al obtener los datos. Estado: ${responseExistentes.status}`);
         }
         const hotelesExistentes = await responseExistentes.json();
 
         const procesarDatos = datos.map((hotel) => {
-          const existe = hotelesExistentes.find(
-            (hotelExistente) => hotelExistente.id === hotel.id
-          );
+          const existe = hotelesExistentes.find((hotelExistente) => hotelExistente.id === hotel.id);
 
           if (tipo === "nuevo" || !existe) {
             return { ...hotel, id: null };
@@ -1388,18 +1269,11 @@ export default {
 
         const datosConCambios = procesarDatos.filter((hotel) => {
           const original = hotelesExistentes.find((h) => h.id === hotel.id);
-          return (
-            !original || JSON.stringify(hotel) !== JSON.stringify(original)
-          );
+          return !original || JSON.stringify(hotel) !== JSON.stringify(original);
         });
 
         if (datosConCambios.length === 0) {
-          this.$q.notify({
-            type: "info",
-            message: "No hay cambios para actualizar.",
-            position: "top",
-            timeout: 3000,
-          });
+          this.$q.notify({ type: "info", message: "No hay cambios para actualizar.", position: "top", timeout: 3000 });
           return;
         }
 
@@ -1421,22 +1295,15 @@ export default {
             return hotel;
           });
 
-          const response = await fetch(
-            "http://localhost:8010/hoteles/procesar-lote",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ hoteles: batch }),
-            }
-          );
+          const response = await fetch("http://localhost:8010/hoteles/procesar-lote", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hoteles: batch }),
+          });
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(
-              `Error al procesar los datos: ${
-                errorData.mensaje || response.statusText
-              }`
-            );
+            throw new Error(`Error al procesar los datos: ${errorData.mensaje || response.statusText}`);
           }
 
           return response.json();
@@ -1445,23 +1312,13 @@ export default {
         // Esperar a que todas las promesas se resuelvan
         await Promise.all(promises);
 
-        this.$q.notify({
-          type: "positive",
-          message: `Acción realizada con éxito`,
-          position: "top",
-          timeout: 3000,
-        });
+        this.$q.notify({ type: "positive", message: `Acción realizada con éxito`, position: "top", timeout: 3000 });
       } catch (error) {
         console.error("Error al guardar los datos en la base de datos:", error);
-        this.$q.notify({
-          type: "negative",
-          message: `Error al guardar los datos: ${error.message}`,
-          position: "top",
-          timeout: 5000,
-        });
+        this.$q.notify({ type: "negative", message: `Error al guardar los datos: ${error.message}`, position: "top", timeout: 5000 });
         throw error;
       }
-    },
+    }
   },
 };
 </script>

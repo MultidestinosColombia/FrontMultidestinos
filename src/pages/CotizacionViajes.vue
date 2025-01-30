@@ -2981,14 +2981,15 @@ export default {
         const hotelincluye = hotelesResponse.data[0].incluye;
         const hotelnoincluye = hotelesResponse.data[0].noIncluye;
 
-        // Crear el documento PDF
+       // Crear el documento PDF
         const doc = new jsPDF();
-        const margins = { top: 10, bottom: 10, left: 10, right: 10 };
+        const margins = { top: 15, bottom: 10, left: 15, right: 15 };
         const pageWidth = doc.internal.pageSize.width;
         const pageHeight = doc.internal.pageSize.height;
+
         // Configuración del encabezado
-        const headerHeight = 40;
-        const headerPadding = { left: 10, right: 10, top: 5, bottom: 5 };
+        const headerHeight = 50;
+        const headerPadding = { left: 15, right: 15, top: 10, bottom: 10 };
 
         // Cargar imagen (reemplaza con la ruta correcta)
         const imgData = await new Promise((resolve, reject) => {
@@ -3000,9 +3001,8 @@ export default {
 
         // Calcular dimensiones de la imagen
         const aspectRatio = imgData.width / imgData.height;
-        const maxImgWidth =
-          pageWidth / 4 - headerPadding.left - headerPadding.right;
-        const imgWidth = Math.min(100, maxImgWidth);
+        const maxImgWidth = pageWidth / 4 - headerPadding.left - headerPadding.right;
+        const imgWidth = Math.min(120, maxImgWidth);
         const imgHeight = imgWidth / aspectRatio;
         const imgY = margins.top + (headerHeight - imgHeight) / 2;
 
@@ -3028,14 +3028,15 @@ export default {
           imgWidth -
           headerPadding.left -
           headerPadding.right -
-          10;
+          20;
 
         // Agregar texto general al encabezado
         doc.setFontSize(10);
+        doc.setFont("Helvetica", "normal");
         doc.text(
           doc.splitTextToSize(headerTextGeneral, availableWidth),
           margins.left + imgWidth + headerPadding.left + headerPadding.right,
-          margins.top + 10
+          margins.top + 15
         );
 
         // Calcular posición horizontal para el número de cotización (alinear a la derecha)
@@ -3046,19 +3047,33 @@ export default {
           headerPadding.right;
 
         // Aumentar el tamaño de fuente para el número de cotización y mantenerlo en negrita
-        doc.setFontSize(12);
-        doc.setFont("Helvetica-Bold", 12);
-        doc.text(headerTextCotizacion, cotizacionX, margins.top + 10);
+        doc.setFontSize(14);
+        doc.setFont("Helvetica-Bold");
+        doc.text(headerTextCotizacion, cotizacionX, margins.top + 15);
 
-        // Dibujar borde del encabezado
+        // Dibujar borde del encabezado con bordes redondeados
         doc.setDrawColor(0);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(
+          margins.left,
+          margins.top,
+          pageWidth - margins.left - margins.right,
+          headerHeight,
+          10, // Radio de los bordes redondeados
+          10, // Radio de los bordes redondeados
+          "S"
+        );
+
+        // Agregar un fondo de color suave al encabezado
+        doc.setFillColor(51, 102, 204); // Color de fondo azul
         doc.rect(
           margins.left,
           margins.top,
           pageWidth - margins.left - margins.right,
           headerHeight,
-          "S"
+          "F"
         );
+
 
         // Sección: SOLICITUD DE RESERVA
         doc.setFontSize(10); // Tamaño de fuente para el título
