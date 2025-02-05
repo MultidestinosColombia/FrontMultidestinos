@@ -806,612 +806,866 @@
       </q-card>
     </q-dialog>
     <!-- FIN DE FORMULARIO COTIZACION NORMAL -->
-
-
     <!-- COMIENZO DE FORMULARIO COTIZACION PERSONALIZADA -->
 
-    <q-dialog v-model="modalVisiblePersonalizado" persistent>
-  <q-card class="full-width" style="max-width: 900px;">
-    <q-toolbar class="bg-primary text-white">
-      <q-toolbar-title>
-        Personalizar Viaje
-      </q-toolbar-title>
-      <q-btn flat round dense icon="close" @click="closeModalPersonalizado" />
-    </q-toolbar>
-
-    <q-tabs
-      v-model="activeTab"
-      inline-label
-      class="bg-grey-2"
-      active-color="primary"
-      indicator-color="primary"
+    <q-dialog
+      v-model="modalVisiblePersonalizado"
+      content-css="max-width: 600px;"
     >
-      <q-tab name="tab1" icon="info" label="Detalles del Viaje" />
-      <q-tab name="tab2" icon="flight" label="Información de Vuelo" />
-    </q-tabs>
-
-    <q-tab-panels v-model="activeTab" animated>
-      <q-tab-panel name="tab1">
-        <q-card-section>
-          <div class="row q-col-gutter-md">
-            <!-- Fechas -->
-            <div class="col-12 q-mb-md">
-              <div class="row q-col-gutter-md">
-                <div class="col-6">
-                  <q-input
-                    filled
-                    v-model="dateRange[0]"
-                    mask="date"
-                    :rules="startDateRules"
-                    label="Fecha de inicio"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer">
-                        <q-popup-proxy>
-                          <q-date v-model="dateRange[0]" />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-6">
-                  <q-input
-                    filled
-                    v-model="dateRange[1]"
-                    mask="date"
-                    :rules="endDateRules"
-                    label="Fecha de fin"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer">
-                        <q-popup-proxy>
-                          <q-date v-model="dateRange[1]" />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
-
-            <!-- Salida y Destino -->
-            <div class="col-6">
-              <q-select
-                outlined
-                v-model="selectedDeparture"
-                label="Salida"
-                :options="departureOptions"
-                :rules="[val => !!val || 'Campo requerido']"
-                @update:model-value="handleDepartureChange"
-              />
-            </div>
-            <div class="col-6">
-              <q-select
-                outlined
-                v-model="destination"
-                label="Destino"
-                :options="destinationOptions"
-                :rules="[val => !!val || 'Campo requerido']"
-                @update:model-value="updateOptionsByDestination"
-              />
-            </div>
-
-            <!-- Nueva Sección -->
-            <div class="col-12">
-              <div class="row q-col-gutter-md">
-                <div class="col-6">
-                  <q-select
-                    outlined
-                    v-model="selectedClient"
-                    label="Cliente"
-                    :options="clientOptions"
-                    filter
-                    use-input
-                    class="q-mb-md"
-                    :rules="[val => !!val || 'Campo requerido']"
-                    @update:modelValue="fetchOptionCorreo"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-select
-                    outlined
-                    v-model="programName"
-                    label="Nombre del Programa"
-                    :options="programNameOptions"
-                    :rules="[val => !!val || 'Campo requerido']"
-                    @update:modelValue="handleSelectionChangeTipo"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- Plan y Hotel -->
-              <div class="row q-col-gutter-md">
-                <div class="col-6">
-                  <q-select
-                    outlined
-                    v-model="noche"
-                    label="Duración"
-                    :options="nochesOptions"
-                    :rules="[val => !!val || 'Campo requerido']"
-                    @update:modelValue="handleSelectionChangeTipo"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-select
-                    outlined
-                    v-model="hotel"
-                    label="Hotel"
-                    :options="hotelOptions"
-                    :rules="[val => !!val || 'Campo requerido']"
-                    @update:modelValue="handleSelectionChangeTipo"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- noche adicional -->
-              <div
-                class="row q-col-gutter-md"
-                v-if="!shouldHideAdditionalNightSection()"
-              >
-                <div class="col-6">
-                  <!-- Checkbox para Noche adicional -->
-                  <q-checkbox
-                    v-model="additionalNightSelected"
-                    label="Noche adicional"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col-6">
-                  <!-- Campo de entrada para el número de noches adicionales -->
-                  <q-input
-                    filled
-                    v-model="additionalNightCount"
-                    label="Noches adicionales"
-                    type="number"
-                    :disable="!additionalNightSelected"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- Número de habitaciones -->
-              <div class="row q-col-gutter-md">
-                <div class="col-6">
-                  <q-select
-                    outlined
-                    v-model="correo"
-                    label="Correo Cliente"
-                    :rules="[val => !!val || 'Campo requerido']"
-                    :options="OptionCorreo"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col-6">
-                  <q-select
-                    outlined
-                    v-model="numRooms"
-                    label="Número de habitaciones"
-                    :rules="[val => !!val || 'Campo requerido']"
-                    :options="roomOptions"
-                    class="q-mb-md"
-                    @update:modelValue="handleNumRoomsChange"
-                  />
-                </div>
-              </div>
-
-              <!-- Bucle para mostrar el formulario de cada habitación -->
-              <div v-for="(room, index) in rooms" :key="index">
-                <q-card
-                  :style="{
-                    border: '0',
-                    borderRadius: '10px',
-                    boxShadow: 'none',
-                    marginTop: '20px',
-                  }"
-                >
-                  <q-card-section class="q-pa-md">
-                    <p style="text-align: center">
-                      <span style="margin-left: 10px; font-weight: bold">
-                        Habitación {{ index + 1 }}
-                      </span>
-                    </p>
-                    <div class="row q-col-gutter-md">
-                      <div class="col-6">
-                        <q-select
-                          outlined
-                          v-model="room.roomType"
-                          label="Tipo de Habitación"
-                          :rules="[val => !!val || 'Campo requerido']"
-                          :options="roomTypeOptions"
-                          class="q-mb-md"
-                        />
-                      </div>
-                      <div class="col-6">
-                        <q-select
-                          outlined
-                          v-model="room.adults"
-                          label="Adultos"
-                          :rules="[val => !!val || 'Campo requerido']"
-                          :options="adultsOptions"
-                          class="q-mb-md"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="row q-col-gutter-md">
-                      <div class="col-6">
-                        <q-checkbox
-                          v-model="hasChildren[index]"
-                          label="¿Niños?"
-                          @update:modelValue="handleChildrenChange(index)"
-                        />
-                      </div>
-                      <div class="col-6">
-                        <q-input
-                          filled
-                          v-model="room.numChildren"
-                          label="Niños"
-                          readonly
-                          :disable="!hasChildren[index]"
-                        />
-                      </div>
-                    </div>
-
-                    <div v-if="mostrarCamposEdad(index)">
-                      <div class="row">
-                        <div class="col-12">
-                          <p class="age-input-label">
-                            Edades y nacionalidad de los adultos:
-                          </p>
-                        </div>
-
-                        <div
-                          v-for="(age, i) in room.adultAges"
-                          :key="'adult' + i + '-' + index"
-                          class="col-6 col-sm-4 col-md-3"
-                        >
-                          <q-input
-                            filled
-                            v-model="room.adultAges[i]"
-                            :label="'Adulto ' + (i + 1) + ' - Edad'"
-                            type="number"
-                          />
-                          <q-checkbox
-                            v-model="room.isForeigner[i]"
-                            label="Extranjero"
-                          />
-                        </div>
-                      </div>
-
-                      <div class="row" v-if="hasChildren[index]">
-                        <div class="col-12">
-                          <p class="age-input-label">Edad del niño:</p>
-                        </div>
-                        <div class="col-6 col-sm-4 col-md-3">
-                          <q-input
-                            filled
-                            v-model="room.childAge"
-                            label="Niño"
-                            type="number"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <q-select
-                      outlined
-                      v-model="room.accommodation"
-                      label="Acomodación"
-                      :rules="[val => !!val || 'Campo requerido']"
-                      :options="accommodationOptions"
-                      class="q-mb-md"
-                    />
+      <q-card>
+        <q-card-section class="q-pa-md">
+          <!-- Contenido de las pestañas -->
+          <div v-show="activeTab === 'tab1'">
+            <!-- primera formulario -->
+            <q-card
+              :style="{
+                border: '0',
+                borderRadius: '100%',
+                boxShadow: 'none',
+              }"
+            >
+              <q-card-section class="q-pa-md">
+                <!-- FECHA INICIO -->
+                <div class="row q-col-gutter-md">
+                  <!-- Fecha de inicio -->
+                  <div class="col" style="margin-left: 10px">
                     <q-input
                       filled
-                      v-model="room.valor"
-                      label="Valor Persona"
-                      type="number"
-                    />
-                  </q-card-section>
-                </q-card>
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-      </q-tab-panel>
-      <q-tab-panel name="tab2">
-        <q-card-section>
-          <!-- Sección de vuelos con diseño similar -->
-          <div class="row q-col-gutter-md">
-            <!-- Vuelo de Ida -->
-            <div class="col-6">
-              <q-card flat bordered>
-                <q-card-section>
-                  <div class="text-h6 q-mb-md">Vuelo de Ida</div>
-                  <q-select outlined v-model="aerolineaValue1" label="Aerolínea" :rules="[val => !!val || 'Campo requerido']" :options="aerolineaOptions" />
-                  <q-input outlined v-model="vueloValue1" label="Número de Vuelo" :rules="[val => !!val || 'Campo requerido']" />
-                  <!-- Información ida -->
-                  <p class="text-center">
-                    <span class="font-weight-bold" style="margin-left: 10px;">Información ida</span>
-                  </p>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <div class="q-mb-md q-ml-md">
-                        <q-select v-model="aerolineaValue1" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <q-input v-model="vueloValue1" label="Vuelo" outlined type="text" class="q-mb-md" />
-                    </div>
+                      v-model="dateRange[0]"
+                      mask="date"
+                      :rules="startDateRules"
+                      label="Fecha de inicio"
+                    >
+                      <template v-slot:append>
+                        <q-icon name="event" class="cursor-pointer">
+                          <q-popup-proxy
+                            cover
+                            transition-show="scale"
+                            transition-hide="scale"
+                          >
+                            <q-date v-model="dateRange[0]">
+                              <div class="row items-center justify-end">
+                                <q-btn
+                                  v-close-popup
+                                  label="Close"
+                                  color="primary"
+                                  flat
+                                />
+                              </div>
+                            </q-date>
+                          </q-popup-proxy>
+                        </q-icon>
+                      </template>
+                    </q-input>
                   </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <div class="q-mb-md q-ml-md">
-                        <q-input v-model="horaSalidaValue1" label="Hora de salida" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <q-input v-model="horaLlegadaValue1" label="Hora de llegada" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
-                    </div>
-                  </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <div class="q-mb-md q-ml-md">
-                        <q-input v-model="claseValue1" label="Clase" :rules="[val => !!val || 'Campo requerido']" outlined type="text" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="col" style="margin-left: 10px">
-                      <q-input filled v-model="dateRange[0]" mask="date" :rules="startDateRules" label="Fecha de inicio">
-                        <template v-slot:append>
-                          <q-icon name="event" class="cursor-pointer">
-                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                              <q-date v-model="dateRange[0]">
-                                <div class="row items-center justify-end">
-                                  <q-btn v-close-popup label="Close" color="primary" flat />
-                                </div>
-                              </q-date>
-                            </q-popup-proxy>
-                          </q-icon>
-                        </template>
-                      </q-input>
-                    </div>
-                  </div>
-                  <div v-if="mostrarEscalas">
-                    <!-- Información escala ida -->
-                    <p class="text-center">
-                      <span class="font-weight-bold" style="margin-left: 10px;">Información escala ida</span>
-                    </p>
-                    <div class="row q-col-gutter-md">
-                      <div class="col">
-                        <q-select v-model="aerolineaEscalaIda" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
-                      </div>
-                      <div class="col">
-                        <q-input v-model="vueloEscalaIda" label="Vuelo" outlined type="text" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="row q-col-gutter-md">
-                      <div class="col">
-                        <q-input v-model="horaSalidaEscalaIda" label="Hora de salida" outlined type="time" step="1800" class="q-mb-md" />
-                      </div>
-                      <div class="col">
-                        <q-input v-model="horaLlegadaEscalaIda" label="Hora de llegada" outlined type="time" step="1800" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="row q-col-gutter-md">
-                      <div class="col">
-                        <q-input v-model="claseEscalaIda" label="Clase" outlined type="text" class="q-mb-md" />
-                      </div>
-                    </div>
-                  </div>
-                </q-card-section>
-              </q-card>
-            </div>
-            <!-- Vuelo de Vuelta -->
-            <div class="col-6">
-              <q-card flat bordered>
-                <q-card-section>
-                  <div class="text-h6 q-mb-md">Vuelo de Vuelta</div>
-                  <q-select outlined v-model="aerolineaValue2" label="Aerolínea" :rules="[val => !!val || 'Campo requerido']" :options="aerolineaOptions" />
-                  <q-input outlined v-model="vueloValue2"  label="Número de Vuelo" :rules="[val => !!val || 'Campo requerido']" />
-                  <!-- Información vuelta -->
-                  <p class="text-center">
-                    <span class="font-weight-bold" style="margin-left: 10px;">Información vuelta</span>
-                  </p>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <div class="q-mb-md q-ml-md">
-                        <q-select v-model="aerolineaValue2" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <q-input v-model="vueloValue2" label="Vuelo" outlined type="text" class="q-mb-md" />
-                    </div>
-                  </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <div class="q-mb-md q-ml-md">
-                        <q-input v-model="horaSalidaValue2" label="Hora de salida" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <q-input v-model="horaLlegadaValue2" label="Hora de llegada" :rules="[val => !!val || 'Campo requerido']" outlined type="time" step="1800" class="q-mb-md" />
-                    </div>
-                  </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <div class="q-mb-md q-ml-md">
-                        <q-input v-model="claseValue2" label="Clase" :rules="[val => !!val || 'Campo requerido']"  outlined type="text" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="col">
-                      <q-input filled v-model="dateRange[1]" mask="date" :rules="endDateRules" label="Fecha de fin">
-                        <template v-slot:append>
-                          <q-icon name="event" class="cursor-pointer">
-                            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                              <q-date v-model="dateRange[1]">
-                                <div class="row items-center justify-end">
-                                  <q-btn v-close-popup label="Close" color="primary" flat />
-                                </div>
-                              </q-date>
-                            </q-popup-proxy>
-                          </q-icon>
-                        </template>
-                      </q-input>
-                    </div>
-                  </div>
-                  <div v-if="mostrarEscalas">
-                    <!-- Información escala vuelta -->
-                    <p class="text-center">
-                      <span class="font-weight-bold" style="margin-left: 10px;">Información escala vuelta</span>
-                    </p>
-                    <div class="row q-col-gutter-md">
-                      <div class="col">
-                        <q-select v-model="aerolineaEscalaVuelta" label="Aerolinea" outlined :options="aerolineaOptions" class="q-mb-md" />
-                      </div>
-                      <div class="col">
-                        <q-input v-model="vueloEscalaVuelta" label="Vuelo" outlined type="text" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="row q-col-gutter-md">
-                      <div class="col">
-                        <q-input v-model="horaSalidaEscalaVuelta" label="Hora de salida" outlined type="time" step="1800" class="q-mb-md" />
-                      </div>
-                      <div class="col">
-                        <q-input v-model="horaLlegadaEscalaVuelta" label="Hora de llegada" outlined type="time" step="1800" class="q-mb-md" />
-                      </div>
-                    </div>
-                    <div class="row q-col-gutter-md">
-                      <div class="col">
-                        <q-input v-model="claseEscalaVuelta" label="Clase" outlined type="text" class="q-mb-md" />
-                      </div>
-                    </div>
-                  </div>
-                </q-card-section>
-              </q-card>
-            </div>
-          </div>
-          <!-- Sección de Impuestos -->
-          <div class="col-6 q-mt-lg">
-            <q-card flat bordered>
-              <p class="text-center">
-                <span class="font-weight-bold" style="margin-left: 10px;">Impuestos</span>
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <div class="q-mb-md q-ml-md">
-                    <q-input v-model="Combus" label="Combus" outlined type="text" class="q-mb-md" />
-                  </div>
-                </div>
-                <div class="col">
-                  <q-input v-model="Tasa" label="Tasa" outlined type="text" class="q-mb-md" />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <div class="q-mb-md q-ml-md">
-                    <q-input v-model="Iva" label="Iva" outlined type="text" class="q-mb-md" />
-                  </div>
-                </div>
-                <div class="col">
-                  <q-input v-model="Ta" label="Ta" outlined type="text" class="q-mb-md" />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <div class="q-mb-md q-ml-md">
-                    <q-input v-model="IvaTa" label="IvaTa" outlined type="text" class="q-mb-md" />
-                  </div>
-                </div>
-                <div class="col">
-                  <q-input v-model="Otros" label="Otros" outlined type="text" class="q-mb-md" />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <div class="q-mb-md q-ml-md">
-                    <q-input v-model="precioTransp" label="Precio Transporte" outlined type="text" class="q-mb-md" />
-                  </div>
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <div class="q-mb-md q-ml-md">
-                    <q-input v-model="textoIncluye" label="Incluye" filled type="textarea" autogrow>
-                      <template v-slot:control>
-                        <q-editor v-model="textoIncluye" toolbar-color="primary" />
+                  <!-- Fecha de fin -->
+                  <div class="col">
+                    <q-input
+                      filled
+                      v-model="dateRange[1]"
+                      mask="date"
+                      :rules="endDateRules"
+                      label="Fecha de fin"
+                    >
+                      <template v-slot:append>
+                        <q-icon name="event" class="cursor-pointer">
+                          <q-popup-proxy
+                            cover
+                            transition-show="scale"
+                            transition-hide="scale"
+                          >
+                            <q-date v-model="dateRange[1]">
+                              <div class="row items-center justify-end">
+                                <q-btn
+                                  v-close-popup
+                                  label="Close"
+                                  color="primary"
+                                  flat
+                                />
+                              </div>
+                            </q-date>
+                          </q-popup-proxy>
+                        </q-icon>
                       </template>
                     </q-input>
                   </div>
                 </div>
-                <div class="col">
-                  <q-input v-model="textoNoIncluye" label="No Incluye" filled type="textarea" autogrow>
+                <div class="q-gutter-md">
+                  <!-- Salida -->
+                  <q-select
+                    outlined
+                    v-model="selectedDeparture"
+                    label="Salida"
+                    :options="departureOptions"
+                    @update:modelValue="handleDepartureChange"
+                    class="q-mb-md q-ml-md"
+                  />
+
+                  <!-- Destino -->
+                  <q-select
+                    outlined
+                    v-model="destination"
+                    label="Destino"
+                    :options="destinationOptions"
+                    @update:modelValue="updateOptionsByDestination"
+                    class="q-mb-md relative-position"
+                  >
+                    <template #append>
+                      <div
+                        class="error-message"
+                        v-show="!destinationOptions.length"
+                        style="color: red; font-size: 15px; align-items: center"
+                      >
+                        Ups... no hay información
+                      </div>
+                    </template>
+                  </q-select>
+
+                  <!-- Cliente y Nombre del Programa -->
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="selectedClient"
+                        label="Cliente"
+                        :options="clientOptions"
+                        filter
+                        use-input
+                        class="q-mb-md q-ml-md"
+                        @update:modelValue="fetchOptionCorreo"
+                      />
+                    </div>
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="programName"
+                        label="Nombre del Programa"
+                        :options="programNameOptions"
+                        @update:modelValue="handleSelectionChangeTipo"
+                        class="q-mb-md"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Plan y Hotel -->
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="noche"
+                        label="Duración"
+                        :options="nochesOptions"
+                        @update:modelValue="handleSelectionChangeTipo"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="hotel"
+                        label="Hotel"
+                        :options="hotelOptions"
+                        @update:modelValue="handleSelectionChangeTipo"
+                        class="q-mb-md"
+                      />
+                    </div>
+                  </div>
+                  <!-- noche adicional -->
+                  <div
+                    class="row q-col-gutter-md"
+                    v-if="!shouldHideAdditionalNightSection()"
+                  >
+                    <div class="col">
+                      <!-- Checkbox para Noche adicional -->
+                      <q-checkbox
+                        v-model="additionalNightSelected"
+                        label="Noche adicional"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                    <div class="col">
+                      <!-- Campo de entrada para el número de noches adicionales -->
+                      <q-input
+                        filled
+                        v-model="additionalNightCount"
+                        label="Noches adicionales"
+                        type="number"
+                        :disable="!additionalNightSelected"
+                        class="q-mb-md"
+                      />
+                    </div>
+                  </div>
+                  <!-- Número de habitaciones -->
+                  <div class="row q-col-gutter-md">
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="correo"
+                        label="Correo Cliente"
+                        :options="OptionCorreo"
+                        class="q-mb-md q-ml-md"
+                      />
+                    </div>
+                    <div class="col">
+                      <q-select
+                        outlined
+                        v-model="numRooms"
+                        label="Número de habitaciones"
+                        :options="roomOptions"
+                        class="q-mb-md q-ml-md"
+                        @update:modelValue="handleNumRoomsChange"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Bucle para mostrar el formulario de cada habitación -->
+                  <div v-for="(room, index) in rooms" :key="index">
+                    <q-card
+                      :style="{
+                        border: '0',
+                        borderRadius: '10px',
+                        boxShadow: 'none',
+                        marginTop: '20px',
+                      }"
+                    >
+                      <q-card-section class="q-pa-md">
+                        <p style="text-align: center">
+                          <span style="margin-left: 10px; font-weight: bold">
+                            Habitación {{ index + 1 }}
+                          </span>
+                        </p>
+                        <div class="row q-col-gutter-md">
+                          <div class="col">
+                            <q-select
+                              outlined
+                              v-model="room.roomType"
+                              label="Tipo de Habitación"
+                              :options="roomTypeOptions"
+                              class="q-mb-md"
+                            />
+                          </div>
+                          <div class="col">
+                            <q-select
+                              outlined
+                              v-model="room.adults"
+                              label="Adultos"
+                              :options="adultsOptions"
+                              class="q-mb-md"
+                            />
+                          </div>
+                        </div>
+
+                        <div class="row q-col-gutter-md">
+                          <div class="col">
+                            <q-checkbox
+                              v-model="hasChildren[index]"
+                              label="¿Niños?"
+                              @update:modelValue="handleChildrenChange(index)"
+                            />
+                          </div>
+                          <div class="col">
+                            <q-input
+                              filled
+                              v-model="room.numChildren"
+                              label="Niños"
+                              readonly
+                              :disable="!hasChildren[index]"
+                            />
+                          </div>
+                        </div>
+
+                        <div v-if="mostrarCamposEdad(index)">
+                          <div class="row">
+                            <div class="col-12">
+                              <p class="age-input-label">
+                                Edades y nacionalidad de los adultos:
+                              </p>
+                            </div>
+
+                            <div
+                              v-for="(age, i) in room.adultAges"
+                              :key="'adult' + i + '-' + index"
+                              class="col-6 col-sm-4 col-md-3"
+                            >
+                              <q-input
+                                filled
+                                v-model="room.adultAges[i]"
+                                :label="'Adulto ' + (i + 1) + ' - Edad'"
+                                type="number"
+                              />
+
+                              <q-checkbox
+                                v-model="room.isForeigner[i]"
+                                label="Extranjero"
+                              />
+                            </div>
+                          </div>
+
+                          <div class="row" v-if="hasChildren[index]">
+                            <div class="col-12">
+                              <p class="age-input-label">Edad del niño:</p>
+                            </div>
+                            <div class="col-6 col-sm-4 col-md-3">
+                              <q-input
+                                filled
+                                v-model="room.childAge"
+                                label="Niño"
+                                type="number"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <q-select
+                          outlined
+                          v-model="room.accommodation"
+                          label="Acomodación"
+                          :options="accommodationOptions"
+                          class="q-mb-md"
+                        />
+                        <q-input
+                          filled
+                          v-model="room.valor"
+                          label="Valor Persona"
+                          type="number"
+                        />
+                      </q-card-section>
+                    </q-card>
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+            <div>
+              <!-- Contenido de la primera pestaña -->
+            </div>
+          </div>
+          <div v-show="activeTab === 'tab2'">
+            <!-- segunda pestaña -->
+
+            <!-- Aerolina-->
+
+            <p style="text-align: center">
+              <span style="margin-left: 10px; font-weight: bold"
+                >Información ida</span
+              >
+            </p>
+
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-select
+                    v-model="aerolineaValue1"
+                    label="Aerolinea"
+                    outlined
+                    :options="aerolineaOptions"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <!-- Vuelo-->
+              <div class="col">
+                <q-input
+                  v-model="vueloValue1"
+                  label="Vuelo"
+                  outlined
+                  type="text"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <!-- hora salida -->
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="horaSalidaValue1"
+                    label="Hora de salida"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- hora llegada-->
+              <div class="col">
+                <q-input
+                  v-model="horaLlegadaValue1"
+                  label="Hora de llegada"
+                  outlined
+                  type="time"
+                  step="1800"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <!-- CLASE -->
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="claseValue1"
+                    label="Clase"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <!-- FECHA-->
+              <div class="col" style="margin-left: 10px">
+                <q-input
+                  filled
+                  v-model="dateRange[0]"
+                  mask="date"
+                  :rules="startDateRules"
+                  label="Fecha de inicio"
+                >
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy
+                        cover
+                        transition-show="scale"
+                        transition-hide="scale"
+                      >
+                        <q-date v-model="dateRange[0]">
+                          <div class="row items-center justify-end">
+                            <q-btn
+                              v-close-popup
+                              label="Close"
+                              color="primary"
+                              flat
+                            />
+                          </div>
+                        </q-date>
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
+              </div>
+            </div>
+            <p style="text-align: center">
+              <span style="margin-left: 10px; font-weight: bold"
+                >Información vuelta</span
+              >
+            </p>
+
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-select
+                    v-model="aerolineaValue2"
+                    label="Aerolinea"
+                    outlined
+                    :options="aerolineaOptions"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <!-- Vuelo-->
+              <div class="col">
+                <q-input
+                  v-model="vueloValue2"
+                  label="Vuelo"
+                  outlined
+                  type="text"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <!-- hora salida -->
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="horaSalidaValue2"
+                    label="Hora de salida"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- hora llegada-->
+              <div class="col">
+                <q-input
+                  v-model="horaLlegadaValue2"
+                  label="Hora de llegada"
+                  outlined
+                  type="time"
+                  step="1800"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <!-- CLASE -->
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="claseValue2"
+                    label="Clase"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <!-- FECHA-->
+              <!-- Fecha de fin -->
+              <div class="col">
+                <q-input
+                  filled
+                  v-model="dateRange[1]"
+                  mask="date"
+                  :rules="endDateRules"
+                  label="Fecha de fin"
+                >
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy
+                        cover
+                        transition-show="scale"
+                        transition-hide="scale"
+                      >
+                        <q-date v-model="dateRange[1]">
+                          <div class="row items-center justify-end">
+                            <q-btn
+                              v-close-popup
+                              label="Close"
+                              color="primary"
+                              flat
+                            />
+                          </div>
+                        </q-date>
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
+              </div>
+            </div>
+            <!--IMPUESTOS VUELO MANUAL-->
+            <p style="text-align: center">
+              <span style="margin-left: 10px; font-weight: bold"
+                >Impuestos</span
+              >
+            </p>
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="Combus"
+                    label="Combus"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- hora llegada-->
+              <div class="col">
+                <q-input
+                  v-model="Tasa"
+                  label="Tasa"
+                  outlined
+                  type="text"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="Iva"
+                    label="Iva"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- hora llegada-->
+              <div class="col">
+                <q-input
+                  v-model="Ta"
+                  label="Ta"
+                  outlined
+                  type="text"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="IvaTa"
+                    label="IvaTa"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <!-- hora llegada-->
+              <div class="col">
+                <q-input
+                  v-model="Otros"
+                  label="Otros"
+                  outlined
+                  type="text"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="precioTransp"
+                    label="Precio Transporte"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-input
+                    v-model="textoIncluye"
+                    label="Incluye"
+                    filled
+                    type="textarea"
+                    autogrow
+                  >
                     <template v-slot:control>
-                      <q-editor v-model="textoNoIncluye" toolbar-color="primary" />
+                      <q-editor
+                        v-model="textoIncluye"
+                        toolbar-color="primary"
+                      />
                     </template>
                   </q-input>
                 </div>
               </div>
-              <!-- Escala -->
-              <div class="row q-col-gutter-md">
-                <div class="col" style="margin-left: 10px">
-                  <q-checkbox v-model="mostrarEscalas" label="Escala (Ida y Vuelta)" />
-                </div>
+
+              <div class="col">
+                <q-input
+                  v-model="textoNoIncluye"
+                  label="No Incluye"
+                  filled
+                  type="textarea"
+                  autogrow
+                >
+                  <template v-slot:control>
+                    <q-editor
+                      v-model="textoNoIncluye"
+                      toolbar-color="primary"
+                    />
+                  </template>
+                </q-input>
               </div>
-              <!-- Suplemento -->
+            </div>
+
+            <!--FIN IMPUESTO VUELO MANUAL-->
+            <!-- ESCALA -->
+            <div class="row q-col-gutter-md">
+              <div class="col" style="margin-left: 10px">
+                <q-checkbox
+                  v-model="mostrarEscalas"
+                  label="Escala (Ida y Vuelta)"
+                />
+              </div>
+            </div>
+
+            <div v-if="mostrarEscalas">
+              <p style="text-align: center">
+                <span style="margin-left: 10px; font-weight: bold"
+                  >Información escala ida</span
+                >
+              </p>
               <div class="row q-col-gutter-md">
                 <div class="col">
-                  <div class="q-mb-md q-ml-md">
-                    <q-checkbox v-model="supplementChecked" label="Suplemento?" />
-                  </div>
+                  <q-select
+                    v-model="aerolineaEscalaIda"
+                    label="Aerolinea"
+                    outlined
+                    :options="aerolineaOptions"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="vueloEscalaIda"
+                    label="Vuelo"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
                 </div>
               </div>
-              <div v-if="supplementChecked">
-                <q-input v-model="numberOfPeople" label="Número de personas" outlined type="number" class="q-mb-md" />
-                <div v-for="person in peopleArray" :key="person">
-                  <q-input v-model="supplementValues[person - 1]" :label="`Suplemento persona ${person}`" outlined type="number" class="q-mb-md" />
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="horaSalidaEscalaIda"
+                    label="Hora de salida"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="horaLlegadaEscalaIda"
+                    label="Hora de llegada"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
                 </div>
               </div>
-            </q-card>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="claseEscalaIda"
+                    label="Clase"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+
+              <p style="text-align: center">
+                <span style="margin-left: 10px; font-weight: bold"
+                  >Información escala vuelta</span
+                >
+              </p>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-select
+                    v-model="aerolineaEscalaVuelta"
+                    label="Aerolinea"
+                    outlined
+                    :options="aerolineaOptions"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="vueloEscalaVuelta"
+                    label="Vuelo"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="horaSalidaEscalaVuelta"
+                    label="Hora de salida"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model="horaLlegadaEscalaVuelta"
+                    label="Hora de llegada"
+                    outlined
+                    type="time"
+                    step="1800"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+              <div class="row q-col-gutter-md">
+                <div class="col">
+                  <q-input
+                    v-model="claseEscalaVuelta"
+                    label="Clase"
+                    outlined
+                    type="text"
+                    class="q-mb-md"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Suplemento y Campo de entrada para el suplemento -->
+            <div class="row q-col-gutter-md">
+              <div class="col">
+                <div class="q-mb-md q-ml-md">
+                  <q-checkbox v-model="supplementChecked" label="Suplemento?" />
+                </div>
+              </div>
+            </div>
+
+            <div v-if="supplementChecked">
+              <q-input
+                v-model="numberOfPeople"
+                label="Número de personas"
+                outlined
+                type="number"
+                class="q-mb-md"
+              />
+
+              <div v-for="person in peopleArray" :key="person">
+                <q-input
+                  v-model="supplementValues[person - 1]"
+                  :label="`Suplemento persona ${person}`"
+                  outlined
+                  type="number"
+                  class="q-mb-md"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de navegación -->
+          <div class="row q-mt-md justify-center">
+            <div class="col" v-if="activeTab === 'tab2'">
+              <q-btn label="Atrás" @click="goBack" color="primary" />
+            </div>
+            <div class="col" v-if="activeTab === 'tab1'">
+              <q-btn label="Siguiente" @click="goNext" color="primary" />
+            </div>
+            <div class="col" v-if="activeTab === 'tab2'">
+              <q-btn
+                label="Registrar"
+                @click="saveFormDataPersonalizado"
+                color="primary"
+              />
+            </div>
+            <div
+              class="col"
+              v-if="activeTab === 'tab1' || activeTab === 'tab2'"
+            >
+              <q-btn
+                label="Cerrar"
+                @click="closeModalPersonalizado"
+                color="red"
+              />
+            </div>
           </div>
         </q-card-section>
-      </q-tab-panel>
-    </q-tab-panels>
-
-    <q-card-actions align="right">
-      <q-btn
-        v-if="activeTab === 'tab2'"
-        flat
-        color="primary"
-        @click="goBack"
-      >
-        Atrás
-      </q-btn>
-      <q-btn
-        v-if="activeTab === 'tab1'"
-        color="primary"
-        @click="goNext"
-      >
-        Siguiente
-      </q-btn>
-      <q-btn
-        v-if="activeTab === 'tab2'"
-        color="primary"
-        @click="saveFormDataPersonalizado"
-      >
-        Guardar
-      </q-btn>
-      <q-btn
-        color="red"
-        @click="closeModalPersonalizado"
-      >
-        Cerrar
-      </q-btn>
-    </q-card-actions>
-  </q-card>
-</q-dialog>
+      </q-card>
+    </q-dialog>
 
     <!-- FIN DE FORMULARIO COTIZACION PERSONALIZADA -->
 
@@ -1584,7 +1838,6 @@
   </q-page>
 </template>
 
-
 <script>
 import numeral from "numeral";
 import { Notify } from "quasar";
@@ -1594,7 +1847,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { LocalStorage } from "quasar";
 import axios from "axios";
-import { format } from "date-fns";
+import { format, minutesToHours } from "date-fns";
 import emailjs from "emailjs-com";
 import { PDFDocument } from "pdf-lib";
 
@@ -2301,7 +2554,6 @@ export default {
       },
       paramsH: {
         hotel: "",
-
         destino: "",
         noches: "",
         pertenece: "",
@@ -2312,6 +2564,14 @@ export default {
         destino: "",
         noches: "",
         pertenece: "",
+      },
+      paramsTransporte: {
+        hotel: "",
+        nombrePrograma: "",
+        destino: "",
+        noches: "",
+        pertenece: "",
+        tipoHabitacion: "",
       },
       userData,
       modalVisible,
@@ -2408,6 +2668,9 @@ export default {
       console.log("Iniciando fetchProgramName...");
       this.autofillingProgramName = true;
       try {
+        console.log("Enviando datos al servidor:", this.paramsH);
+        console.log("thhotel", this.hotel);
+
         this.paramsH.hotel = this.hotel;
         this.paramsH.destino = this.destination;
         this.paramsH.noches = this.noche.label;
@@ -2497,7 +2760,7 @@ export default {
 
         console.log(
           "Programas coincidentes (sin duplicados y con fechas válidas):",
-          validPrograms
+          validPrograms[0]
         );
 
         // 4. Asignar los programas válidos y manejar las opciones
@@ -4554,6 +4817,7 @@ export default {
 
           // Tercera columna: Número de adultos
           const numAdultos = habitacionData.adultos;
+          console.log("numAdultos", numAdultos);
           doc.text(
             numAdultos.toString(),
             margins.left + 2 * cellWidth + cellPadding,
@@ -5239,6 +5503,7 @@ export default {
           console.error("Error al buscar hoteles:", error);
         });
     },
+
     // Método para abrir el modal
     openModalPersonalizado() {
       this.modalVisiblePersonalizado = true;
@@ -5374,13 +5639,13 @@ export default {
         });
         return;
       }
-      let combus = 0,
-        tasa = 0,
-        iva = 0,
-        ta = 0,
-        ivaTa = 0,
-        otros = 0,
-        precioTrans = 0;
+      let combus = 0;
+      let tasa = 0;
+      let iva = 0;
+      let ta = 0;
+      let ivaTa = 0;
+      let otros = 0;
+      let precioTrans = 0;
 
       const impuestosResponse = await axios.get(
         "https://backmultidestinos.onrender.com/canoCristal/"
@@ -5519,9 +5784,15 @@ export default {
               params: transporteRequestData,
             }
           );
+          console.log("transporteResponse", transporteResponse);
+          console.log("entrando a trans");
 
           transporteResponse.data.forEach((transporte) => {
+            console.log("transporte.combus", transporte.combus);
+
             combus += parseFloat(transporte.combus) || 0;
+            console.log("combus", combus);
+
             tasa += parseFloat(transporte.tasa) || 0;
             iva += parseFloat(transporte.iva) || 0;
             ta += parseFloat(transporte.ta) || 0;
@@ -5529,417 +5800,510 @@ export default {
             otros += parseFloat(transporte.otros) || 0;
             precioTrans += parseFloat(transporte.total) || 0;
           });
-          console.log("precioTrans", precioTrans);
+          console.log("saliendo de trans trans");
+          console.log("normalcombus", combus);
+          console.log("this.normalcombus", this.combus);
+
+          console.log("precioTrans", this.precioTrans);
           //FIN TRASNPORTES------------------------------------------------------------------------------------------------
           // Inicializar variables para el total de adultos y niños
 
           let childrenPrice = 0;
           // Iterar sobre cada habitación en el formulario
-          this.rooms.forEach(async (room, index) => {
-            console.log(`Procesando habitación ${index + 1}`);
+          let impuestosFiltrados = [];
+          await Promise.all(
+            this.rooms.map(async (room, index) => {
+              console.log(`Procesando habitación ${index + 1}`);
 
-            // Obtener el tipo de habitación seleccionado en el formulario para esta habitación
-            //roomAccommodation es igual a la acomodacion
-            const roomAccommodation = room.accommodation;
-            //roomtype es igual al tipo de habitacion
-            const roomType = room.roomType;
-            console.log(`Tipo de habitación seleccionado: ${roomType}`);
+              // Obtener el tipo de habitación seleccionado en el formulario para esta habitación
+              //roomAccommodation es igual a la acomodacion
+              const roomAccommodation = room.accommodation;
+              //roomtype es igual al tipo de habitacion
+              const roomType = room.roomType;
+              console.log(`Tipo de habitación seleccionado: ${roomType}`);
 
-            // Obtener los datos de precio para el tipo de habitación seleccionado
-            const roomPriceData = datosProcesados.find(
-              (data) => data.tipoHabitacion === roomType
-            );
-            console.log("Datos de precio encontrados:", roomPriceData);
+              // Obtener los datos de precio para el tipo de habitación seleccionado
+              const roomPriceData = datosProcesados.find(
+                (data) => data.tipoHabitacion === roomType
+              );
+              console.log("Datos de precio encontrados:", roomPriceData);
+              // Obtener la acomodación y el tipo de habitación
+              const acomodacion = room.accommodation;
+              const tipoHabitacion = room.roomType;
 
-            // Verificar si se encontraron datos de precio para este tipo de habitación
-            if (roomPriceData) {
-              // Extraer el precio de la acomodación
-              const accommodationPrice = roomPriceData[roomAccommodation]; // Utilizar el tipo de habitación como clave
-              console.log(`la acomodacio es: ${roomAccommodation}`);
-              console.log(`Precio de la acomodación: ${accommodationPrice}`);
+              // Crear paramsN con los valores de this
+              const paramsN = {
+                pertenece: this.selectedDeparture,
+                destino: this.destination,
+                nombrePrograma: this.programName,
+                hotel: this.hotel,
+                tipoHabitacion: tipoHabitacion,
+                noches: `${this.noche.value} noches`,
+              };
 
-              // Guardar el precio de la acomodación en la habitación
-              room.accommodationPrice = accommodationPrice;
-              // Inicializar el precio total
-              let totalPrice = 0;
-              // Si hay niños en esta habitación, obtener su precio
-              let childrenPriceNumber = 0;
-              if (this.hasChildren[index]) {
-                // Obtener el precio de los niños según el tipo de acomodación
-                childrenPrice = roomPriceData.niño;
-                console.log("childrenPrice", childrenPrice);
-                this.childrenPriceNumber = parseFloat(
-                  childrenPrice.replace(/\./g, "")
+              console.log("noche escogida", this.noche.value);
+              console.log(paramsN);
+              let impuestosParaBD;
+              try {
+                // Realizar la búsqueda de transportes
+                const response = await axios.get(
+                  "https://backmultidestinos.onrender.com/transporte/por-parametros",
+                  { params: paramsN }
                 );
 
-                totalPrice += childrenPrice;
+                // 1. Obtener los nombres de los impuestos por acomodación desde la respuesta
+                const nombresImpuestosPorAcomodacion = Object.keys(
+                  response.data[0] || {}
+                ).filter((clave) =>
+                  clave
+                    .toLowerCase()
+                    .startsWith(roomAccommodation.toLowerCase() + "_")
+                );
+
+                // 2. Mostrar los nombres de los impuestos por acomodación
+                console.log(
+                  "Nombres de impuestos por acomodación:",
+                  nombresImpuestosPorAcomodacion
+                );
+
+                // 3. Crear un objeto con los impuestos y sus valores, usando los nombres de las columnas de la BD
+                this.impuestosParaBD = nombresImpuestosPorAcomodacion.reduce(
+                  (obj, nombreImpuesto) => {
+                    // Construir el nombre del campo para la BD (ej. "sencilla_ImpuestoHotel")
+                    const nombreCampoBD = `${nombreImpuesto.split("_")[0]}_${
+                      nombreImpuesto.split("_")[1]
+                    }`;
+                    // Obtener el valor del impuesto directamente desde la respuesta
+                    obj[nombreCampoBD] = response.data[0][nombreImpuesto];
+                    return obj;
+                  },
+                  {}
+                );
+
+                // 4. Mostrar el objeto impuestosParaBD
+                console.log("Impuestos para la BD:", impuestosParaBD);
+
+                // Obtener los datos de precio para el tipo de habitación seleccionado
+                const roomPriceData = datosProcesados.find(
+                  (data) => data.tipoHabitacion === roomType
+                );
+                console.log("Datos de precio encontrados:", roomPriceData);
+
+                // ... (resto del código para procesar los datos de la habitación) ...
+              } catch (error) {
+                console.error("Error al buscar transportes:", error);
+                // ... (código para manejar el error) ...
               }
-              console.log("childrenPriceNumber1", this.childrenPriceNumber);
+              // Verificar si se encontraron datos de precio para este tipo de habitación
+              if (roomPriceData) {
+                // Extraer el precio de la acomodación
+                const accommodationPrice = roomPriceData[roomAccommodation]; // Utilizar el tipo de habitación como clave
+                console.log(`la acomodacio es: ${roomAccommodation}`);
+                console.log(`Precio de la acomodación: ${accommodationPrice}`);
 
-              // Verificar si hay noches adicionales seleccionadas
-              let additionalNightTotalPriceAdulto = 0;
-              let additionalNightTotalPriceNiño = 0;
-              if (
-                this.additionalNightSelected &&
-                this.additionalNightCount > 0
-              ) {
-                // Obtener el precio de la noche adicional para adultos según el tipo de acomodación
-                const additionalNightPriceAdulto = parseFloat(
-                  roomPriceData[`nocheAdicional${roomAccommodation}`].replace(
-                    /\./g,
-                    ""
-                  )
-                );
-                console.log(
-                  "additionalNightPriceAdulto",
-                  additionalNightPriceAdulto
-                );
-                const nochesAdicionales = this.additionalNightCount;
-                console.log("nochesAdicionales", nochesAdicionales);
-                // Calcular el precio total de las noches adicionales para adultos
-                additionalNightTotalPriceAdulto =
-                  additionalNightPriceAdulto * this.additionalNightCount;
-                console.log(
-                  "additionalNightTotalPriceAdulto",
-                  additionalNightTotalPriceAdulto
-                );
-
-                // Agregar el precio total de las noches adicionales para adultos al precio total
-                totalPrice += additionalNightTotalPriceAdulto;
-
-                // Si hay niños en esta habitación, obtener el precio de la noche adicional para niños
+                // Guardar el precio de la acomodación en la habitación
+                room.accommodationPrice = accommodationPrice;
+                // Inicializar el precio total
+                let totalPrice = 0;
+                // Si hay niños en esta habitación, obtener su precio
+                let childrenPriceNumber = 0;
                 if (this.hasChildren[index]) {
-                  const additionalNightPriceNiño = parseFloat(
-                    roomPriceData[`nocheAdicionalniño`].replace(/\./g, "")
-                  );
-                  console.log(
-                    "additionalNightPriceNiño",
-                    additionalNightPriceNiño
-                  );
-
-                  // Calcular el precio total de las noches adicionales para niños
-                  additionalNightTotalPriceNiño =
-                    additionalNightPriceNiño *
-                    this.additionalNightCount *
-                    room.numChildren;
-                  console.log(
-                    "additionalNightTotalPriceNiño",
-                    additionalNightTotalPriceNiño
+                  // Obtener el precio de los niños según el tipo de acomodación
+                  childrenPrice = roomPriceData.niño;
+                  console.log("childrenPrice", childrenPrice);
+                  this.childrenPriceNumber = parseFloat(
+                    childrenPrice.replace(/\./g, "")
                   );
 
-                  // Agregar el precio total de las noches adicionales para niños al precio total
-                  totalPrice += additionalNightTotalPriceNiño;
+                  totalPrice += childrenPrice;
                 }
-              }
-              // // Calcular el precio total sumando el precio de la acomodación y otros costos adicionales
-              // room.totalPrice = totalPrice + accommodationPrice;
+                console.log("childrenPriceNumber1", this.childrenPriceNumber);
 
-              //SACAR VALOR COMISIONABLE.
-
-              const accommodationPriceNumber = parseFloat(
-                accommodationPrice.replace(/\./g, "")
-              );
-              console.log("accommodationPriceNumber", accommodationPriceNumber);
-              console.log("precioTrans", precioTrans);
-
-              const ValorComisionableAdultos =
-                accommodationPriceNumber -
-                precioTrans +
-                (this.additionalNightSelected
-                  ? additionalNightTotalPriceAdulto
-                  : 0);
-              this.ValorComisionableNiños = 0;
-              let ValorClienteNiño = 0;
-              console.log(
-                "antes de childrenPriceNumber",
-                this.childrenPriceNumber
-              );
-              if (this.hasChildren[index]) {
-                this.ValorComisionableNiños =
-                  this.childrenPriceNumber -
-                  precioTrans +
-                  additionalNightTotalPriceNiño;
-
-                this.ValorClienteNiño =
-                  this.ValorComisionableNiños -
-                  this.ValorComisionableNiños * (clientePorcentaje / 100);
-              }
-              console.log("this.ValorClienteNiño", this.ValorClienteNiño);
-              console.log("ValorComisionableAdultos", ValorComisionableAdultos);
-              console.log(
-                "ValorComisionableNiños",
-                this.ValorComisionableNiños
-              );
-
-              // PORCENTAJE
-
-              //PRECIO CON PORCENTAJE
-              const ValorClienteAdulto =
-                ValorComisionableAdultos -
-                ValorComisionableAdultos * (clientePorcentaje / 100);
-              console.log("ValorClienteAdulto", ValorClienteAdulto);
-              console.log("ValorClienteNiño", ValorClienteNiño);
-
-              //valor total descuento con adulto + niño x habitacion
-
-              const ValorCliente = ValorClienteAdulto + ValorClienteNiño;
-
-              console.log("ValorCliente", ValorCliente);
-
-              const numAdultos = room.adults;
-              const numNiños = this.hasChildren[index] ? room.numChildren : 0;
-              const valorBrutoAdulto = accommodationPriceNumber * numAdultos;
-              const valorBrutoniño =
-                (this.childrenPriceNumber ? this.childrenPriceNumber : 0) *
-                numNiños;
-              let valorBrutoTotal = valorBrutoAdulto + valorBrutoniño;
-              console.log("valorBrutoAdulto", valorBrutoAdulto);
-              console.log("valorBrutoniño", valorBrutoniño);
-              console.log("valorBrutoTotal", valorBrutoTotal);
-
-              console.log(
-                `Número de adultos en la habitación ${index + 1}: ${numAdultos}`
-              );
-              console.log(
-                `Número de niños en la habitación ${index + 1}: ${numNiños}`
-              );
-
-              const TotalAcomodacionAdulto = ValorClienteAdulto * numAdultos;
-              console.log("TotalAcomodacionAdulto", TotalAcomodacionAdulto);
-              let TotalAcomodacionNiño = this.ValorClienteNiño * numNiños;
-              console.log("TotalAcomodacionNiño", TotalAcomodacionNiño);
-              if (
-                TotalAcomodacionNiño === null ||
-                isNaN(TotalAcomodacionNiño)
-              ) {
-                TotalAcomodacionNiño = 0;
-              }
-              console.log(
-                "TotalAcomodacionNiño después de la condición",
-                TotalAcomodacionNiño
-              );
-              let TotalAcomodacion =
-                TotalAcomodacionNiño + TotalAcomodacionAdulto;
-
-              console.log("TotalAcomodacion", TotalAcomodacion);
-
-              // Agregar el número de adultos y niños al total
-              this.totalAdultos += parseInt(numAdultos);
-              this.totalNiños += numNiños;
-              const Valorporcentaje =
-                ValorComisionableAdultos * numAdultos +
-                this.ValorComisionableNiños * numNiños;
-              const descuento = Valorporcentaje * (clientePorcentaje / 100);
-              console.log("descuento", descuento);
-              console.log("Valorporcentaje", Valorporcentaje);
-
-              //IMPUESTOS CAÑO CRISTAL
-
-              // Calcular impuestos
-              let impuestosHabitacion = {
-                cormacarena5a11: 0,
-                cormacarena12a65: 0,
-                cormacarenaExtranjero: 0,
-                pqsNaturales5a24: 0,
-                pqsNaturales25a65: 0,
-                pqsNaturalesExtranjero: 0,
-                alcaldiaNacional: 0,
-                alcaldiaExtranjero: 0,
-                defensaCivil: 0,
-              };
-              let impuestosHabitacionPersonas = {
-                cormacarena5a11: 0,
-                cormacarena12a65: 0,
-                cormacarenaExtranjero: 0,
-                pqsNaturales5a24: 0,
-                pqsNaturales25a65: 0,
-                pqsNaturalesExtranjero: 0,
-                alcaldiaNacional: 0,
-                alcaldiaExtranjero: 0,
-                defensaCivil: 0,
-              };
-              console.log("Habitación actual:", room);
-
-              // Verificar si hay edades para calcular impuestos
-
-              if (
-                room.adultAges.length > 0 &&
-                this.destination === "La Macarena"
-              ) {
-                // Calcular impuestos para cada persona (adultos y niños)
-                for (let i = 0; i < room.adultAges.length; i++) {
-                  const edadPersona = room.adultAges[i];
-                  const esExtranjero = room.isForeigner[i];
-
+                // Verificar si hay noches adicionales seleccionadas
+                let additionalNightTotalPriceAdulto = 0;
+                let additionalNightTotalPriceNiño = 0;
+                if (
+                  this.additionalNightSelected &&
+                  this.additionalNightCount > 0
+                ) {
+                  // Obtener el precio de la noche adicional para adultos según el tipo de acomodación
+                  const additionalNightPriceAdulto = parseFloat(
+                    roomPriceData[`nocheAdicional${roomAccommodation}`].replace(
+                      /\./g,
+                      ""
+                    )
+                  );
                   console.log(
-                    `Calculando impuestos para la persona ${
-                      i + 1
-                    } (edad: ${edadPersona}, extranjero: ${esExtranjero})`
+                    "additionalNightPriceAdulto",
+                    additionalNightPriceAdulto
+                  );
+                  const nochesAdicionales = this.additionalNightCount;
+                  console.log("nochesAdicionales", nochesAdicionales);
+                  // Calcular el precio total de las noches adicionales para adultos
+                  additionalNightTotalPriceAdulto =
+                    additionalNightPriceAdulto * this.additionalNightCount;
+                  console.log(
+                    "additionalNightTotalPriceAdulto",
+                    additionalNightTotalPriceAdulto
                   );
 
-                  for (const impuesto of impuestosData) {
-                    const nombreImpuesto = impuesto.IMPUESTO;
+                  // Agregar el precio total de las noches adicionales para adultos al precio total
+                  totalPrice += additionalNightTotalPriceAdulto;
 
-                    console.log(`Impuesto actual: ${nombreImpuesto}`);
-
-                    if (nombreImpuesto === "cormacarena") {
-                      if (esExtranjero) {
-                        impuestosHabitacion.cormacarenaExtranjero +=
-                          parseFloat(impuesto.EXTRANJERO) || 0;
-                        impuestosHabitacionPersonas.cormacarenaExtranjero++;
-                      } else if (edadPersona >= 5 && edadPersona <= 11) {
-                        impuestosHabitacion.cormacarena5a11 +=
-                          parseFloat(impuesto["5 a 11 años"]) || 0;
-                        impuestosHabitacionPersonas.cormacarena5a11++;
-                      } else if (edadPersona >= 12 && edadPersona <= 65) {
-                        impuestosHabitacion.cormacarena12a65 +=
-                          parseFloat(impuesto["12 a 65 años"]) || 0;
-                        impuestosHabitacionPersonas.cormacarena12a65++;
-                      }
-                    } else if (nombreImpuesto === "pqsNaturales") {
-                      if (esExtranjero) {
-                        impuestosHabitacion.pqsNaturalesExtranjero +=
-                          parseFloat(impuesto.EXTRANJERO) || 0;
-                        impuestosHabitacionPersonas.pqsNaturalesExtranjero++;
-                      } else if (edadPersona >= 5 && edadPersona <= 24) {
-                        impuestosHabitacion.pqsNaturales5a24 +=
-                          parseFloat(impuesto["5 a 24 años"]) || 0;
-                        impuestosHabitacionPersonas.pqsNaturales5a24++;
-                      } else if (edadPersona >= 25 && edadPersona <= 65) {
-                        impuestosHabitacion.pqsNaturales25a65 +=
-                          parseFloat(impuesto["25 a 65 años"]) || 0;
-                        impuestosHabitacionPersonas.pqsNaturales25a65++;
-                      }
-                    } else if (nombreImpuesto === "alcaldia") {
-                      if (esExtranjero) {
-                        impuestosHabitacion.alcaldiaExtranjero +=
-                          parseFloat(impuesto.EXTRANJERO) || 0;
-                        impuestosHabitacionPersonas.alcaldiaExtranjero++;
-                      } else if (edadPersona >= 5 && edadPersona <= 1000) {
-                        // Solo para nacionales mayores de 12 años
-                        impuestosHabitacion.alcaldiaNacional +=
-                          parseFloat(impuesto["12 a 65 años"]) || 0;
-                        impuestosHabitacionPersonas.alcaldiaNacional++;
-                      }
-                    } else if (nombreImpuesto === "defensaCivil") {
-                      // Asumiendo que el impuesto de Defensa Civil se aplica a todos por igual
-                      impuestosHabitacion.defensaCivil +=
-                        parseFloat(impuesto["5 a 11 años"]) || 0;
-                      impuestosHabitacionPersonas.defensaCivil++;
-                    }
-
+                  // Si hay niños en esta habitación, obtener el precio de la noche adicional para niños
+                  if (this.hasChildren[index]) {
+                    const additionalNightPriceNiño = parseFloat(
+                      roomPriceData[`nocheAdicionalniño`].replace(/\./g, "")
+                    );
                     console.log(
-                      `   Impuesto ${nombreImpuesto} (acumulado): ${impuestosHabitacion[nombreImpuesto]}`
-                    ); // Mostrar el acumulado de cada impuesto
+                      "additionalNightPriceNiño",
+                      additionalNightPriceNiño
+                    );
+
+                    // Calcular el precio total de las noches adicionales para niños
+                    additionalNightTotalPriceNiño =
+                      additionalNightPriceNiño *
+                      this.additionalNightCount *
+                      room.numChildren;
+                    console.log(
+                      "additionalNightTotalPriceNiño",
+                      additionalNightTotalPriceNiño
+                    );
+
+                    // Agregar el precio total de las noches adicionales para niños al precio total
+                    totalPrice += additionalNightTotalPriceNiño;
                   }
                 }
-              }
+                // // Calcular el precio total sumando el precio de la acomodación y otros costos adicionales
+                // room.totalPrice = totalPrice + accommodationPrice;
 
-              console.log(
-                "Impuestos totales por habitación:",
-                impuestosHabitacion
-              );
+                //SACAR VALOR COMISIONABLE.
 
-              // Convertir impuestos a null si son 0
-              for (const impuesto in impuestosHabitacion) {
-                if (impuestosHabitacion[impuesto] === 0) {
-                  impuestosHabitacion[impuesto] = null;
+                const accommodationPriceNumber = parseFloat(
+                  accommodationPrice.replace(/\./g, "")
+                );
+                console.log(
+                  "accommodationPriceNumber",
+                  accommodationPriceNumber
+                );
+                console.log("precioTrans", precioTrans);
+
+                const ValorComisionableAdultos =
+                  accommodationPriceNumber -
+                  precioTrans +
+                  (this.additionalNightSelected
+                    ? additionalNightTotalPriceAdulto
+                    : 0);
+                this.ValorComisionableNiños = 0;
+                let ValorClienteNiño = 0;
+                console.log(
+                  "antes de childrenPriceNumber",
+                  this.childrenPriceNumber
+                );
+                if (this.hasChildren[index]) {
+                  this.ValorComisionableNiños =
+                    this.childrenPriceNumber -
+                    precioTrans +
+                    additionalNightTotalPriceNiño;
+
+                  this.ValorClienteNiño =
+                    this.ValorComisionableNiños -
+                    this.ValorComisionableNiños * (clientePorcentaje / 100);
                 }
+                console.log("this.ValorClienteNiño", this.ValorClienteNiño);
+                console.log(
+                  "ValorComisionableAdultos",
+                  ValorComisionableAdultos
+                );
+                console.log(
+                  "ValorComisionableNiños",
+                  this.ValorComisionableNiños
+                );
+
+                // PORCENTAJE
+
+                //PRECIO CON PORCENTAJE
+                const ValorClienteAdulto =
+                  ValorComisionableAdultos -
+                  ValorComisionableAdultos * (clientePorcentaje / 100);
+                console.log("ValorClienteAdulto", ValorClienteAdulto);
+                console.log("ValorClienteNiño", ValorClienteNiño);
+
+                //valor total descuento con adulto + niño x habitacion
+
+                const ValorCliente = ValorClienteAdulto + ValorClienteNiño;
+
+                console.log("ValorCliente", ValorCliente);
+
+                const numAdultos = parseInt(room.adults);
+                console.log("numAdultos", numAdultos);
+                const numNiños = this.hasChildren[index] ? room.numChildren : 0;
+                const valorBrutoAdulto = accommodationPriceNumber * numAdultos;
+                const valorBrutoniño =
+                  (this.childrenPriceNumber ? this.childrenPriceNumber : 0) *
+                  numNiños;
+                let valorBrutoTotal = valorBrutoAdulto + valorBrutoniño;
+                console.log("valorBrutoAdulto", valorBrutoAdulto);
+                console.log("valorBrutoniño", valorBrutoniño);
+                console.log("valorBrutoTotal", valorBrutoTotal);
+
+                console.log(
+                  `Número de adultos en la habitación ${
+                    index + 1
+                  }: ${numAdultos}`
+                );
+                console.log(
+                  `Número de niños en la habitación ${index + 1}: ${numNiños}`
+                );
+
+                const TotalAcomodacionAdulto = ValorClienteAdulto * numAdultos;
+                console.log("TotalAcomodacionAdulto", TotalAcomodacionAdulto);
+                let TotalAcomodacionNiño = this.ValorClienteNiño * numNiños;
+                console.log("TotalAcomodacionNiño", TotalAcomodacionNiño);
+                if (
+                  TotalAcomodacionNiño === null ||
+                  isNaN(TotalAcomodacionNiño)
+                ) {
+                  TotalAcomodacionNiño = 0;
+                }
+                console.log(
+                  "TotalAcomodacionNiño después de la condición",
+                  TotalAcomodacionNiño
+                );
+                let TotalAcomodacion =
+                  TotalAcomodacionNiño + TotalAcomodacionAdulto;
+
+                console.log("TotalAcomodacion", TotalAcomodacion);
+                console.log("totalAdultos", numAdultos);
+
+                // Agregar el número de adultosy niños al total
+                this.totalAdultos += numAdultos;
+                console.log("totalAdultos", numAdultos);
+
+                this.totalNiños += numNiños;
+                const Valorporcentaje =
+                  ValorComisionableAdultos * numAdultos +
+                  this.ValorComisionableNiños * numNiños;
+                const descuento = Valorporcentaje * (clientePorcentaje / 100);
+                console.log("descuento", descuento);
+                console.log("Valorporcentaje", Valorporcentaje);
+
+                //IMPUESTOS CAÑO CRISTAL
+
+                // Calcular impuestos
+                let impuestosHabitacion = {
+                  cormacarena5a11: 0,
+                  cormacarena12a65: 0,
+                  cormacarenaExtranjero: 0,
+                  pqsNaturales5a24: 0,
+                  pqsNaturales25a65: 0,
+                  pqsNaturalesExtranjero: 0,
+                  alcaldiaNacional: 0,
+                  alcaldiaExtranjero: 0,
+                  defensaCivil: 0,
+                };
+                let impuestosHabitacionPersonas = {
+                  cormacarena5a11: 0,
+                  cormacarena12a65: 0,
+                  cormacarenaExtranjero: 0,
+                  pqsNaturales5a24: 0,
+                  pqsNaturales25a65: 0,
+                  pqsNaturalesExtranjero: 0,
+                  alcaldiaNacional: 0,
+                  alcaldiaExtranjero: 0,
+                  defensaCivil: 0,
+                };
+                console.log("Habitación actual:", room);
+
+                // Verificar si hay edades para calcular impuestos
+
+                if (
+                  room.adultAges.length > 0 &&
+                  this.destination === "La Macarena"
+                ) {
+                  // Calcular impuestos para cada persona (adultos y niños)
+                  for (let i = 0; i < room.adultAges.length; i++) {
+                    const edadPersona = room.adultAges[i];
+                    const esExtranjero = room.isForeigner[i];
+
+                    console.log(
+                      `Calculando impuestos para la persona ${
+                        i + 1
+                      } (edad: ${edadPersona}, extranjero: ${esExtranjero})`
+                    );
+
+                    for (const impuesto of impuestosData) {
+                      const nombreImpuesto = impuesto.IMPUESTO;
+
+                      console.log(`Impuesto actual: ${nombreImpuesto}`);
+
+                      if (nombreImpuesto === "cormacarena") {
+                        if (esExtranjero) {
+                          impuestosHabitacion.cormacarenaExtranjero +=
+                            parseFloat(impuesto.EXTRANJERO) || 0;
+                          impuestosHabitacionPersonas.cormacarenaExtranjero++;
+                        } else if (edadPersona >= 5 && edadPersona <= 11) {
+                          impuestosHabitacion.cormacarena5a11 +=
+                            parseFloat(impuesto["5 a 11 años"]) || 0;
+                          impuestosHabitacionPersonas.cormacarena5a11++;
+                        } else if (edadPersona >= 12 && edadPersona <= 65) {
+                          impuestosHabitacion.cormacarena12a65 +=
+                            parseFloat(impuesto["12 a 65 años"]) || 0;
+                          impuestosHabitacionPersonas.cormacarena12a65++;
+                        }
+                      } else if (nombreImpuesto === "pqsNaturales") {
+                        if (esExtranjero) {
+                          impuestosHabitacion.pqsNaturalesExtranjero +=
+                            parseFloat(impuesto.EXTRANJERO) || 0;
+                          impuestosHabitacionPersonas.pqsNaturalesExtranjero++;
+                        } else if (edadPersona >= 5 && edadPersona <= 24) {
+                          impuestosHabitacion.pqsNaturales5a24 +=
+                            parseFloat(impuesto["5 a 24 años"]) || 0;
+                          impuestosHabitacionPersonas.pqsNaturales5a24++;
+                        } else if (edadPersona >= 25 && edadPersona <= 65) {
+                          impuestosHabitacion.pqsNaturales25a65 +=
+                            parseFloat(impuesto["25 a 65 años"]) || 0;
+                          impuestosHabitacionPersonas.pqsNaturales25a65++;
+                        }
+                      } else if (nombreImpuesto === "alcaldia") {
+                        if (esExtranjero) {
+                          impuestosHabitacion.alcaldiaExtranjero +=
+                            parseFloat(impuesto.EXTRANJERO) || 0;
+                          impuestosHabitacionPersonas.alcaldiaExtranjero++;
+                        } else if (edadPersona >= 5 && edadPersona <= 1000) {
+                          // Solo para nacionales mayores de 12 años
+                          impuestosHabitacion.alcaldiaNacional +=
+                            parseFloat(impuesto["12 a 65 años"]) || 0;
+                          impuestosHabitacionPersonas.alcaldiaNacional++;
+                        }
+                      } else if (nombreImpuesto === "defensaCivil") {
+                        // Asumiendo que el impuesto de Defensa Civil se aplica a todos por igual
+                        impuestosHabitacion.defensaCivil +=
+                          parseFloat(impuesto["5 a 11 años"]) || 0;
+                        impuestosHabitacionPersonas.defensaCivil++;
+                      }
+
+                      console.log(
+                        `   Impuesto ${nombreImpuesto} (acumulado): ${impuestosHabitacion[nombreImpuesto]}`
+                      ); // Mostrar el acumulado de cada impuesto
+                    }
+                  }
+                }
+
+                console.log(
+                  "Impuestos totales por habitación:",
+                  impuestosHabitacion
+                );
+
+                // Convertir impuestos a null si son 0
+                for (const impuesto in impuestosHabitacion) {
+                  if (impuestosHabitacion[impuesto] === 0) {
+                    impuestosHabitacion[impuesto] = null;
+                  }
+                }
+
+                console.log(
+                  "Impuestos calculados para la habitación:",
+                  impuestosHabitacion
+                ); // Verificar impuestos calculados
+                console.log(
+                  "Número de personas por impuesto:",
+                  impuestosHabitacionPersonas
+                );
+                //FIN IMPUESTOS CAÑO CRISTAL
+                console.log(
+                  "        this.impuestosParaBD ",
+                  this.impuestosParaBD
+                );
+                this.habitacionesDatos.push({
+                  idCotizacion: "",
+                  adultos: numAdultos,
+                  niños: numNiños,
+                  acomodacion: roomAccommodation,
+                  tipoHabitacion: roomType,
+
+                  //preciosTotales
+                  precioFlayerAdulto: accommodationPriceNumber,
+                  precioFlayerNino: this.childrenPriceNumber,
+
+                  //valores brutos
+                  precioHabitacionNino: valorBrutoniño,
+                  precioHabitacionAdulto: valorBrutoAdulto,
+                  precioHabitacionTotal: valorBrutoTotal,
+
+                  //comisionables
+                  precioComisionableAdulto: ValorComisionableAdultos,
+                  precioComisionableNino: this.ValorComisionableNiños,
+
+                  //descuentos
+
+                  valorDescuentoHabitacionNino: this.ValorClienteNiño,
+
+                  valorDescuentoHabitacionAdulto: ValorClienteAdulto,
+                  valorDescuentoCliente: ValorCliente,
+                  descuento: descuento,
+
+                  TotalAcomodacionAdulto: TotalAcomodacionAdulto,
+                  TotalAcomodacionNino: TotalAcomodacionNiño,
+                  TotalAcomodacion: TotalAcomodacion,
+
+                  //EDADES SOLO SI ES CAÑO CRISTAL
+                  edadesAdultos: room.adultAges
+                    .filter((age) => age !== null)
+                    .join(","),
+                  edadNino: room.childAge !== null ? room.childAge : null,
+                  extranjero: room.isForeigner // Nuevo campo con la información de extranjeros
+                    .map((isForeign) => (isForeign ? "SI" : "NO")) // Convertir a "SI" o "NO"
+                    .join(","), // Unir en una cadena separada por comas
+                  ...this.impuestosParaBD,
+
+                  //impuestos:
+                  // defensaCivil: impuestosHabitacion.defensaCivil,
+                  // defensaCivilPersonas: impuestosHabitacionPersonas.defensaCivil,
+
+                  //2
+                  // alcaldiaNacional: impuestosHabitacion.alcaldiaNacional,
+                  // alcaldiaNacionalPersonas:
+                  //   impuestosHabitacionPersonas.alcaldiaNacional,
+                  // alcaldiaExtranjero: impuestosHabitacion.alcaldiaExtranjero,
+                  // alcaldiaExtranjeroPersonas:
+                  //   impuestosHabitacionPersonas.alcaldiaExtranjero,
+
+                  //3
+                  // pqsNaturalesExtranjero:
+                  //   impuestosHabitacion.pqsNaturalesExtranjero,
+                  // pqsNaturalesExtranjeroPersonas:
+                  //   impuestosHabitacionPersonas.pqsNaturalesExtranjero,
+                  // pqsNaturales25a65: impuestosHabitacion.pqsNaturales25a65,
+                  // pqsNaturales25a65Personas:
+                  //   impuestosHabitacionPersonas.pqsNaturales25a65,
+                  // pqsNaturales5a24: impuestosHabitacion.pqsNaturales5a24,
+                  // pqsNaturales5a24Personas:
+                  //   impuestosHabitacionPersonas.pqsNaturales5a24,
+                  //3
+                  // cormacarenaExtranjero:
+                  //   impuestosHabitacion.cormacarenaExtranjero,
+                  // cormacarenaExtranjeroPersonas:
+                  //   impuestosHabitacionPersonas.cormacarenaExtranjero,
+                  // cormacarena5a11: impuestosHabitacion.cormacarena5a11,
+                  // cormacarena5a11Personas:
+                  //   impuestosHabitacionPersonas.cormacarena5a11,
+                  // cormacarena12a65: impuestosHabitacion.cormacarena12a65,
+                  // cormacarena12a65Personas:
+                  //   impuestosHabitacionPersonas.cormacarena12a65,
+                  // Agrega otros valores que desees enviar
+                });
+                console.log(
+                  "habitacionesDatos después del push:",
+                  this.habitacionesDatos
+                );
+              } else {
+                console.log(
+                  "No se encontraron datos de precio para esta habitación"
+                );
               }
-
-              console.log(
-                "Impuestos calculados para la habitación:",
-                impuestosHabitacion
-              ); // Verificar impuestos calculados
-              console.log(
-                "Número de personas por impuesto:",
-                impuestosHabitacionPersonas
-              );
-              //FIN IMPUESTOS CAÑO CRISTAL
-
-              this.habitacionesDatos.push({
-                idCotizacion: "",
-                adultos: numAdultos,
-                niños: numNiños,
-                acomodacion: roomAccommodation,
-                tipoHabitacion: roomType,
-
-                //preciosTotales
-                precioFlayerAdulto: accommodationPriceNumber,
-                precioFlayerNino: this.childrenPriceNumber,
-
-                //valores brutos
-                precioHabitacionNino: valorBrutoniño,
-                precioHabitacionAdulto: valorBrutoAdulto,
-                precioHabitacionTotal: valorBrutoTotal,
-
-                //comisionables
-                precioComisionableAdulto: ValorComisionableAdultos,
-                precioComisionableNino: this.ValorComisionableNiños,
-
-                //descuentos
-
-                valorDescuentoHabitacionNino: this.ValorClienteNiño,
-
-                valorDescuentoHabitacionAdulto: ValorClienteAdulto,
-                valorDescuentoCliente: ValorCliente,
-                descuento: descuento,
-
-                TotalAcomodacionAdulto: TotalAcomodacionAdulto,
-                TotalAcomodacionNino: TotalAcomodacionNiño,
-                TotalAcomodacion: TotalAcomodacion,
-
-                //EDADES SOLO SI ES CAÑO CRISTAL
-                edadesAdultos: room.adultAges
-                  .filter((age) => age !== null)
-                  .join(","),
-                edadNino: room.childAge !== null ? room.childAge : null,
-                extranjero: room.isForeigner // Nuevo campo con la información de extranjeros
-                  .map((isForeign) => (isForeign ? "SI" : "NO")) // Convertir a "SI" o "NO"
-                  .join(","), // Unir en una cadena separada por comas
-
-                //impuestos:
-                defensaCivil: impuestosHabitacion.defensaCivil,
-                defensaCivilPersonas: impuestosHabitacionPersonas.defensaCivil,
-
-                //2
-                alcaldiaNacional: impuestosHabitacion.alcaldiaNacional,
-                alcaldiaNacionalPersonas:
-                  impuestosHabitacionPersonas.alcaldiaNacional,
-                alcaldiaExtranjero: impuestosHabitacion.alcaldiaExtranjero,
-                alcaldiaExtranjeroPersonas:
-                  impuestosHabitacionPersonas.alcaldiaExtranjero,
-
-                //3
-                pqsNaturalesExtranjero:
-                  impuestosHabitacion.pqsNaturalesExtranjero,
-                pqsNaturalesExtranjeroPersonas:
-                  impuestosHabitacionPersonas.pqsNaturalesExtranjero,
-                pqsNaturales25a65: impuestosHabitacion.pqsNaturales25a65,
-                pqsNaturales25a65Personas:
-                  impuestosHabitacionPersonas.pqsNaturales25a65,
-                pqsNaturales5a24: impuestosHabitacion.pqsNaturales5a24,
-                pqsNaturales5a24Personas:
-                  impuestosHabitacionPersonas.pqsNaturales5a24,
-                //3
-                cormacarenaExtranjero:
-                  impuestosHabitacion.cormacarenaExtranjero,
-                cormacarenaExtranjeroPersonas:
-                  impuestosHabitacionPersonas.cormacarenaExtranjero,
-                cormacarena5a11: impuestosHabitacion.cormacarena5a11,
-                cormacarena5a11Personas:
-                  impuestosHabitacionPersonas.cormacarena5a11,
-                cormacarena12a65: impuestosHabitacion.cormacarena12a65,
-                cormacarena12a65Personas:
-                  impuestosHabitacionPersonas.cormacarena12a65,
-                // Agrega otros valores que desees enviar
-              });
-            } else {
-              console.log(
-                "No se encontraron datos de precio para esta habitación"
-              );
-            }
-          });
+            })
+          );
         } catch (error) {
           // Maneja cualquier error que pueda ocurrir durante las solicitudes
           console.log("error");
@@ -5954,7 +6318,6 @@ export default {
 
         // Ahora tienes el total de adultos y niños de todos los cuartos
         console.log("Array de habitacionesDatos:", this.habitacionesDatos);
-
         console.log("Total de adultos:", this.totalAdultos);
         console.log("Total de niños:", this.totalNiños);
 
@@ -5978,9 +6341,72 @@ export default {
         // console.log("TOTALBRUTO DESPUES DE IMPUESTOS ", valorBrutoTotal);
         // fin otros
         // Iterar sobre el array habitacionesDatos
+        console.log("ENTRANDOOOOO HABITACION COSOTOS");
         this.habitacionesDatos.forEach((habitacion) => {
+          // Nombres de las columnas de impuestos
+          console.log("ENTRANDOOOOO222 HABITACION COSOTOS");
+
+          console.log(
+            "habitacion.TotalAcomodacion;",
+            habitacion.TotalAcomodacion
+          );
+
+          const nombresColumnasImpuestos = [
+            "sencilla_ImpuestoHotel",
+            "doble_ImpuestoHotel",
+            "triple_ImpuestoHotel",
+            "cuadruple_ImpuestoHotel",
+            "quintuple_ImpuestoHotel",
+            "sextuple_ImpuestoHotel",
+            "niño_ImpuestoHotel",
+            "sencilla_ImpuestoIngr",
+            "doble_ImpuestoIngr",
+            "triple_ImpuestoIngr",
+            "cuadruple_ImpuestoIngr",
+            "quintuple_ImpuestoIngr",
+            "sextuple_ImpuestoIngr",
+            "niño_ImpuestoIngr",
+            "sencilla_Impoconsumo",
+            "doble_Impoconsumo",
+            "triple_Impoconsumo",
+            "cuadruple_Impoconsumo",
+            "quintuple_Impoconsumo",
+            "sextuple_Impoconsumo",
+            "niño_Impoconsumo",
+          ];
+
           // Sumar el valor de TotalAcomodacion de cada habitación a la suma total
           this.sumaTotalAcomodacion += habitacion.TotalAcomodacion;
+          console.log(
+            "suma total antes de los totales otros",
+            this.sumaTotalAcomodacion
+          );
+          //VALOR SUMA SUMATOTALACOMODACION
+          for (const propiedad in habitacion) {
+            console.log("propiedad", propiedad);
+            const valor = habitacion[propiedad];
+            const valorEntero = Number(valor);
+
+            // Verificar si la propiedad es un impuesto y si tiene un valor numérico
+            if (nombresColumnasImpuestos.includes(propiedad)) {
+              console.log("si paso", valorEntero);
+              console.log(
+                "suma total antesitos de los totales otros",
+                this.sumaTotalAcomodacion
+              );
+              this.sumaTotalAcomodacion += valorEntero; // Sumar el valor del impuesto
+              this.sumaValorBrutohab += valorEntero; // Sumar el valor del impuesto
+              console.log(
+                "suma total despusito de los totales otros",
+                this.sumaTotalAcomodacion
+              );
+            }
+          }
+          console.log(
+            "despues suma total antes de los totales otros",
+            this.sumaTotalAcomodacion
+          );
+
           this.sumaValorBrutohab += habitacion.precioHabitacionTotal;
           this.sumaTotalDescuento += habitacion.descuento;
 
@@ -6171,9 +6597,12 @@ export default {
           this.totalAdultos + (this.totalNiños ? this.totalNiños : 0);
 
         console.log("totalPasajeros", totalPasajeros);
+        console.log("1combus", this.combus);
 
         combus *= totalPasajeros;
         tasa *= totalPasajeros;
+        console.log("despuescombus2.0", combus);
+
         iva *= totalPasajeros;
         ta *= totalPasajeros;
         ivaTa *= totalPasajeros;
@@ -6181,7 +6610,7 @@ export default {
         precioTrans *= totalPasajeros;
         this.sumaTotalAcomodacion += precioTrans;
 
-        console.log("combus", combus);
+        console.log("combus multi", combus);
         console.log("precioTrans", precioTrans);
         //suma nueva total precioClienteAcomodacion
         if (clienteTipoBase === "Comisión") {
@@ -6220,6 +6649,10 @@ export default {
         } else {
           this.tieneImpuestos = true; // Tiene impuestos
         }
+
+        console.log("llego a formData");
+        console.log("combus", this.combus);
+
         const formData = {
           // idCotizacion: idCotizacion,
           salida: this.selectedDeparture,
@@ -6283,38 +6716,16 @@ export default {
           rteIca: rteIcaCalculado,
           totalComision: totalComision,
           correo: this.correo,
-          // tiene impuesttos?
-          //VALORES IMPUESTOS
 
-          // cormacarena5a11_Total: this.cormacarena5a11Total,
-          // cormacarena12a65_Total: this.cormacarena12a65Total,
-          // cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
-          // pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
-          // pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
-          // pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
-          // alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
-          // alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
-          // defensaCivil_Total: this.defensaCivilTotal,
-          // //personas Impuestos Total
-          // defensaCivil_numeroPersonas: this.defensaCivilPersonas,
-          // alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
-          // alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
-          // pqsNaturalesExtranjero_numeroPersonas:
-          //   this.pqsNaturalesExtranjeroPersonas,
-          // pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
-          // pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
-          // cormacarenaExtranjero_numeroPersonas:
-          //   this.cormacarenaExtranjeroPersonas,
-          // cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
-          // cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
           transfer: this.transferInOutValue || null,
-          asesorExterno: this.selectedUser.value || null,
+          asesorExterno: "this.selectedUser.value || null",
           extra1: extraValuesString || null,
           incluye: null,
           noIncluye: null,
           status: "pendiente",
           tieneImpuestos: this.tieneImpuestos,
         };
+        console.log("formData", formData);
         console.log("formData", formData);
 
         // Realizar la solicitud para guardar la cotización con los precios de las habitaciones
@@ -6401,13 +6812,16 @@ export default {
           color: "positive",
         });
 
-        this.resetVariables();
         // Llama al método para cerrar el modal
         this.closeModal();
+        this.resetVariables();
+
         // window.location.reload(); QUITAR
         // Manejar la respuesta del servidor si es necesario
       } catch (error) {
         console.error("Error al guardar la cotización:", error);
+        this.closeModal();
+
         this.resetVariables();
 
         this.$q.notify({
@@ -7154,13 +7568,13 @@ export default {
           valorDescuento: this.sumaTotalDescuento,
 
           //transporte
-          combus: combus,
-          tasa: tasa,
-          iva: iva,
-          ta: ta,
-          ivaTa: ivaTa,
-          otros: otros,
-          precioTrans: precioTrans, // Este es el valor real, no una cadena literal
+          combus: this.combus,
+          tasa: this.tasa,
+          iva: this.iva,
+          ta: this.ta,
+          ivaTa: this.ivaTa,
+          otros: this.otros,
+          precioTrans: this.precioTrans, // Este es el valor real, no una cadena literal
 
           suplemento: valorSuplemento,
 

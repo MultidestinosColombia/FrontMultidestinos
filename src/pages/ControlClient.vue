@@ -430,6 +430,8 @@
       </q-card>
     </q-dialog>
 
+  
+
     <q-table
       :rows="clientes"
       :columns="[
