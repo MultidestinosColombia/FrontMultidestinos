@@ -3244,7 +3244,7 @@ export default {
         const hotelincluye = hotelesResponse.data[0].incluye;
         const hotelnoincluye = hotelesResponse.data[0].noIncluye;
 
-       // Crear el documento PDF
+        // Crear el documento PDF
         const doc = new jsPDF();
         const margins = { top: 15, bottom: 10, left: 15, right: 15 };
         const pageWidth = doc.internal.pageSize.width;
@@ -3264,7 +3264,8 @@ export default {
 
         // Calcular dimensiones de la imagen
         const aspectRatio = imgData.width / imgData.height;
-        const maxImgWidth = pageWidth / 4 - headerPadding.left - headerPadding.right;
+        const maxImgWidth =
+          pageWidth / 4 - headerPadding.left - headerPadding.right;
         const imgWidth = Math.min(120, maxImgWidth);
         const imgHeight = imgWidth / aspectRatio;
         const imgY = margins.top + (headerHeight - imgHeight) / 2;
@@ -3336,7 +3337,6 @@ export default {
           headerHeight,
           "F"
         );
-
 
         // Sección: SOLICITUD DE RESERVA
         doc.setFontSize(10); // Tamaño de fuente para el título
@@ -4937,27 +4937,82 @@ export default {
 
         currentY = liquidacionTop + currentRow * cellHeight + 10; // Actualizar currentY después de las filas de habitaciones
 
-        // Nombres reflejando los valores
-        const nombres = [
-          "TRANSPORTE NO COMISI",
-          "Q",
-          "YS",
-          "CO",
-          "TA",
-          "YS TA",
-          "TOTAL IMPUESTOS",
+        const nombresHabitacion = [
+          "sencilla_ImpuestoHotel",
+          "doble_ImpuestoHotel",
+          "triple_ImpuestoHotel",
+          "cuadruple_ImpuestoHotel",
+          "quintuple_ImpuestoHotel",
+          "sextuple_ImpuestoHotel",
+          "niño_ImpuestoHotel",
+          "sencilla_ImpuestoIngr",
+          "doble_ImpuestoIngr",
+          "triple_ImpuestoIngr",
+          "cuadruple_ImpuestoIngr",
+          "quintuple_ImpuestoIngr",
+          "sextuple_ImpuestoIngr",
+          "niño_ImpuestoIngr",
+          "sencilla_Impoconsumo",
+          "doble_Impoconsumo",
+          "triple_Impoconsumo",
+          "cuadruple_Impoconsumo",
+          "quintuple_Impoconsumo",
+          "sextuple_Impoconsumo",
+          "niño_Impoconsumo",
         ];
+        const nombres = [];
+        const valores = [];
 
-        // Valores correspondientes
-        const valores = [
-          cotizacion.otros,
-          cotizacion.combus,
-          cotizacion.iva,
-          cotizacion.tasa,
-          cotizacion.ta,
-          cotizacion.ivaTa,
-          cotizacion.precioTrans,
-        ];
+        // *** NUEVA SECCIÓN: Manejo de 'habitacion' (ANTES DE "TOTAL IMPUESTOS") ***
+        if (Array.isArray(habitacion)) {
+          habitacion.forEach((habitacionData) => {
+            nombresHabitacion.forEach((nombre) => {
+              const valor = habitacionData[nombre];
+              if (valor != null && valor != undefined && valor !== "") {
+                nombres.push(nombre);
+                valores.push(valor);
+              }
+            });
+          });
+        } else if (typeof habitacion === "object" && habitacion !== null) {
+          nombresHabitacion.forEach((nombre) => {
+            const valor = habitacion[nombre];
+            if (valor != null && valor != undefined && valor !== "") {
+              nombres.push(nombre);
+              valores.push(valor);
+            }
+          });
+        }
+
+        // *** SECCIÓN ORIGINAL (modificada) ***
+
+        // Datos de cotización (hasta "YS TA")
+        nombres.push("TRANSPORTE NO COMISI");
+        valores.push(cotizacion.otros);
+
+        nombres.push("Q");
+        valores.push(cotizacion.combus);
+
+        nombres.push("YS");
+        valores.push(cotizacion.iva);
+
+        nombres.push("CO");
+        valores.push(cotizacion.tasa);
+
+        nombres.push("TA");
+        valores.push(cotizacion.ta);
+
+        nombres.push("YS TA");
+        valores.push(cotizacion.ivaTa);
+
+        // *** Insertar "TOTAL IMPUESTOS" después de los datos de habitación ***
+        nombres.push("TOTAL IMPUESTOS");
+        valores.push(cotizacion.precioTrans);
+
+        if (cotizacion.suplemento > 0) {
+          nombres.push("SUPLEMENTO");
+          valores.push(cotizacion.suplemento);
+        }
 
         if (cotizacion.suplemento > 0) {
           nombres.push("SUPLEMENTO");
@@ -6409,8 +6464,23 @@ export default {
                 "suma total antesitos de los totales otros",
                 this.sumaTotalAcomodacion
               );
-              this.sumaTotalAcomodacion += valorEntero; // Sumar el valor del impuesto
-              this.sumaValorBrutohab += valorEntero; // Sumar el valor del impuesto
+              const valorEntero2 = habitacion.adultos * valorEntero;
+              habitacion[propiedad] = valorEntero2;
+
+              console.log("cantidad adultos", habitacion.adultos);
+              console.log("cantidad adultos2", valorEntero2);
+
+              console.log("valor despues de multiplicaion", valorEntero);
+              if (habitacion.niños) {
+                console.log("entro a niños");
+
+                valorEntero2 += habitacion.niños * valorEntero;
+                habitacion[propiedad] += valorEntero2;
+
+                console.log("entro a niños valor:", valorEntero2);
+              }
+              this.sumaTotalAcomodacion += valorEntero2; // Sumar el valor del impuesto
+              this.sumaValorBrutohab += valorEntero2; // Sumar el valor del impuesto
               console.log(
                 "suma total despusito de los totales otros",
                 this.sumaTotalAcomodacion
