@@ -2783,7 +2783,7 @@ export default {
         }
 
         // Obtener la lista de tipos de habitación de la respuesta del servidor
-        const tiposDeHabitacion = response.data.map(
+        const tiposDeHabitacion = validPrograms.map(
           (item) => item.tipoHabitacion
         );
 
