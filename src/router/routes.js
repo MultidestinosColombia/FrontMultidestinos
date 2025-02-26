@@ -35,6 +35,10 @@ const routes = [
         name: "DetallesPlan",
         component: DetallesPlanView,
       },
+      {
+        path: "/ControlLiquidacion",
+        component: () => import("pages/ControlLiquidacion.vue"),
+      },
     ],
   },
   {

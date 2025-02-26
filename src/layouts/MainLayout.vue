@@ -25,49 +25,89 @@
     >
       <q-scroll-area class="fit" :horizontal-thumb-style="{ opacity: 0 }">
         <q-list padding>
-          <q-item clickable @click="goPage('/home')">
+
+
+          <q-item clickable @click="goPage('/home')" class="q-hover-shadow" dense>
             <q-item-section avatar>
-              <q-icon name="home" />
+              <q-icon name="home" color="blue-7" size="md" />
             </q-item-section>
-            <q-item-section>Inicio</q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Inicio</q-item-label>
+            </q-item-section>
           </q-item>
-          <q-item clickable @click="goPage('/cotizacion')">
+
+
+
+          <q-item clickable @click="goPage('/cotizacion')" class="q-hover-shadow" dense>
             <q-item-section avatar>
-              <q-icon name="description" />
+              <q-icon name="description" color="purple-7" size="md" />
             </q-item-section>
-            <q-item-section>Cotización</q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Cotización</q-item-label>
+            </q-item-section>
           </q-item>
-          <q-item clickable @click="goPage('/liquidacion')">
+
+
+
+          <q-item clickable @click="goPage('/liquidacion')" class="q-hover-shadow" dense>
             <q-item-section avatar>
-              <q-icon name="task" />
+              <q-icon name="task_alt" color="orange-7" size="md" />
             </q-item-section>
-            <q-item-section>Liquidacion</q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Liquidación</q-item-label>
+            </q-item-section>
           </q-item>
+
 
           <q-item
             v-if="userRole === 'administrador'"
             clickable
             @click="goPage('/ControlUser')"
+            class="q-hover-shadow"
+            dense
           >
             <q-item-section avatar>
-              <q-icon name="manage_accounts" />
+              <q-icon name="manage_accounts" color="red-7" size="md" />
             </q-item-section>
-            <q-item-section>Control Usuarios</q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Control</q-item-label>
+              <q-item-label class="text-weight-bold ellipsis">Usuarios</q-item-label>
+            </q-item-section>
           </q-item>
 
-          <q-item clickable @click="goPage('/ControlClient')">
+
+          <q-item clickable @click="goPage('/ControlClient')" class="q-hover-shadow" dense>
             <q-item-section avatar>
-              <q-icon name="group" />
+              <q-icon name="groups" color="teal-7" size="md" />
             </q-item-section>
-            <q-item-section>Control Clientes</q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Control</q-item-label>
+              <q-item-label class="text-weight-bold ellipsis">Clientes</q-item-label>
+            </q-item-section>
           </q-item>
 
-          <q-item clickable @click="goPage('/ControlPlanes')">
+
+          <q-item clickable @click="goPage('/ControlPlanes')" class="q-hover-shadow" dense>
             <q-item-section avatar>
-              <q-icon name="add_box" />
+              <q-icon name="playlist_add_check" color="blue-7" size="md" />
             </q-item-section>
-            <q-item-section>Control Planes</q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Control</q-item-label>
+              <q-item-label class="text-weight-bold ellipsis">Planes</q-item-label>
+            </q-item-section>
           </q-item>
+
+
+          <q-item clickable @click="goPage('/ControlLiquidacion')" class="q-hover-shadow" dense>
+            <q-item-section avatar>
+              <q-icon name="monetization_on" color="green-7" size="md" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label overline class="text-uppercase text-primary">Control</q-item-label>
+              <q-item-label class="text-weight-bold ellipsis">Liquidaciones</q-item-label>
+            </q-item-section>
+          </q-item>
+
           <!-- <q-item clickable @click="goPage('/cotizacion')">
             <q-item-section avatar>
               <q-icon name="logout" />

@@ -2664,6 +2664,10 @@ export default {
     this.cargarTransportes();
   },
 
+  build: {
+    chunkSizeWarningLimit: 1024, // Aumenta el límite a 1MB
+  },
+
   methods: {
     //EDITAR
 

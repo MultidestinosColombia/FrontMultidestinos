@@ -3572,6 +3572,9 @@ export default {
           "CO",
           "TA",
           "YS TA",
+          "Impuesto Hotel",
+          "Impuesto Ingreso",
+          "Impoconsumo",
 
           "defensaCivil",
           "alcaldiaNacional",
@@ -3592,6 +3595,9 @@ export default {
           cotizacion.tasa,
           cotizacion.ta,
           cotizacion.ivaTa,
+          cotizacion.Impuesto_Hotel,
+          cotizacion.Impuesto_Ingreso,
+          cotizacion.Impoconsumo,
           impuesto.defensaCivil_Total,
           impuesto.alcaldiaNacional_Total,
           impuesto.alcaldiaExtranjero_Total,
@@ -3981,6 +3987,9 @@ export default {
         console.error("Error al descargar cotización:", error);
       }
     },
+
+
+    //---------------------------------------------------------------------------------------------Documento Normal------------------------------------------------------------------------------------------------//
     async descargarCotizacion(idCotizacion) {
       try {
         // Realizar las solicitudes HTTP para obtener los datos
@@ -4503,8 +4512,8 @@ export default {
           noIncluyeHeight
         );
         currentY = maxLineY + 15;
-        //------------------------------------
-        // Sección: LIQUIDACIÓN
+        //--------------------------------------------------------------------------------------------------------------------------//
+        //----------------------------------------------- Sección: LIQUIDACIÓN -----------------------------------------------------//
         // Título de la sección LIQUIDACIÓN
         doc.setFontSize(10);
         doc.text("LIQUIDACIÓN:", margins.left, currentY);
@@ -4513,33 +4522,35 @@ export default {
         // Variables de configuración de la tabla
         const liquidacionTop = currentY + 5;
         const cellPadding = 2;
-        const cellHeight = 6; // Altura de cada celda
+        const cellHeight = 7; // Altura de cada celda
         const tableWidth = pageWidth - margins.left - margins.right;
         const cellWidth = tableWidth / 6; // Ajustar para 6 columnas
 
         // Dibujar el borde de la tabla
         doc.setDrawColor(0); // Color del borde
 
-        // Función para dibujar una fila
-        function drawRow(y) {
+        // Función para dibujar una fila con bordes claros y mejor alineación
+        function drawRow(y, isHeader = false) {
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.3); // Grosor del borde
           for (let j = 0; j <= 6; j++) {
             const x = margins.left + j * cellWidth;
-            doc.line(x, y, x, y + cellHeight); // Dibujar columna
+            doc.line(x, y, x, y + cellHeight);
           }
-          doc.line(margins.left, y, pageWidth - margins.right, y); // Dibujar fila superior
-          doc.line(
-            margins.left,
-            y + cellHeight,
-            pageWidth - margins.right,
-            y + cellHeight
-          ); // Dibujar fila inferior
+          doc.line(margins.left, y, pageWidth - margins.right, y);
+          doc.line(margins.left, y + cellHeight, pageWidth - margins.right, y + cellHeight);
+
+          if (isHeader) {
+            doc.setFillColor(200, 200, 200);
+            doc.rect(margins.left, y, tableWidth, cellHeight, "F");
+          }
         }
 
         // Variables para las sumas
         let sumaTotalHabitaciones = 0;
 
         // Ajustar tamaño de fuente para el contenido de las celdas
-        doc.setFontSize(7);
+        doc.setFontSize(8);
 
         // Iterar a través de las habitaciones y añadir datos a la tabla
         let currentRow = 0;
@@ -4673,6 +4684,10 @@ export default {
 
         currentY = liquidacionTop + currentRow * cellHeight + 10; // Actualizar currentY después de las filas de habitaciones
 
+
+
+
+
         // Nombres reflejando los valores
         const nombres = [
           "TRANSPORTE NO COMISI",
@@ -4734,15 +4749,42 @@ export default {
 
           // Segunda columna: Valor dividido por el total de pasajeros
           const totalPasajeros = cotizacion.totalPasajeros;
-          const valor = valores[index] || 0;
+          const impuesto_Hotel = cotizacion.Impuesto_Hotel || "";
+          const impuesto_Ingreso = cotizacion.Impuesto_Hotel || "";
+          const impoconsumo = cotizacion.Impuesto_Hotel || "";
+
+
+          const valor = valores[index] !== undefined && valores[index] !== null ? valores[index] : "";
           const valorDividido =
-            totalPasajeros !== 0 ? Math.trunc(valor / totalPasajeros) : "";
+            totalPasajeros !== 0 && valor !== "" ? Math.trunc(valor / totalPasajeros) : "";
           doc.text(
             valorDividido.toString(),
             margins.left + cellWidth + cellPadding,
             y + cellHeight / 2,
             { baseline: "middle" }
           );
+
+          doc.text(
+            impuesto_Hotel || "",
+            margins.left + 4 * cellWidth + cellPadding,
+            y + cellHeight / 2,
+            { baseline: "middle" }
+          );
+
+          doc.text(
+            impuesto_Ingreso || " ",
+            margins.left + 5 * cellWidth + cellPadding,
+            y + cellHeight / 2,
+            { baseline: "middle" }
+          );
+
+          doc.text(
+            impoconsumo || " ",
+            margins.left + 6 * cellWidth + cellPadding,
+            y + cellHeight / 2,
+            { baseline: "middle" }
+          );
+
 
           // Tercera columna: Número total de pasajeros
           const totalPasajerosTexto =
@@ -5340,6 +5382,9 @@ export default {
         throw error; // Propaga el error para que pueda ser manejado fuera de esta función si es necesario
       }
     },
+
+
+    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
     async saveFormData() {
       //
@@ -6432,7 +6477,7 @@ export default {
       }
     },
 
-    //GUARDAR PARA EL PERSONALIZADO.
+    //---------------------------------------------------------------------  GUARDAR PARA EL PERSONALIZADO.----------------------------------------------------------------//
     async saveFormDataPersonalizado() {
       //
       // Iterar sobre los datos de transporte y calcular totales

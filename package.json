@@ -27,7 +27,7 @@
     "pdf-lib": "^1.17.1",
     "proyecto-multidestinos": "file:",
     "quasar": "^2.8.0",
-    "sweetalert2": "^11.14.5",
+    "sweetalert2": "^11.16.0",
     "vue": "^3.4.18",
     "vue-router": "^4.0.12",
     "vuex": "^4.1.0",
