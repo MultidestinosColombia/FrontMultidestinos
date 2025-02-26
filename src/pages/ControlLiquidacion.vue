@@ -2091,7 +2091,7 @@ export default {
     async fetchData() {
       this.loading = true;
       try {
-        const baseURL = "http://localhost:8010/ControlLiquidacion";
+        const baseURL = "https://backmultidestinos.onrender.com/ControlLiquidacion";
 
         // Verificar que el servidor esté respondiendo
         const responses = await Promise.all([
