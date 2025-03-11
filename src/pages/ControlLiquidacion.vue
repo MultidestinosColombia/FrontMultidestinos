@@ -20,8 +20,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:top-right>
               <q-btn
@@ -171,8 +169,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -197,8 +193,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -220,8 +214,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -245,8 +237,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -268,8 +258,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -293,8 +281,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -318,8 +304,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -344,8 +328,6 @@
             dense
             :loading="loading"
             class="custom-table"
-            hide-pagination
-            hide-bottom
           >
             <template v-slot:body="props">
               <q-tr :props="props" class="hover-effect">
@@ -444,6 +426,47 @@ export default {
           field: "receptivo_id",
           sortable: true,
         },
+
+        {
+          name: "subtotal_sencilla",
+          label: "Subtotal Sencilla",
+          align: "center",
+          field: "subtotal_sencilla",
+          sortable: true,
+        },
+
+        {
+          name: "subtotal_doble",
+          label: "Subtotal Doble",
+          align: "center",
+          field: "subtotal_doble",
+          sortable: true,
+        },
+
+        {
+          name: "subtotal_triple",
+          label: "Subtotal Triple",
+          align: "center",
+          field: "subtotal_triple",
+          sortable: true,
+        },
+
+        {
+          name: "subtotal_cuadruple",
+          label: "Subtotal Cuadruple",
+          align: "center",
+          field: "subtotal_cuadruple",
+          sortable: true,
+        },
+
+        {
+          name: "subtotal_niño",
+          label: "Subtotal Niño",
+          align: "center",
+          field: "subtotal_niño",
+          sortable: true,
+        },
+
         {
           name: "Tarifa_aerea",
           label: "Tarifa Aérea",
@@ -679,10 +702,39 @@ export default {
           sortable: true,
         },
         {
-          name: "total",
-          label: "Total",
+          name: "total_sgl",
+          label: "Total Sgl",
           align: "right",
-          field: "total",
+          field: "total_sgl",
+          sortable: true,
+        },
+
+        {
+          name: "total_dbl",
+          label: "Total Dbl",
+          align: "right",
+          field: "total_dbl",
+          sortable: true,
+        },
+        {
+          name: "total_tpl",
+          label: "Total Tpl",
+          align: "right",
+          field: "total_tpl",
+          sortable: true,
+        },
+        {
+          name: "total_cpl",
+          label: "Total Cpl",
+          align: "right",
+          field: "total_cpl",
+          sortable: true,
+        },
+        {
+          name: "total_chd",
+          label: "Total Chd",
+          align: "right",
+          field: "total_chd",
           sortable: true,
         },
       ],
@@ -933,6 +985,12 @@ export default {
           field: "iva_ing_propio_niño",
         },
         { name: "total", label: "Total", align: "center", field: "total" },
+        {
+          name: "total_2",
+          label: "Total 2",
+          align: "center",
+          field: "total_2",
+        },
       ],
 
       columns_noche_1: [
@@ -2077,6 +2135,10 @@ export default {
         },
       ],
 
+      filter: "",
+      filterColumn: null,
+      columnOptions: [], // Se generará automáticamente
+
       pagination: {
         rowsPerPage: 10,
         sortBy: null,
@@ -2086,12 +2148,21 @@ export default {
     };
   },
 
+  computed: {
+    pagesNumber() {
+      return Math.ceil(
+        this.rowsproveedores.length / this.pagination.rowsPerPage
+      );
+    },
+  },
+
   methods: {
     //----------------------------------------------------------- Datos de las Tablas ------------------------------------------------------------------//
     async fetchData() {
       this.loading = true;
       try {
-        const baseURL = "https://backmultidestinos.onrender.com/ControlLiquidacion";
+        const baseURL =
+          "https://backmultidestinos.onrender.com/ControlLiquidacion";
 
         // Verificar que el servidor esté respondiendo
         const responses = await Promise.all([
@@ -2208,6 +2279,35 @@ export default {
     },
 
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------//
+
+    filterTable(rows, terms, cols) {
+      if (!terms) return rows;
+
+      return rows.filter((row) => {
+        if (this.filterColumn) {
+          // Búsqueda específica por columna
+          const colValue = row[this.filterColumn.value] || "";
+          return colValue
+            .toString()
+            .toLowerCase()
+            .includes(terms.toLowerCase());
+        } else {
+          // Búsqueda en todas las columnas
+          return Object.values(row).some(
+            (value) =>
+              value &&
+              value.toString().toLowerCase().includes(terms.toLowerCase())
+          );
+        }
+      });
+    },
+  },
+  created() {
+    // Generar opciones de filtro basadas en las columnas
+    this.columnOptions = this.columns_Proveedores.map((col) => ({
+      label: col.label,
+      value: col.field,
+    }));
   },
   mounted() {
     this.fetchData(); // Cargar datos al iniciar la página

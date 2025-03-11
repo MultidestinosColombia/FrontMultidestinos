@@ -104,7 +104,7 @@
             </q-item-section>
             <q-item-section>
               <q-item-label overline class="text-uppercase text-primary">Control</q-item-label>
-              <q-item-label class="text-weight-bold ellipsis">Liquidaciones</q-item-label>
+              <q-item-label class="text-weight-bold ellipsis"> De Costos</q-item-label>
             </q-item-section>
           </q-item>
 
