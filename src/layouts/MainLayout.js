@@ -1,7 +1,5 @@
-import { ref } from "vue";
-import EssentialLink from "components/EssentialLink.vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
 import { LocalStorage } from "quasar";
 
 export default {
@@ -12,9 +10,24 @@ export default {
     const leftDrawerOpen = ref(false);
     const miniState = ref(true);
     const drawer = ref(false);
+    const nombre = ref("Usuario");
+    const imagenPerfil = ref("https://imgs.search.brave.com/-pUIVTqW8I-PGNqZNvfunzlQC_Gl8kxUWz05wrmd-aM/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9hbmF0/by5vcmcvd3AtY29u/dGVudC91cGxvYWRz/LzIwMjIvMDUvbXVs/dGlkZXN0aW5vcy5q/cGc"); // Imagen por defecto
     const linksList = [];
+
+
     const userData = LocalStorage.getItem("userData");
     const userRole = userData ? userData.rol : null;
+
+    if (userData) {
+      try {
+        const usuario = typeof userData === "string" ? JSON.parse(userData) : userData;
+        nombre.value = usuario.nombreCompleto || "Usuario";
+        imagenPerfil.value = usuario.imagenPerfil || imagenPerfil.value;
+      } catch (error) {
+        console.error("Error al analizar los datos del usuario:", error);
+        nombre.value = "Usuario";
+      }
+    }
 
     const toggleLeftDrawer = () => {
       leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -30,21 +43,42 @@ export default {
     };
 
     const logout = () => {
-      console.log("Logout initiated");
+      console.log("Logout iniciado...");
       LocalStorage.remove("userData");
       LocalStorage.remove("token");
       LocalStorage.clear();
 
-      console.log(
-        "Token almacenado en el LocalStorage:",
-        LocalStorage.getItem("token")
-      );
-      console.log("Datos del usuario eliminados al cerrar sesión");
-
+      console.log("Token eliminado, datos del usuario borrados.");
       router.push("/");
     };
 
+
+     // Agregando la hora actual con actualización en tiempo real
+     const currentTime = ref("");
+
+     const updateClock = () => {
+      const now = new Date();
+      let time = now.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true, // 🔹 Activa el formato de 12 horas (AM/PM)
+      });
+
+      time = time.replace(" a. m", " AM").replace(" p. m", " PM");
+
+      currentTime.value = time;
+    };
+
+
+     onMounted(() => {
+       updateClock();
+       setInterval(updateClock, 1000);
+     });
+
     return {
+      nombre, // Se devuelve la variable nombre
+      imagenPerfil,
       userRole,
       router,
       essentialLinks: linksList,
@@ -55,12 +89,7 @@ export default {
       toggleMiniState,
       goPage,
       logout,
+      currentTime, // ✅ Se devuelve la variable de la hora actual
     };
-  },
-
-  beforeMount() {},
-
-  async data() {
-    return {};
   },
 };

@@ -1,43 +1,108 @@
 <template>
-  <q-page padding>
-    <div class="row q-col-gutter-md">
+  <q-page padding class="liquidaciones-page bg-grey-1">
+    <!-- Cabecera -->
+    <div class="row q-pb-md">
       <div class="col-12">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6">Liquidaciones</div>
-          </q-card-section>
-          <q-card-section>
-            <div class="row">
-              <div class="col-6">
-                <q-input
-                  v-model="filterId"
-                  label="Filtrar por ID de Cotización"
-                  filled
-                  dense
-                  clearable
-                />
-              </div>
-              <div class="col-6">
-                <q-select
-                  v-model="filterStatus"
-                  :options="statusOptions"
-                  label="Filtrar por Status"
-                  filled
-                  dense
-                  clearable
-                  emit-value
-                  map-options
-                />
-              </div>
+        <h4 class="q-ma-none text-primary">
+          <q-icon name="money" size="sm" class="q-mr-sm" />
+          Sistema de Liquidaciones
+        </h4>
+        <p class="text-grey-8 q-ma-none">Gestión de liquidaciones y facturas</p>
+      </div>
+    </div>
+
+    <!-- Panel principal -->
+    <div class="row q-col-gutter-md">
+      <!-- Tarjeta de filtros -->
+      <div class="col-12 col-md-4">
+        <q-card class="filtros-card" flat bordered>
+          <q-card-section class="bg-primary text-white">
+            <div class="text-h6">
+              <q-icon name="filter_list" class="q-mr-sm" />
+              Filtros
             </div>
           </q-card-section>
+
+          <q-card-section>
+            <q-input
+              v-model="filterId"
+              label="ID de Cotización"
+              filled
+              dense
+              clearable
+              class="q-mb-md"
+              :debounce="300"
+              placeholder="Buscar por ID..."
+            >
+              <template v-slot:prepend>
+                <q-icon name="search" />
+              </template>
+              <template v-slot:append>
+                <q-icon
+                  name="close"
+                  @click="filterId = ''"
+                  class="cursor-pointer"
+                  v-if="filterId"
+                />
+              </template>
+            </q-input>
+
+            <q-select
+              v-model="filterStatus"
+              :options="statusOptions"
+              label="Estado"
+              filled
+              dense
+              clearable
+              emit-value
+              map-options
+              class="q-mb-md"
+              placeholder="Todos los estados"
+            >
+              <template v-slot:prepend>
+                <q-icon name="label" />
+              </template>
+            </q-select>
+
+            <div class="row q-mt-md">
+              <q-btn
+                color="primary"
+                label="Aplicar Filtros"
+                icon="check"
+                class="q-mr-sm"
+              />
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- Tabla principal -->
+      <div class="col-12 col-md-8">
+        <q-card flat bordered>
+          <q-card-section class="bg-primary text-white">
+            <div class="text-h6">
+              <q-icon name="list" class="q-mr-sm" />
+              Lista de Liquidaciones
+            </div>
+          </q-card-section>
+
           <q-card-section>
             <q-table
-              title="Lista de Liquidaciones"
               :rows="filteredRows"
               :columns="columns"
               row-key="id"
+              v-model:pagination="pagination"
+              :loading="loading"
+              :filter="globalFilter"
+              binary-state-sort
+              flat
+              bordered
+              separator="cell"
             >
+              <!-- Barra de búsqueda global -->
+
+              <!-- Personalización de celdas -->
+
               <template v-slot:body-cell-tieneImpuestos="props">
                 <q-td :props="props">
                   {{ props.row.impuestosLiq === "1" ? "Sí" : "No" }}
@@ -62,26 +127,76 @@
                   />
                 </q-td>
               </template>
+
+              <!-- No hay resultados -->
+              <template v-slot:no-data>
+                <div class="full-width row flex-center q-py-lg">
+                  <q-icon
+                    name="search_off"
+                    size="lg"
+                    color="grey-7"
+                    class="q-mb-md"
+                  />
+                  <div class="text-h6 text-grey-7">
+                    No se encontraron liquidaciones
+                  </div>
+                </div>
+                <div class="full-width row flex-center q-py-lg">
+                  <div class="text-caption text-grey-7">
+                    Intenta modificar los filtros de búsqueda
+                  </div>
+                </div>
+              </template>
             </q-table>
           </q-card-section>
         </q-card>
+
+        <!-- Espacio para componentes adicionales debajo de la tabla -->
+        <div class="componentes-adicionales-tabla q-mt-md">
+          <!-- Aquí se pueden colocar más componentes en el futuro -->
+        </div>
       </div>
     </div>
-    <q-dialog v-model="mostrarDialogo">
-      <q-card>
+
+    <!-- Diálogos -->
+    <!-- Diálogo para descargar factura -->
+    <q-dialog v-model="mostrarDialogo" persistent>
+      <q-card style="min-width: 350px">
+        <q-card-section class="bg-primary text-white">
+          <div class="text-h6">
+            <q-icon name="receipt" class="q-mr-sm" />
+            Opciones de Facturación
+          </div>
+        </q-card-section>
+
         <q-card-section>
-          <div class="text-h6">Factura a otro nombre</div>
+          <q-input
+            v-model="nombreFactura"
+            label="Nombre para la factura"
+            filled
+            class="q-mb-sm"
+            ref="nombreInput"
+          >
+            <template v-slot:prepend>
+              <q-icon name="person" />
+            </template>
+          </q-input>
         </q-card-section>
-        <q-card-section class="q-pt-none">
-          <q-input v-model="nombreFactura" label="Nombre para la factura" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" color="primary" v-close-popup />
+
+        <q-card-actions align="right" class="bg-grey-2 q-py-sm">
           <q-btn
             flat
+            label="Cancelar"
+            color="negative"
+            v-close-popup
+            icon="close"
+          />
+          <q-btn
             label="Aceptar"
-            color="primary"
+            color="positive"
             @click="procesarDescarga"
+            icon="download"
+            :loading="descargando"
           />
         </q-card-actions>
       </q-card>
@@ -332,7 +447,8 @@ export default {
         console.log("clienteResponse", clienteResponse);
         const clienteData = clienteResponse.data[0];
         console.log("clienteData", clienteData);
-        const tipoBase = clienteData.tipoBase;
+        const tipoBase = clienteData?.tipoBase ?? "Valor por defecto";
+
         const vendedorResponse = await axios.get(
           `https://backmultidestinos.onrender.com/user/${cotizacion.CreadorCotizacion}`
         );
@@ -460,9 +576,9 @@ export default {
               new Date(cotizacion.fechaCreacion).getTimezoneOffset() * 60000
           ).toLocaleDateString(),
           cotizacion.cliente.toString(),
-          clienteData.telefono ? clienteData.telefono.toString() : "N/A",
+          clienteData?.telefono ? clienteData.telefono.toString() : "N/A",
           "N/A",
-          clienteData.nit ? clienteData.nit.toString() : "N/A",
+          clienteData?.nit ? clienteData.nit.toString() : "N/A",
           vendedorResponse.data.nombreCompleto
             ? vendedorResponse.data.nombreCompleto.toString()
             : "N/A",
@@ -1086,7 +1202,7 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
           if (currentRow === 0) {
             doc.setFontSize(6);
             const baseText =
-              tipoBase === "Comisión" ? "BASE COMISIÓN" : "BASE DE DESCUENTO";
+              tipoBase === "Comisión" ? "BASE COMISIÓN" : "BASE COMISION";
             doc.text(
               baseText,
               margins.left + 4 * cellWidth + cellPadding,
@@ -1262,7 +1378,7 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
           // Columna 5 y 6 para "Q" y "YS"
           if (nombre === "Q") {
             doc.text(
-              "Porcentaje",
+              "COMISION",
               margins.left + 4 * cellWidth + cellPadding,
               y + cellHeight / 2,
               { baseline: "middle" }
@@ -2406,7 +2522,7 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
           if (currentRow === 0) {
             doc.setFontSize(6);
             const baseText =
-              tipoBase === "Comisión" ? "BASE COMISIÓN" : "BASE DE DESCUENTO";
+              tipoBase === "Comisión" ? "BASE COMISIÓN" : "BASE COMISION";
             doc.text(
               baseText,
               margins.left + 4 * cellWidth + cellPadding,

@@ -27,6 +27,11 @@ const routes = [
       },
 
       {
+        path: "/Liquidaciondecostos",
+        component: () => import("pages/Liquidacion_de_costos.vue"),
+      },
+
+      {
         path: "/ControlPlanes",
         component: () => import("pages/ControlPlanes.vue"),
       },
@@ -38,6 +43,10 @@ const routes = [
       {
         path: "/ControlLiquidacion",
         component: () => import("pages/ControlLiquidacion.vue"),
+      },
+      {
+        path: "/Perfil",
+        component: () => import("pages/PerfilUsuario.vue"),
       },
     ],
   },

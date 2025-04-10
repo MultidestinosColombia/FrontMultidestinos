@@ -430,7 +430,7 @@
       </q-card>
     </q-dialog>
 
-  
+
 
     <q-table
       :rows="clientes"
@@ -616,8 +616,10 @@ export default {
     // Cargar clientes al cargar la página
     this.cargarZonasYUsuarios();
     this.cargarClientes();
+    this.obtenerRolUsuarioActual();
   },
   methods: {
+
     validarEntrada(event) {
       // Obtener el código de la tecla presionada
       const keyCode = event.keyCode || event.which;
@@ -826,7 +828,31 @@ export default {
           });
         });
     },
+
+//-------------------------------------------------------------------------------------------------------------------//
+
+    async obtenerRolUsuarioActual() {
+      try {
+        // Obtener los datos del usuario desde el LocalStorage
+        const userData = LocalStorage.getItem("userData");
+        if (userData && userData.rol) {
+          this.rolUsuarioActual = userData.rol; // Asigna el rol del usuario a la variable
+          console.log("Rol del usuario:", this.rolUsuarioActual);
+        } else {
+          throw new Error("No se encontró el rol del usuario en el LocalStorage");
+        }
+      } catch (error) {
+        console.error("Error al obtener el rol del usuario:", error);
+      }
+    },
     editarCliente(cliente) {
+      if (this.rolUsuarioActual !== "administrador") {
+        Notify.create({
+          message: "No tienes permisos para editar clientes",
+          color: "negative",
+        });
+        return;
+      }
       // Construir la URL con el ID del cliente
       const url = `https://backmultidestinos.onrender.com/user/${cliente.asesor}`;
 
@@ -871,6 +897,13 @@ export default {
         });
     },
     editarClienteSubmit() {
+      if (this.rolUsuarioActual !== "administrador") {
+        Notify.create({
+          message: "No tienes permisos para editar clientes",
+          color: "negative",
+        });
+        return;
+      }
       const zonaId = this.zonaEditar
         ? this.usuariosPorZona[this.zonaEditar][0].value
         : null;
@@ -936,6 +969,13 @@ export default {
         });
     },
     eliminarCliente(id) {
+      if (this.rolUsuarioActual !== "administrador" && this.rolUsuarioActual !== "Asesor") {
+        Notify.create({
+          message: "No tienes permisos para eliminar clientes",
+          color: "negative",
+        });
+        return;
+      }
       fetch(`https://backmultidestinos.onrender.com/cliente/${id}`, {
         method: "DELETE",
       })
@@ -965,7 +1005,7 @@ export default {
           });
         });
     },
-    limpiarFormulario() {
+    llimpiarFormulario() {
       this.nombre = "";
       this.ciudad = "";
       this.correo = "";
@@ -1004,6 +1044,11 @@ export default {
     },
   },
 };
+
+
+
+//-------------------------------------------------------------------------------------------------------------------//
+
 </script>
 <style scoped>
 .q-table .q-td.fit {

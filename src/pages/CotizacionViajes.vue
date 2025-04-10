@@ -4281,7 +4281,8 @@ export default {
         console.log("clienteResponse", clienteResponse);
         const clienteData = clienteResponse.data[0];
         console.log("clienteData", clienteData);
-        const tipoBase = clienteData.tipoBase;
+        const tipoBase = clienteData?.tipoBase;
+
         const vendedorResponse = await axios.get(
           `https://backmultidestinos.onrender.com/user/${cotizacion.CreadorCotizacion}`
         );
@@ -4373,7 +4374,7 @@ export default {
 
         // Aumentar el tamaño de fuente para el número de cotización y mantenerlo en negrita
         doc.setFontSize(12);
-        doc.setFont("Helvetica-Bold", 12);
+        doc.setFont("helvetica", "bold", 12);
         doc.text(headerTextCotizacion, cotizacionX, margins.top + 10);
 
         // Dibujar borde del encabezado
@@ -4409,9 +4410,9 @@ export default {
               new Date(cotizacion.fechaCreacion).getTimezoneOffset() * 60000
           ).toLocaleDateString(),
           cotizacion.cliente.toString(),
-          clienteData.telefono ? clienteData.telefono.toString() : "N/A",
+          clienteData && clienteData.telefono ? clienteData.telefono.toString() : "N/A",
           "N/A",
-          clienteData.nit ? clienteData.nit.toString() : "N/A",
+          clienteData && clienteData.nit ? clienteData.nit.toString() : "N/A",
           vendedorResponse.data.nombreCompleto
             ? vendedorResponse.data.nombreCompleto.toString()
             : "N/A",
