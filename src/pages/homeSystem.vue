@@ -194,17 +194,23 @@ export default {
 
     onMounted(async () => {
       const userData = LocalStorage.getItem("userData");
+
       if (userData && userData.nombreCompleto) {
         nombre.value = userData.nombreCompleto;
-        console.log("rol", LocalStorage.getItem("userData").rol);
+        rol.value = userData.rol; 
+        console.log("rol", rol.value);
       } else {
         nombre.value = "invitado";
+        rol.value = "usuario";
       }
 
-      fechaInicio.value = "2023-01-01";
-      fechaFin.value = "2024-12-31";
+      const anioActual = new Date().getFullYear();
+      fechaInicio.value = `${anioActual}-01-01`;
+      fechaFin.value = `${anioActual}-12-31`;
+
       await fetchUsers();
     });
+
 
     const fetchUsers = async () => {
       try {

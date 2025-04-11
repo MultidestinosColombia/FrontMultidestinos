@@ -1631,24 +1631,27 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
 
         // Iterar sobre los tipos de habitación
         for (const habitacionData of habitacion) {
-          // Crear el objeto de parámetros
           const params = {
             pertenece: cotizacion.salida,
             destino: cotizacion.destino,
             nombrePrograma: cotizacion.nombrePrograma,
             hotel: cotizacion.hotel,
-            noches: cotizacion.noches + " noches",
+            noches: cotizacion.noches, // <-- aquí solo el número
             tipoHabitacion: habitacionData.tipoHabitacion,
           };
 
-          // Realizar la solicitud POST y guardar la respuesta
-          const response = await axios.post(
-            "https://backmultidestinos.onrender.com/costosHotel/buscar",
-            params
-          );
-          console.log("hola", response);
-          costosHotelResponses.push(response.data);
+          try {
+            const response = await axios.post(
+              "https://backmultidestinos.onrender.com/costosHotel/buscar",
+              params
+            );
+            console.log("Respuesta:", response.data);
+            costosHotelResponses.push(response.data);
+          } catch (error) {
+            console.error("Error al buscar costo hotel:", error.response?.data || error.message);
+          }
         }
+
 
         // Procesar las respuestas de costos de hotel
         console.log("costosHotelResponses", costosHotelResponses);
@@ -1681,13 +1684,16 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
           );
           currentY += 6;
 
-          // Obtener el valor de la columna correspondiente a la acomodación
+          // Acomodación en minúscula
           const acomodacion = habitacionData.acomodacion.toLowerCase();
-          let valor = costosHotel[0][acomodacion] || "N/A";
 
-          // Formatear el valor si es un número
-          if (typeof valor === "number") {
-            valor = numeral(valor).format("$0,0");
+          // Validación: si no hay datos, mostrar "No disponible"
+          let valor = "No disponible";
+          if (costosHotel && costosHotel.length > 0 && costosHotel[0][acomodacion]) {
+            valor = costosHotel[0][acomodacion];
+            if (typeof valor === "number") {
+              valor = numeral(valor).format("$0,0");
+            }
           }
 
           doc.text(
@@ -1699,6 +1705,7 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
           doc.text(`  - Valor: ${valor}`, margins.left + 10, currentY);
           currentY += 8;
         });
+
         // Obtener el Blob del PDF
         const pdfBlob = doc.output("blob");
         // Guardar el documento como archivo PDF

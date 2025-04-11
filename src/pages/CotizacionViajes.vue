@@ -1850,6 +1850,9 @@ import axios from "axios";
 import { format, minutesToHours } from "date-fns";
 import emailjs from "emailjs-com";
 import { PDFDocument } from "pdf-lib";
+import Swal from "sweetalert2";
+
+
 
 const formatCurrency = (value) => {
   const formatter = new Intl.NumberFormat("es-ES", {
@@ -1922,7 +1925,7 @@ export default {
     const statusOptions = [
       { label: "Aprobado", value: "Aprobado" },
       { label: "Rechazado", value: "Rechazado" },
-      { label: "Pendiente", value: "Pendiente" },
+      { label: "Pendiente", value: "pendiente" },
     ];
     const showAgeInputs = (index) => {
       return (
@@ -2664,141 +2667,135 @@ export default {
           return "grey";
       }
     },
+
     async fetchProgramName() {
-      console.log("Iniciando fetchProgramName...");
-      this.autofillingProgramName = true;
-      try {
-        console.log("Enviando datos al servidor:", this.paramsH);
-        console.log("thhotel", this.hotel);
+  // Verificamos si ya se hizo un registro reciente y evitamos repetir la lógica
+  if (this.justSubmitted) {
+    console.log("fetchProgramName cancelado porque se acaba de registrar.");
+    return {
+      success: false,
+      reason: "justSubmitted"
+    };
+  }
 
-        this.paramsH.hotel = this.hotel;
-        this.paramsH.destino = this.destination;
-        this.paramsH.noches = this.noche.label;
-        this.paramsH.pertenece = this.selectedDeparture;
+  console.log("Iniciando fetchProgramName...");
+  this.autofillingProgramName = true;
 
-        console.log("Enviando datos al servidor:", this.paramsH);
+  // Validación de datos requeridos
+  if (!this.hotel || !this.destination || !this.noche?.label || !this.selectedDeparture) {
+    this.$q.notify({
+      message: "Faltan datos para buscar el programa. Verifica hotel, destino, noches y salida.",
+      color: "negative",
+    });
+    this.autofillingProgramName = false;
+    return {
+      success: false,
+      reason: "missingData"
+    };
+  }
 
-        const response = await axios.post(
-          "https://backmultidestinos.onrender.com/hoteles/buscarH",
-          this.paramsH
-        );
+  try {
+    // Parámetros que se mandan al backend
+    this.paramsH.hotel = this.hotel;
+    this.paramsH.destino = this.destination;
+    this.paramsH.noches = this.noche.label;
+    this.paramsH.pertenece = this.selectedDeparture;
 
-        console.log("Respuesta del servidor sobre el programa:", response);
+    const response = await axios.post(
+      "https://backmultidestinos.onrender.com/hoteles/buscarH",
+      this.paramsH
+    );
 
-        this.programNameOptions = response.data;
-        console.log("Opciones de nombre de programa:", this.programNameOptions);
+    this.programNameOptions = response.data;
 
-        // 1. Filtrar programas con fechas válidas (no nulas)
-        let validPrograms = this.programNameOptions.filter((program) => {
-          const isValid =
-            program.FechaInicio !== null && program.FechaFin !== null;
-          console.log(
-            `Programa ${program.nombrePrograma} tiene fechas válidas: ${isValid}`
-          );
-          return isValid;
-        });
+    // 1. Filtrar programas con fechas válidas
+    let validPrograms = this.programNameOptions.filter((program) =>
+      program.FechaInicio !== null && program.FechaFin !== null
+    );
 
-        console.log("Programas con fechas válidas:", validPrograms);
+    // 2. Validar fechas seleccionadas
+    let selectedStartDate = new Date(this.dateRange[0]);
+    let selectedEndDate = new Date(this.dateRange[1]);
 
-        // 2. Filtrar los programas que coincidan con las fechas (comparación de rango)
-        let selectedStartDate = new Date(this.dateRange[0]);
-        let selectedEndDate = new Date(this.dateRange[1]);
+    if (isNaN(selectedStartDate) || isNaN(selectedEndDate)) {
+      this.$q.notify({
+        message: "Error: Fecha inválida seleccionada.",
+        color: "negative",
+      });
+      return {
+        success: false,
+        reason: "invalidDateRange"
+      };
+    }
 
-        // Imprimir fechas seleccionadas por el usuario
-        console.log("Fecha de inicio seleccionada:", selectedStartDate);
-        console.log("Fecha de fin seleccionada:", selectedEndDate);
+    selectedStartDate.setHours(0, 0, 0, 0);
+    selectedEndDate.setHours(0, 0, 0, 0);
 
-        if (isNaN(selectedStartDate) || isNaN(selectedEndDate)) {
-          console.error("Error: Fecha inválida en dateRange.");
-          this.$q.notify({
-            message: "Error: Fecha inválida seleccionada.",
-            color: "negative",
-          });
-          return;
-        }
+    // 3. Filtrar programas que coinciden con el rango de fechas
+    validPrograms = validPrograms.filter((program) => {
+      let startDate = new Date(program.FechaInicio);
+      let endDate = new Date(program.FechaFin);
 
-        selectedStartDate.setHours(0, 0, 0, 0); // Normalizar la fecha de inicio
-        selectedEndDate.setHours(0, 0, 0, 0); // Normalizar la fecha de fin
+      if (isNaN(startDate) || isNaN(endDate)) return false;
 
-        validPrograms = validPrograms.filter((program) => {
-          let startDate = new Date(program.FechaInicio);
-          let endDate = new Date(program.FechaFin);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
 
-          if (isNaN(startDate) || isNaN(endDate)) {
-            console.error(
-              `Error: Fecha inválida en el programa ${program.nombrePrograma}.`
-            );
-            return false;
-          }
+      return startDate <= selectedEndDate && endDate >= selectedStartDate;
+    });
 
-          startDate.setHours(0, 0, 0, 0); // Normalizar la fecha de inicio del programa
-          endDate.setHours(0, 0, 0, 0); // Normalizar la fecha de fin del programa
+    // 4. Eliminar duplicados por nombre
+    validPrograms = validPrograms.filter(
+      (program, index, self) =>
+        index === self.findIndex(p => p.nombrePrograma === program.nombrePrograma)
+    );
 
-          // Imprimir fechas del programa
-          console.log("Fecha de inicio del programa:", startDate);
-          console.log("Fecha de fin del programa:", endDate);
+    this.matchingPrograms = validPrograms;
 
-          // Verificar si las fechas del programa están dentro del rango seleccionado
-          const match =
-            startDate <= selectedEndDate && endDate >= selectedStartDate;
+    // 5. Asignar nombre de programa
+    if (this.matchingPrograms.length === 1) {
+      this.programName = this.matchingPrograms[0].nombrePrograma;
+    } else if (this.matchingPrograms.length > 1) {
+      this.matchingProgramOptions = this.matchingPrograms.map(p => p.nombrePrograma);
+    } else {
+      this.programName = null;
+    }
 
-          console.log(
-            `Programa ${program.nombrePrograma} coincide con las fechas: ${match}`
-          );
+    // 6. Tipos de habitación únicos
+    const tiposDeHabitacionUnicos = [...new Set(validPrograms.map(item => item.tipoHabitacion))];
+    this.roomTypeOptions = tiposDeHabitacionUnicos;
 
-          return match;
-        });
+    // ✅ Si todo salió bien, indicamos que el registro fue exitoso (simulado)
+    this.justSubmitted = true;
 
-        console.log("Programas que coinciden con las fechas:", validPrograms);
+    // Opcional: reiniciar la bandera luego de un tiempo
+    setTimeout(() => {
+      this.justSubmitted = false;
+    }, 2000);
 
-        // 3. Eliminar programas duplicados basándose en el nombre del programa
-        validPrograms = validPrograms.filter(
-          (program, index, self) =>
-            index ===
-            self.findIndex((p) => p.nombrePrograma === program.nombrePrograma)
-        );
+    return {
+      success: true,
+      matchingPrograms: this.matchingPrograms,
+      programName: this.programName,
+      roomTypes: this.roomTypeOptions
+    };
 
-        console.log(
-          "Programas coincidentes (sin duplicados y con fechas válidas):",
-          validPrograms[0]
-        );
+  } catch (error) {
+    console.error("Error al obtener nombres de programa:", error);
+    this.$q.notify({
+      message: "Ocurrió un error al buscar programas.",
+      color: "negative",
+    });
+    return {
+      success: false,
+      reason: "serverError",
+      error
+    };
+  } finally {
+    this.autofillingProgramName = false;
+  }
+},
 
-        // 4. Asignar los programas válidos y manejar las opciones
-        this.matchingPrograms = validPrograms;
-
-        if (this.matchingPrograms.length === 1) {
-          this.programName = this.matchingPrograms[0].nombrePrograma;
-          console.log("Nombre del programa seleccionado:", this.programName);
-        } else if (this.matchingPrograms.length > 1) {
-          this.matchingProgramOptions = this.matchingPrograms.map(
-            (program) => program.nombrePrograma
-          );
-          console.log(
-            "Opciones de programas coincidentes:",
-            this.matchingProgramOptions
-          );
-        } else {
-          this.programName = null;
-          console.log("No hay programas coincidentes.");
-        }
-
-        // Obtener la lista de tipos de habitación de la respuesta del servidor
-        const tiposDeHabitacion = validPrograms.map(
-          (item) => item.tipoHabitacion
-        );
-
-        // Eliminar duplicados utilizando un Set
-        const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
-        console.log("Tipos de habitación únicos:", tiposDeHabitacionUnicos);
-
-        // Asignar los tipos de habitación únicos a la opción de tipo de habitación
-        this.roomTypeOptions = tiposDeHabitacionUnicos;
-      } catch (error) {
-        console.error("Error al obtener nombres de programa:", error);
-      } finally {
-        this.autofillingProgramName = false;
-      }
-    },
     validarHora(horaLlegada, horaSalida) {
       if (horaLlegada && horaSalida && horaLlegada < horaSalida) {
         // Mostrar mensaje de error o realizar otra acción
@@ -5396,6 +5393,11 @@ export default {
     // Método para realizar la solicitud HTTP y cargar las opciones
     async fetchOptions() {
       try {
+        if (!this.selectedDeparture || this.selectedDeparture.trim() === "") {
+          console.warn("Debe seleccionar una ciudad de salida.");
+          return;
+        }
+
         console.log("Realizando solicitud HTTP para cargar opciones...");
         console.log("Salida seleccionada:", this.selectedDeparture);
 
@@ -5405,9 +5407,9 @@ export default {
 
         console.log("Respuesta del servidor:", response.data);
 
-        // Agrupar opciones por destino Y guardar las originales
         const optionsByDestination = {};
         const originalOptionsByDestination = {};
+
         response.data.forEach((item) => {
           const destino = item.destino;
           if (!optionsByDestination[destino]) {
@@ -5418,33 +5420,24 @@ export default {
               accommodationOptions: [],
             };
             originalOptionsByDestination[destino] = {
-              // Guardamos las originales
               nochesOptions: [],
             };
           }
-          optionsByDestination[destino].programNameOptions.push(
-            item.nombrePrograma
-          );
-          optionsByDestination[destino].hotelOptions.push(
-            ...item.hotel.split("*")
-          );
-          optionsByDestination[destino].nochesOptions.push(
-            ...item.noches.split("*")
-          );
-          optionsByDestination[destino].accommodationOptions.push(
-            ...item.acomodacion.split("*")
-          );
-          originalOptionsByDestination[destino].nochesOptions.push(
-            ...item.noches.split("*")
-          ); // Guardamos las originales
+
+          optionsByDestination[destino].programNameOptions.push(item.nombrePrograma);
+          optionsByDestination[destino].hotelOptions.push(...item.hotel.split("*"));
+          optionsByDestination[destino].nochesOptions.push(...item.noches.split("*"));
+          optionsByDestination[destino].accommodationOptions.push(...item.acomodacion.split("*"));
+          originalOptionsByDestination[destino].nochesOptions.push(...item.noches.split("*"));
         });
 
         this.optionsByDestination = optionsByDestination;
-        this.originalOptionsByDestination = originalOptionsByDestination; // Guardamos las originales
+        this.originalOptionsByDestination = originalOptionsByDestination;
 
-        // Obtener todos los destinos y eliminar duplicados
         const allDestinations = response.data.map((item) => item.destino);
         this.destinationOptions = [...new Set(allDestinations)];
+
+
       } catch (error) {
         console.error("Error al cargar opciones:", error);
       }
@@ -5542,15 +5535,31 @@ export default {
     // Método para manejar el cambio en la selección de hotel, programa y destino
 
     handleSelectionChangeTipo(selectedValue) {
-      const newValue = selectedValue.value;
+      const newValue = selectedValue?.value;
+
+      // Validar que los datos requeridos estén definidos
+      if (!this.hotel || !this.programName || !this.destination || !this.selectedDeparture) {
+        console.warn("Faltan datos para buscar tipos de habitación");
+        return;
+      }
+
+      // Validar que this.noche y this.noche.label existen
+      const nocheLabel = this.noche?.label;
+      if (!nocheLabel) {
+        console.warn("No se ha seleccionado una noche válida.");
+        return;
+      }
+
       // Actualizar los parámetros con los valores seleccionados
       this.paramsN.hotel = this.hotel;
       this.paramsN.nombrePrograma = this.programName;
       this.paramsN.destino = this.destination;
-      this.paramsN.noches = this.noche.label;
+      this.paramsN.noches = nocheLabel;
       this.paramsN.pertenece = this.selectedDeparture;
-      console.log("noche escogida", this.noche.label);
-      console.log(this.paramsN);
+
+      console.log("Noche escogida:", nocheLabel);
+      console.log("Parámetros enviados:", this.paramsN);
+
       // Realizar la búsqueda de tipos de habitación
       axios
         .post(
@@ -5558,20 +5567,26 @@ export default {
           this.paramsN
         )
         .then((response) => {
+          console.log("Respuesta del servidor:", response.data);
+
           // Obtener la lista de tipos de habitación de la respuesta del servidor
-          console.log("hola", response.data);
           const tiposDeHabitacion = response.data.map(
             (item) => item.tipoHabitacion
           );
 
           // Eliminar duplicados utilizando un Set
           const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
-          console.log(tiposDeHabitacionUnicos);
+          console.log("Tipos de habitación únicos:", tiposDeHabitacionUnicos);
+
           // Asignar los tipos de habitación únicos a la opción de tipo de habitación
           this.roomTypeOptions = tiposDeHabitacionUnicos;
         })
         .catch((error) => {
           console.error("Error al buscar hoteles:", error);
+          this.$q.notify({
+            message: "Hubo un error al cargar los tipos de habitación",
+            color: "negative",
+          });
         });
     },
 
@@ -5719,7 +5734,7 @@ export default {
       let precioTrans = 0;
 
       const impuestosResponse = await axios.get(
-        "https://backmultidestinos.onrender.com/canoCristal/"
+        "https://backmultidestinos.onrender.com/CanoCristal/"
       );
       const impuestosData = impuestosResponse.data;
       console.log("Datos de impuestos obtenidos:", impuestosData);
@@ -6898,6 +6913,8 @@ export default {
           color: "positive",
         });
 
+        location.reload();
+
         // Llama al método para cerrar el modal
         this.closeModal();
         this.resetVariables();
@@ -7789,6 +7806,8 @@ export default {
           message: "¡Se ha registrado con éxito!",
           color: "positive",
         });
+
+        location.reload();
 
         this.resetVariables();
         // Llama al método para cerrar el modal
