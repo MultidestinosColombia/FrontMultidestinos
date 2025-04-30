@@ -193,9 +193,11 @@ export default {
   },
   computed: {
     filtrarCostos() {
-      return this.filtro === "Todos"
+      const filtrados = this.filtro === "Todos"
         ? this.costos
         : this.costos.filter((c) => c.estado === this.filtro);
+
+        return filtrados.slice().sort((a, b) => b.id - a.id);
     },
     totalPagado() {
       return this.costos

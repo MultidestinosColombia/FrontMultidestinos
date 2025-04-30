@@ -1,29 +1,45 @@
+
 <template>
   <q-page padding class="liquidaciones-page bg-grey-1">
-    <!-- Cabecera -->
-    <div class="row q-pb-md">
-      <div class="col-12">
-        <h4 class="q-ma-none text-primary">
-          <q-icon name="money" size="sm" class="q-mr-sm" />
-          Sistema de Liquidaciones
-        </h4>
-        <p class="text-grey-8 q-ma-none">Gestión de liquidaciones y facturas</p>
+    <!-- Cabecera mejorada con diseño más moderno -->
+    <div class="q-pb-lg">
+      <div class="bg-primary rounded-borders q-pa-md text-white shadow-2">
+        <div class="row items-center">
+          <div class="col-auto">
+            <q-avatar color="white" text-color="primary" size="56px">
+              <q-icon name="monetization_on" size="32px" />
+            </q-avatar>
+          </div>
+          <div class="col q-pl-md">
+            <h4 class="q-ma-none text-weight-bold">Sistema de Liquidaciones</h4>
+            <p class="q-ma-none q-mt-xs opacity-8">Gestión de liquidaciones y facturas</p>
+          </div>
+          <div class="col-auto">
+            <q-btn round flat icon="refresh" size="md" @click="actualizarTabla">
+              <q-tooltip>Actualizar datos</q-tooltip>
+            </q-btn>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Panel principal -->
+    <!-- Panel principal con diseño mejorado -->
     <div class="row q-col-gutter-md">
-      <!-- Tarjeta de filtros -->
+      <!-- Tarjeta de filtros mejorada -->
       <div class="col-12 col-md-4">
-        <q-card class="filtros-card" flat bordered>
+        <q-card class="filtros-card shadow-2">
           <q-card-section class="bg-primary text-white">
-            <div class="text-h6">
-              <q-icon name="filter_list" class="q-mr-sm" />
-              Filtros
+            <div class="row items-center no-wrap">
+              <q-icon name="filter_list" size="md" class="q-mr-sm" />
+              <div class="text-h6">Filtros</div>
+              <q-space />
+              <q-btn flat round icon="help_outline" size="sm">
+                <q-tooltip>Ayuda con los filtros</q-tooltip>
+              </q-btn>
             </div>
           </q-card-section>
 
-          <q-card-section>
+          <q-card-section class="q-pa-md">
             <q-input
               v-model="filterId"
               label="ID de Cotización"
@@ -35,7 +51,7 @@
               placeholder="Buscar por ID..."
             >
               <template v-slot:prepend>
-                <q-icon name="search" />
+                <q-icon name="search" color="primary" />
               </template>
               <template v-slot:append>
                 <q-icon
@@ -43,13 +59,14 @@
                   @click="filterId = ''"
                   class="cursor-pointer"
                   v-if="filterId"
+                  color="grey-6"
                 />
               </template>
             </q-input>
 
             <q-select
               v-model="filterStatus"
-              :options="statusOptions"
+              :options="[{ label: 'Todos los estados', value: null }, ...statusOptions]"
               label="Estado"
               filled
               dense
@@ -57,36 +74,95 @@
               emit-value
               map-options
               class="q-mb-md"
-              placeholder="Todos los estados"
             >
               <template v-slot:prepend>
-                <q-icon name="label" />
+                <q-icon name="label" color="primary" />
+              </template>
+              <template v-slot:selected>
+                <div class="flex items-center">
+                  <q-icon
+                    :name="filterStatus ? 'circle' : 'label'"
+                    :color="chipColor(filterStatus)"
+                    size="xs"
+                    class="q-mr-xs"
+                    v-if="filterStatus"
+                  />
+                  <span>{{ filterStatus || 'Todos los estados' }}</span>
+                </div>
               </template>
             </q-select>
 
-            <div class="row q-mt-md">
-              <q-btn
-                color="primary"
-                label="Aplicar Filtros"
-                icon="check"
-                class="q-mr-sm"
-              />
+            <q-separator class="q-my-md" />
+
+            <div class="row q-col-gutter-sm">
+              <div class="col-6">
+                <q-btn
+                  color="primary"
+                  label="Aplicar"
+                  icon="check"
+                  class="full-width"
+                  unelevated
+                   @click="applyFilter"
+                />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+
+        <!-- Nueva sección de estadísticas -->
+        <q-card class="q-mt-md shadow-1">
+          <q-card-section class="bg-secondary text-white">
+            <div class="row items-center no-wrap">
+              <q-icon name="insights" size="md" class="q-mr-sm" />
+              <div class="text-h6">Resumen</div>
+            </div>
+          </q-card-section>
+          <q-card-section class="q-pa-md">
+            <div class="row q-col-gutter-sm">
+              <div class="col-6">
+                <div class="text-subtitle2 text-grey-8">Liquidaciones</div>
+                <div class="text-h5 text-primary">{{ filteredRows.length }}</div>
+              </div>
+              <div class="col-6">
+                <div class="text-subtitle2 text-grey-8">Pendientes</div>
+                <div class="text-h5 text-orange">{{ countPendientes }}</div>
+              </div>
             </div>
           </q-card-section>
         </q-card>
       </div>
 
-      <!-- Tabla principal -->
+      <!-- Tabla principal mejorada -->
       <div class="col-12 col-md-8">
-        <q-card flat bordered>
+        <q-card class="shadow-2">
           <q-card-section class="bg-primary text-white">
-            <div class="text-h6">
-              <q-icon name="list" class="q-mr-sm" />
-              Lista de Liquidaciones
+            <div class="row items-center no-wrap">
+              <q-icon name="receipt_long" size="md" class="q-mr-sm" />
+              <div class="text-h6">Lista de Liquidaciones</div>
+              <q-space />
+              <q-input
+                v-model="globalFilter"
+                dense
+                filled
+                placeholder="Buscar..."
+                class="search-input"
+                style="width: 200px"
+                dark
+              >
+                <template v-slot:prepend>
+                  <q-icon name="search" />
+                </template>
+                <template v-slot:append>
+                  <q-icon name="clear" @click="globalFilter = ''" class="cursor-pointer" v-if="globalFilter" />
+                </template>
+              </q-input>
+              <q-btn flat round icon="download" class="q-ml-sm" @click="exportToPDF">
+                <q-tooltip>Exportar tabla</q-tooltip>
+              </q-btn>
             </div>
           </q-card-section>
 
-          <q-card-section>
+          <q-card-section class="q-pa-none">
             <q-table
               :rows="filteredRows"
               :columns="columns"
@@ -98,34 +174,89 @@
               flat
               bordered
               separator="cell"
+              class="liquidaciones-table"
             >
-              <!-- Barra de búsqueda global -->
-
               <!-- Personalización de celdas -->
+              <template v-slot:loading>
+                <q-inner-loading showing color="primary">
+                  <q-spinner-dots size="50px" color="primary" />
+                </q-inner-loading>
+              </template>
+
+              <template v-slot:header="props">
+                <q-tr :props="props">
+                  <q-th v-for="col in props.cols" :key="col.name" :props="props" class="bg-grey-2">
+                    {{ col.label }}
+                  </q-th>
+                </q-tr>
+              </template>
 
               <template v-slot:body-cell-tieneImpuestos="props">
                 <q-td :props="props">
-                  {{ props.row.impuestosLiq === "1" ? "Sí" : "No" }}
+                  <q-badge :color="props.row.impuestosLiq === '1' ? 'positive' : 'grey'" class="text-white">
+                    {{ props.row.impuestosLiq === "1" ? "Sí" : "No" }}
+                  </q-badge>
                 </q-td>
               </template>
+
               <template v-slot:body-cell-status="props">
                 <q-td :props="props">
                   <q-chip
                     :color="chipColor(props.row.status)"
                     text-color="white"
+                    size="sm"
+                    class="shadow-1"
                   >
+                    <q-icon name="circle" size="xs" class="q-mr-xs" />
                     {{ props.row.status }}
                   </q-chip>
                 </q-td>
               </template>
+
               <template v-slot:body-cell-acciones="props">
-                <q-td :props="props">
+                <q-td :props="props" class="text-center">
                   <q-btn
                     @click="mostrarDialogoFactura(props.row)"
                     color="primary"
-                    label="Descargar Liquidacion"
+                    label="Descargar"
+                    icon="download"
+                    size="sm"
+                    unelevated
+                    class="q-px-sm"
                   />
+                  <q-btn
+                    flat
+                    round
+                    color="grey-7"
+                    icon="more_vert"
+                    size="sm"
+                    class="q-ml-xs"
+                  >
+                  </q-btn>
                 </q-td>
+              </template>
+
+              <template v-slot:bottom="props">
+                <div class="row items-center justify-between full-width q-pa-sm">
+                  <div>
+                    <span class="text-body2">Total: {{ filteredRows.length }} liquidaciones</span>
+                  </div>
+                  <div>
+                    <q-pagination
+                      v-model="props.pagination.page"
+                      :max="Math.ceil(props.pagination.rowsNumber / props.pagination.rowsPerPage)"
+                      :max-pages="6"
+                      boundary-links
+                      direction-links
+                      icon-first="first_page"
+                      icon-last="last_page"
+                      icon-prev="chevron_left"
+                      icon-next="chevron_right"
+                      color="primary"
+                      size="sm"
+                    />
+                  </div>
+                </div>
               </template>
 
               <!-- No hay resultados -->
@@ -140,9 +271,7 @@
                   <div class="text-h6 text-grey-7">
                     No se encontraron liquidaciones
                   </div>
-                </div>
-                <div class="full-width row flex-center q-py-lg">
-                  <div class="text-caption text-grey-7">
+                  <div class="text-caption text-grey-7 q-mt-sm">
                     Intenta modificar los filtros de búsqueda
                   </div>
                 </div>
@@ -150,57 +279,89 @@
             </q-table>
           </q-card-section>
         </q-card>
-
-        <!-- Espacio para componentes adicionales debajo de la tabla -->
-        <div class="componentes-adicionales-tabla q-mt-md">
-          <!-- Aquí se pueden colocar más componentes en el futuro -->
-        </div>
       </div>
     </div>
 
     <!-- Diálogos -->
     <!-- Diálogo para descargar factura -->
     <q-dialog v-model="mostrarDialogo" persistent>
-      <q-card style="min-width: 350px">
+      <q-card style="min-width: 400px" class="rounded-borders">
         <q-card-section class="bg-primary text-white">
-          <div class="text-h6">
-            <q-icon name="receipt" class="q-mr-sm" />
-            Opciones de Facturación
+          <div class="row items-center no-wrap">
+            <q-icon name="description" size="md" class="q-mr-sm" />
+            <div class="text-h6">Opciones de Facturación</div>
+            <q-space />
+            <q-btn flat round icon="close" v-close-popup>
+              <q-tooltip>Cerrar</q-tooltip>
+            </q-btn>
           </div>
         </q-card-section>
 
-        <q-card-section>
+        <q-card-section class="q-pa-md q-pt-lg">
+          <div class="text-subtitle2 q-mb-sm">Información de facturación</div>
           <q-input
             v-model="nombreFactura"
             label="Nombre para la factura"
             filled
             class="q-mb-sm"
             ref="nombreInput"
+            bottom-slots
           >
             <template v-slot:prepend>
-              <q-icon name="person" />
+              <q-icon name="person" color="primary" />
             </template>
+            <template v-slot:hint>Ingrese el nombre como aparecerá en la factura</template>
           </q-input>
+
+          <q-select
+            v-model="tipoDocumento"
+            :options="['Factura', 'Recibo', 'Comprobante']"
+            label="Tipo de documento"
+            filled
+            class="q-mt-md"
+          >
+            <template v-slot:prepend>
+              <q-icon name="receipt" color="primary" />
+            </template>
+          </q-select>
         </q-card-section>
 
-        <q-card-actions align="right" class="bg-grey-2 q-py-sm">
+        <q-card-section class="bg-grey-2 text-grey-8 q-pa-sm">
+          <div class="row items-center">
+            <q-icon name="info" size="sm" class="q-mr-xs" />
+            <div class="text-caption">
+              El documento se generará en formato PDF
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-py-md q-px-md">
           <q-btn
             flat
             label="Cancelar"
-            color="negative"
+            color="grey-7"
             v-close-popup
             icon="close"
           />
           <q-btn
-            label="Aceptar"
-            color="positive"
+            label="Descargar"
+            color="primary"
             @click="procesarDescarga"
             icon="download"
             :loading="descargando"
+            unelevated
           />
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Toast para notificaciones -->
+    <q-toast
+      position="bottom-right"
+      timeout="2500"
+      color="positive"
+      class="shadow-3"
+    ></q-toast>
   </q-page>
 </template>
 <script>
@@ -208,6 +369,7 @@ import numeral from "numeral";
 import { Notify } from "quasar";
 import { QChip } from "quasar";
 import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
 import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { LocalStorage } from "quasar";
@@ -231,10 +393,12 @@ export default {
     return {
       mostrarDialogo: false,
       facturaOtroNombre: false,
+      loading: false,
       nombreFactura: "",
       liquidacionSeleccionada: null,
       filterId: "",
       filterStatus: null, // Valor nulo inicialmente para mostrar todas las filas
+      globalFilter: '',
       statusOptions: [
         { label: "Aprobado", value: "Aprobado" },
         { label: "Rechazado", value: "Rechazado" },
@@ -293,13 +457,16 @@ export default {
   },
   computed: {
     filteredRows() {
-      const filterIdLower = this.filterId.toLowerCase();
+      const filterIdLower = (this.filterId || '').toLowerCase();  // Asegúrate de que filterId no sea null o undefined
       return this.rows.filter((row) => {
-        const idMatch = row.idCotizacion.toLowerCase().includes(filterIdLower);
-        const statusMatch =
-          this.filterStatus === null || row.status === this.filterStatus;
-        return idMatch && statusMatch;
+        const idMatch = row.idCotizacion.toLowerCase().includes(filterIdLower); // Filtrado por idCotizacion
+        const statusMatch = this.filterStatus === null || row.status === this.filterStatus; // Filtrado por status
+        return idMatch && statusMatch; // Solo retorna las filas que cumplan con ambos filtros
       });
+    },
+
+    countPendientes() {
+      return this.rows.filter(row => row.status === "Pendiente").length;
     },
   },
   methods: {
@@ -375,7 +542,8 @@ export default {
         this.descargarLiquidacion(row.idCotizacion, row.idLiquidacion);
       }
     },
-    //LiquidacionNormal
+    //-------------------------------------------------------------- LiquidacionNormal -------------------------------------------------------------------------//
+
     async descargarLiquidacion(idCotizacion, idLiquidacion) {
       try {
         // Realizar las solicitudes HTTP para obtener los datos
@@ -1718,7 +1886,7 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
       }
     },
 
-    //Liquidacion caño Cristal
+    //----------------------------------------------------------  Liquidacion caño Cristal ---------------------------------------------------------------------//
     async descargarLiquidacionCano(idCotizacion, idLiquidacion) {
       try {
         // Realizar las solicitudes HTTP para obtener los datos
@@ -3038,6 +3206,68 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
         console.error("Error al descargar cotización:", error);
       }
     },
+
+
+//--------------------------------------------------------------------------------------------------------------------------------//
+//------------------------------------------ Documento De tablas de liquidacion --------------------------------------------------//
+
+exportToPDF() {
+  if (!this.filteredRows.length) {
+    this.$q.notify({ type: 'warning', message: 'No hay datos para exportar' });
+    return;
+  }
+
+  const doc = new jsPDF('l', 'mm', 'a4'); // ← orientación horizontal
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  doc.setFontSize(18);
+  doc.text('Lista de Liquidaciones', pageWidth / 2, 20, { align: 'center' });
+
+  doc.setFontSize(11);
+  doc.text(`Generado el ${new Date().toLocaleDateString()}`, pageWidth / 2, 28, { align: 'center' });
+
+  const headers = this.columns.map(col => col.label);
+  const data = this.filteredRows.map(row =>
+    this.columns.map(col => {
+      const value = typeof col.field === 'function' ? col.field(row) : row[col.field];
+      return value != null ? String(value) : '';
+    })
+  );
+
+  doc.autoTable({
+    head: [headers],
+    body: data,
+    startY: 35,
+    theme: 'grid',
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: [255, 255, 255],
+      halign: 'center',
+    },
+    alternateRowStyles: {
+      fillColor: [245, 245, 245],
+    },
+  });
+
+  doc.save('Lista-Liquidaciones.pdf');
+},
+
+
+//------------------------------------------ Funcion de Boton de Recarga de tabla --------------------------------------------------//
+
+actualizarTabla() {
+  this.loading = true;  // Activar el indicador de carga
+  setTimeout(() => {
+    this.loading = false; // Desactivar el indicador de carga después de un breve retraso
+    this.$q.notify({ type: 'positive', message: 'Tabla recargada correctamente' });
+  }, 1000);  // Simulamos un retraso de 1 segundo, puedes ajustarlo según lo que necesites
+},
+
+
   },
   async mounted() {
     try {
@@ -3051,3 +3281,38 @@ Planes con inicio posterior a los 30 días: El pago se realizará en dos cuotas:
   },
 };
 </script>
+<style lang="scss">
+.liquidaciones-page {
+  .q-table__top {
+    padding: 8px 16px;
+  }
+
+  .liquidaciones-table {
+    thead tr th {
+      font-weight: bold;
+      position: sticky;
+      z-index: 1;
+    }
+
+    tbody td {
+      height: 48px;
+    }
+
+    .q-table__grid-content {
+      min-height: 500px;
+    }
+  }
+
+  .search-input .q-field__control {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .filtros-card {
+    transition: all 0.3s;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+</style>
