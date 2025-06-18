@@ -352,6 +352,15 @@ import Swal from "sweetalert2";
 
 export default {
   data() {
+
+
+  const formatOrNA = (val) => {
+      return isNaN(val) || val === null
+        ? "N/A"
+        : `$ ${Number(val).toLocaleString('es-CO')} COP`;
+    };
+
+
     return {
       loading: false,
       file: null,
@@ -368,6 +377,8 @@ export default {
       rowsNocheAdicionales: [],
       rowsreceptivo: [],
       rowsproveedores: [],
+
+
 
       columns: [
         {
@@ -433,6 +444,7 @@ export default {
           align: "center",
           field: "subtotal_sencilla",
           sortable: true,
+          format: formatOrNA
         },
 
         {
@@ -441,6 +453,7 @@ export default {
           align: "center",
           field: "subtotal_doble",
           sortable: true,
+          format: formatOrNA
         },
 
         {
@@ -449,6 +462,7 @@ export default {
           align: "center",
           field: "subtotal_triple",
           sortable: true,
+          format: formatOrNA
         },
 
         {
@@ -457,6 +471,7 @@ export default {
           align: "center",
           field: "subtotal_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
 
         {
@@ -465,6 +480,7 @@ export default {
           align: "center",
           field: "subtotal_niño",
           sortable: true,
+          format: formatOrNA
         },
 
         {
@@ -473,6 +489,7 @@ export default {
           align: "right",
           field: "Tarifa_aerea",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "Tarjeta_asistencia",
@@ -480,6 +497,7 @@ export default {
           align: "right",
           field: "Tarjeta_asistencia",
           sortable: true,
+          format: formatOrNA
         },
 
         // Nuevas columnas agregadas
@@ -490,6 +508,7 @@ export default {
           align: "right",
           field: "costos_sencilla",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "costos_doble",
@@ -497,6 +516,7 @@ export default {
           align: "right",
           field: "costos_doble",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "costos_triple",
@@ -504,6 +524,7 @@ export default {
           align: "right",
           field: "costos_triple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "costos_cuadruple",
@@ -511,6 +532,7 @@ export default {
           align: "right",
           field: "costos_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "costos_niño",
@@ -518,6 +540,7 @@ export default {
           align: "right",
           field: "costos_niño",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "impuesto",
@@ -525,6 +548,7 @@ export default {
           align: "right",
           field: "impuesto",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_sencilla",
@@ -532,6 +556,7 @@ export default {
           align: "right",
           field: "iva_sencilla",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_doble",
@@ -539,6 +564,7 @@ export default {
           align: "right",
           field: "iva_doble",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_triple",
@@ -546,6 +572,7 @@ export default {
           align: "right",
           field: "iva_triple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_cuadruple",
@@ -553,6 +580,7 @@ export default {
           align: "right",
           field: "iva_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_niño",
@@ -560,6 +588,7 @@ export default {
           align: "right",
           field: "iva_niño",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "impoconsumo_sencilla",
@@ -567,6 +596,7 @@ export default {
           align: "right",
           field: "impoconsumo_sencilla",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "impoconsumo_doble",
@@ -574,6 +604,7 @@ export default {
           align: "right",
           field: "impoconsumo_doble",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "impoconsumo_triple",
@@ -581,6 +612,7 @@ export default {
           align: "right",
           field: "impoconsumo_triple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "impoconsumo_cuadruple",
@@ -588,6 +620,7 @@ export default {
           align: "right",
           field: "impoconsumo_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "impoconsumo_niño",
@@ -595,6 +628,7 @@ export default {
           align: "right",
           field: "impoconsumo_niño",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "ing_propio_sencilla",
@@ -602,6 +636,7 @@ export default {
           align: "right",
           field: "ing_propio_sencilla",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "ing_propio_doble",
@@ -609,6 +644,7 @@ export default {
           align: "right",
           field: "ing_propio_doble",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "ing_propio_triple",
@@ -616,6 +652,7 @@ export default {
           align: "right",
           field: "ing_propio_triple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "ing_propio_cuadruple",
@@ -623,6 +660,7 @@ export default {
           align: "right",
           field: "ing_propio_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "ing_propio_niño",
@@ -630,6 +668,7 @@ export default {
           align: "right",
           field: "ing_propio_niño",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "rentabilidad_sencilla",
@@ -637,6 +676,7 @@ export default {
           align: "right",
           field: "rentabilidad_sencilla",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "rentabilidad_doble",
@@ -644,6 +684,7 @@ export default {
           align: "right",
           field: "rentabilidad_doble",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "rentabilidad_triple",
@@ -651,6 +692,7 @@ export default {
           align: "right",
           field: "rentabilidad_triple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "rentabilidad_cuadruple",
@@ -658,6 +700,7 @@ export default {
           align: "right",
           field: "rentabilidad_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "rentabilidad_niño",
@@ -665,6 +708,7 @@ export default {
           align: "right",
           field: "rentabilidad_niño",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_sencilla",
@@ -672,6 +716,7 @@ export default {
           align: "right",
           field: "iva_ing_propio_sencilla",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_doble",
@@ -679,6 +724,7 @@ export default {
           align: "right",
           field: "iva_ing_propio_doble",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_triple",
@@ -686,6 +732,7 @@ export default {
           align: "right",
           field: "iva_ing_propio_triple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_cuadruple",
@@ -693,6 +740,7 @@ export default {
           align: "right",
           field: "iva_ing_propio_cuadruple",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_niño",
@@ -700,6 +748,7 @@ export default {
           align: "right",
           field: "iva_ing_propio_niño",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "total_sgl",
@@ -707,6 +756,7 @@ export default {
           align: "right",
           field: "total_sgl",
           sortable: true,
+          format: formatOrNA
         },
 
         {
@@ -715,6 +765,7 @@ export default {
           align: "right",
           field: "total_dbl",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "total_tpl",
@@ -722,6 +773,7 @@ export default {
           align: "right",
           field: "total_tpl",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "total_cpl",
@@ -729,6 +781,7 @@ export default {
           align: "right",
           field: "total_cpl",
           sortable: true,
+          format: formatOrNA
         },
         {
           name: "total_chd",
@@ -736,6 +789,7 @@ export default {
           align: "right",
           field: "total_chd",
           sortable: true,
+          format: formatOrNA
         },
       ],
 
@@ -767,229 +821,267 @@ export default {
           label: "Valor Doble",
           align: "center",
           field: "valor_doble",
+          format: formatOrNA
         },
         {
           name: "valor_triple",
           label: "Valor Triple",
           align: "center",
           field: "valor_triple",
+          format: formatOrNA
         },
         {
           name: "valor_cuadruple",
           label: "Valor Cuádruple",
           align: "center",
           field: "valor_cuadruple",
+          format: formatOrNA
         },
         {
           name: "valor_niño",
           label: "Valor Niño",
           align: "center",
           field: "valor_niño",
+          format: formatOrNA
         },
         {
           name: "tiquetes_aereos",
           label: "Tiquetes Aéreos",
           align: "center",
           field: "tiquetes_aereos",
+          format: formatOrNA
         },
         {
           name: "tarjetas_asistencia",
           label: "Tarjetas de Asistencia",
           align: "center",
           field: "tarjetas_asistencia",
+          format: formatOrNA
         },
         {
           name: "costos_sencilla",
           label: "Costos Sencilla",
           align: "center",
           field: "costos_sencilla",
+          format: formatOrNA
         },
         {
           name: "costos_doble",
           label: "Costos Doble",
           align: "center",
           field: "costos_doble",
+          format: formatOrNA
         },
         {
           name: "costos_triple",
           label: "Costos Triple",
           align: "center",
           field: "costos_triple",
+          format: formatOrNA
         },
         {
           name: "costos_cuadruple",
           label: "Costos Cuádruple",
           align: "center",
           field: "costos_cuadruple",
+          format: formatOrNA
         },
         {
           name: "costos_niño",
           label: "Costos Niño",
           align: "center",
           field: "costos_niño",
+          format: formatOrNA
         },
         {
           name: "impuesto",
           label: "Impuesto",
           align: "center",
           field: "impuesto",
+          format: formatOrNA
         },
         {
           name: "iva_sencilla",
           label: "IVA Sencilla",
           align: "center",
           field: "iva_sencilla",
+          format: formatOrNA
         },
         {
           name: "iva_doble",
           label: "IVA Doble",
           align: "center",
           field: "iva_doble",
+          format: formatOrNA
         },
         {
           name: "iva_triple",
           label: "IVA Triple",
           align: "center",
           field: "iva_triple",
+          format: formatOrNA
         },
         {
           name: "iva_cuadruple",
           label: "IVA Cuádruple",
           align: "center",
           field: "iva_cuadruple",
+          format: formatOrNA
         },
         {
           name: "iva_niño",
           label: "IVA Niño",
           align: "center",
           field: "iva_niño",
+          format: formatOrNA
         },
         {
           name: "impoconsumo_sencilla",
           label: "Impoconsumo Sencilla",
           align: "center",
           field: "impoconsumo_sencilla",
+          format: formatOrNA
         },
         {
           name: "impoconsumo_doble",
           label: "Impoconsumo Doble",
           align: "center",
           field: "impoconsumo_doble",
+          format: formatOrNA
         },
         {
           name: "impoconsumo_triple",
           label: "Impoconsumo Triple",
           align: "center",
           field: "impoconsumo_triple",
+          format: formatOrNA
         },
         {
           name: "impoconsumo_cuadruple",
           label: "Impoconsumo Cuádruple",
           align: "center",
           field: "impoconsumo_cuadruple",
+          format: formatOrNA
         },
         {
           name: "impoconsumo_niño",
           label: "Impoconsumo Niño",
           align: "center",
           field: "impoconsumo_niño",
+          format: formatOrNA
         },
         {
           name: "ing_propio_sencilla",
           label: "Ingreso Propio Sencilla",
           align: "center",
           field: "ing_propio_sencilla",
+          format: formatOrNA
         },
         {
           name: "ing_propio_doble",
           label: "Ingreso Propio Doble",
           align: "center",
           field: "ing_propio_doble",
+          format: formatOrNA
         },
         {
           name: "ing_propio_triple",
           label: "Ingreso Propio Triple",
           align: "center",
           field: "ing_propio_triple",
+          format: formatOrNA
         },
         {
           name: "ing_propio_cuadruple",
           label: "Ingreso Propio Cuádruple",
           align: "center",
           field: "ing_propio_cuadruple",
+          format: formatOrNA
         },
         {
           name: "ing_propio_niño",
           label: "Ingreso Propio Niño",
           align: "center",
           field: "ing_propio_niño",
+          format: formatOrNA
         },
         {
           name: "rentabilidad_sencilla",
           label: "Rentabilidad Sencilla",
           align: "center",
           field: "rentabilidad_sencilla",
+          format: formatOrNA
         },
         {
           name: "rentabilidad_doble",
           label: "Rentabilidad Doble",
           align: "center",
           field: "rentabilidad_doble",
+          format: formatOrNA
         },
         {
           name: "rentabilidad_triple",
           label: "Rentabilidad Triple",
           align: "center",
           field: "rentabilidad_triple",
+          format: formatOrNA
         },
         {
           name: "rentabilidad_cuadruple",
           label: "Rentabilidad Cuádruple",
           align: "center",
           field: "rentabilidad_cuadruple",
+          format: formatOrNA
         },
         {
           name: "rentabilidad_niño",
           label: "Rentabilidad Niño",
           align: "center",
           field: "rentabilidad_niño",
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_sencilla",
           label: "IVA Ingreso Propio Sencilla",
           align: "center",
           field: "iva_ing_propio_sencilla",
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_doble",
           label: "IVA Ingreso Propio Doble",
           align: "center",
           field: "iva_ing_propio_doble",
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_triple",
           label: "IVA Ingreso Propio Triple",
           align: "center",
           field: "iva_ing_propio_triple",
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_cuadruple",
           label: "IVA Ingreso Propio Cuádruple",
           align: "center",
           field: "iva_ing_propio_cuadruple",
+          format: formatOrNA
         },
         {
           name: "iva_ing_propio_niño",
           label: "IVA Ingreso Propio Niño",
           align: "center",
           field: "iva_ing_propio_niño",
+          format: formatOrNA
         },
-        { name: "total", label: "Total", align: "center", field: "total" },
+        { name: "total", label: "Total", align: "center", field: "total", format: formatOrNA },
         {
           name: "total_2",
           label: "Total 2",
           align: "center",
           field: "total_2",
+          format: formatOrNA
         },
       ],
 
@@ -1007,201 +1099,234 @@ export default {
           label: "Sencilla",
           align: "center",
           field: "sencilla",
+          format: formatOrNA
         },
-        { name: "doble", label: "Doble", align: "center", field: "doble" },
-        { name: "triple", label: "Triple", align: "center", field: "triple" },
+        { name: "doble", label: "Doble", align: "center", field: "doble" , format: formatOrNA},
+        { name: "triple", label: "Triple", align: "center", field: "triple" , format: formatOrNA},
         {
           name: "cuadruple",
           label: "Cuádruple",
           align: "center",
           field: "cuadruple",
+          format: formatOrNA
         },
-        { name: "niño", label: "Niño", align: "center", field: "niño" },
+        { name: "niño", label: "Niño", align: "center", field: "niño" , format: formatOrNA},
         {
           name: "Subtotal_sencilla",
           label: "Subtotal Sencilla",
           align: "center",
           field: "Subtotal_sencilla",
+          format: formatOrNA
         },
         {
           name: "Subtotal_doble",
           label: "Subtotal Doble",
           align: "center",
           field: "Subtotal_doble",
+          format: formatOrNA
         },
         {
           name: "Subtotal_triple",
           label: "Subtotal Triple",
           align: "center",
           field: "Subtotal_triple",
+          format: formatOrNA
         },
         {
           name: "Subtotal_cuadruple",
           label: "Subtotal Cuádruple",
           align: "center",
           field: "Subtotal_cuadruple",
+          format: formatOrNA
         },
         {
           name: "Subtotal_nino",
           label: "Subtotal Niño",
           align: "center",
           field: "Subtotal_nino",
+          format: formatOrNA
         },
         {
           name: "Imgreso_sencilla",
           label: "Ingreso Sencilla",
           align: "center",
           field: "Imgreso_sencilla",
+          format: formatOrNA
         },
         {
           name: "Imgreso_doble",
           label: "Ingreso Doble",
           align: "center",
           field: "Imgreso_doble",
+          format: formatOrNA
         },
         {
           name: "Imgreso_triple",
           label: "Ingreso Triple",
           align: "center",
           field: "Imgreso_triple",
+          format: formatOrNA
         },
         {
           name: "Imgreso_cuadruple",
           label: "Ingreso Cuádruple",
           align: "center",
           field: "Imgreso_cuadruple",
+          format: formatOrNA
         },
         {
           name: "Imgreso_nino",
           label: "Ingreso Niño",
           align: "center",
           field: "Imgreso_nino",
+          format: formatOrNA
         },
         {
           name: "utilidad_sencilla",
           label: "Utilidad Sencilla",
           align: "center",
           field: "utilidad_sencilla",
+          format: formatOrNA
         },
         {
           name: "utilidad_doble",
           label: "Utilidad Doble",
           align: "center",
           field: "utilidad_doble",
+          format: formatOrNA
         },
         {
           name: "utilidad_triple",
           label: "Utilidad Triple",
           align: "center",
           field: "utilidad_triple",
+          format: formatOrNA
         },
         {
           name: "utilidad_cuadruple",
           label: "Utilidad Cuádruple",
           align: "center",
           field: "utilidad_cuadruple",
+          format: formatOrNA
         },
         {
           name: "utilidad_nino",
           label: "Utilidad Niño",
           align: "center",
           field: "utilidad_nino",
+          format: formatOrNA
         },
         {
           name: "imptos_tkt",
           label: "Impuestos TKT",
           align: "center",
           field: "imptos_tkt",
+          format: formatOrNA
         },
         {
           name: "iva_sgl",
           label: "IVA Sencilla",
           align: "center",
           field: "iva_sgl",
+          format: formatOrNA
         },
         {
           name: "iva_db",
           label: "IVA Doble",
           align: "center",
           field: "iva_db",
+          format: formatOrNA
         },
         {
           name: "iva_trp",
           label: "IVA Triple",
           align: "center",
           field: "iva_trp",
+          format: formatOrNA
         },
         {
           name: "iva_cdp",
           label: "IVA Cuádruple",
           align: "center",
           field: "iva_cdp",
+          format: formatOrNA
         },
         {
           name: "iva_nino",
           label: "IVA Niño",
           align: "center",
           field: "iva_nino",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_sgl",
           label: "IVA Ingreso Sencilla",
           align: "center",
           field: "iva_imgr_sgl",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_db",
           label: "IVA Ingreso Doble",
           align: "center",
           field: "iva_imgr_db",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_trp",
           label: "IVA Ingreso Triple",
           align: "center",
           field: "iva_imgr_trp",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_cdp",
           label: "IVA Ingreso Cuádruple",
           align: "center",
           field: "iva_imgr_cdp",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_nino",
           label: "IVA Ingreso Niño",
           align: "center",
           field: "iva_imgr_nino",
+          format: formatOrNA
         },
         {
           name: "precio_venta_sencilla",
           label: "Precio Venta Sencilla",
           align: "center",
           field: "precio_venta_sencilla",
+          format: formatOrNA
         },
         {
           name: "precio_venta_doble",
           label: "Precio Venta Doble",
           align: "center",
           field: "precio_venta_doble",
+          format: formatOrNA
         },
         {
           name: "precio_venta_triple",
           label: "Precio Venta Triple",
           align: "center",
           field: "precio_venta_triple",
+          format: formatOrNA
         },
         {
           name: "precio_venta_cuadruple",
           label: "Precio Venta Cuádruple",
           align: "center",
           field: "precio_venta_cuadruple",
+          format: formatOrNA
         },
         {
           name: "precio_venta_nino",
           label: "Precio Venta Niño",
           align: "center",
           field: "precio_venta_nino",
+          format: formatOrNA
         },
       ],
 
@@ -1219,201 +1344,234 @@ export default {
           label: "Sencilla",
           align: "center",
           field: "sencilla",
+          format: formatOrNA
         },
-        { name: "doble", label: "Doble", align: "center", field: "doble" },
-        { name: "triple", label: "Triple", align: "center", field: "triple" },
+        { name: "doble", label: "Doble", align: "center", field: "doble" , format: formatOrNA},
+        { name: "triple", label: "Triple", align: "center", field: "triple" , format: formatOrNA},
         {
           name: "cuadruple",
           label: "Cuádruple",
           align: "center",
           field: "cuadruple",
+          format: formatOrNA
         },
-        { name: "niño", label: "Niño", align: "center", field: "niño" },
+        { name: "niño", label: "Niño", align: "center", field: "niño", format: formatOrNA },
         {
           name: "Subtotal_sencilla",
           label: "Subtotal Sencilla",
           align: "center",
           field: "Subtotal_sencilla",
+          format: formatOrNA
         },
         {
           name: "Subtotal_doble",
           label: "Subtotal Doble",
           align: "center",
           field: "Subtotal_doble",
+          format: formatOrNA
         },
         {
           name: "Subtotal_triple",
           label: "Subtotal Triple",
           align: "center",
           field: "Subtotal_triple",
+          format: formatOrNA
         },
         {
           name: "Subtotal_cuadruple",
           label: "Subtotal Cuádruple",
           align: "center",
           field: "Subtotal_cuadruple",
+          format: formatOrNA
         },
         {
           name: "Subtotal_nino",
           label: "Subtotal Niño",
           align: "center",
           field: "Subtotal_nino",
+          format: formatOrNA
         },
         {
           name: "Imgreso_sencilla",
           label: "Ingreso Sencilla",
           align: "center",
           field: "Imgreso_sencilla",
+          format: formatOrNA
         },
         {
           name: "Imgreso_doble",
           label: "Ingreso Doble",
           align: "center",
           field: "Imgreso_doble",
+          format: formatOrNA
         },
         {
           name: "Imgreso_triple",
           label: "Ingreso Triple",
           align: "center",
           field: "Imgreso_triple",
+          format: formatOrNA
         },
         {
           name: "Imgreso_cuadruple",
           label: "Ingreso Cuádruple",
           align: "center",
           field: "Imgreso_cuadruple",
+          format: formatOrNA
         },
         {
           name: "Imgreso_nino",
           label: "Ingreso Niño",
           align: "center",
           field: "Imgreso_nino",
+          format: formatOrNA
         },
         {
           name: "utilidad_sencilla",
           label: "Utilidad Sencilla",
           align: "center",
           field: "utilidad_sencilla",
+          format: formatOrNA
         },
         {
           name: "utilidad_doble",
           label: "Utilidad Doble",
           align: "center",
           field: "utilidad_doble",
+          format: formatOrNA
         },
         {
           name: "utilidad_triple",
           label: "Utilidad Triple",
           align: "center",
           field: "utilidad_triple",
+          format: formatOrNA
         },
         {
           name: "utilidad_cuadruple",
           label: "Utilidad Cuádruple",
           align: "center",
           field: "utilidad_cuadruple",
+          format: formatOrNA
         },
         {
           name: "utilidad_nino",
           label: "Utilidad Niño",
           align: "center",
           field: "utilidad_nino",
+          format: formatOrNA
         },
         {
           name: "imptos_tkt",
           label: "Impuestos TKT",
           align: "center",
           field: "imptos_tkt",
+          format: formatOrNA
         },
         {
           name: "iva_sgl",
           label: "IVA Sencilla",
           align: "center",
           field: "iva_sgl",
+          format: formatOrNA
         },
         {
           name: "iva_db",
           label: "IVA Doble",
           align: "center",
           field: "iva_db",
+          format: formatOrNA
         },
         {
           name: "iva_trp",
           label: "IVA Triple",
           align: "center",
           field: "iva_trp",
+          format: formatOrNA
         },
         {
           name: "iva_cdp",
           label: "IVA Cuádruple",
           align: "center",
           field: "iva_cdp",
+          format: formatOrNA
         },
         {
           name: "iva_nino",
           label: "IVA Niño",
           align: "center",
           field: "iva_nino",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_sgl",
           label: "IVA Ingreso Sencilla",
           align: "center",
           field: "iva_imgr_sgl",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_db",
           label: "IVA Ingreso Doble",
           align: "center",
           field: "iva_imgr_db",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_trp",
           label: "IVA Ingreso Triple",
           align: "center",
           field: "iva_imgr_trp",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_cdp",
           label: "IVA Ingreso Cuádruple",
           align: "center",
           field: "iva_imgr_cdp",
+          format: formatOrNA
         },
         {
           name: "iva_imgr_nino",
           label: "IVA Ingreso Niño",
           align: "center",
           field: "iva_imgr_nino",
+          format: formatOrNA
         },
         {
           name: "precio_venta_sencilla",
           label: "Precio Venta Sencilla",
           align: "center",
           field: "precio_venta_sencilla",
+          format: formatOrNA
         },
         {
           name: "precio_venta_doble",
           label: "Precio Venta Doble",
           align: "center",
           field: "precio_venta_doble",
+          format: formatOrNA
         },
         {
           name: "precio_venta_triple",
           label: "Precio Venta Triple",
           align: "center",
           field: "precio_venta_triple",
+          format: formatOrNA
         },
         {
           name: "precio_venta_cuadruple",
           label: "Precio Venta Cuádruple",
           align: "center",
           field: "precio_venta_cuadruple",
+          format: formatOrNA
         },
         {
           name: "precio_venta_nino",
           label: "Precio Venta Niño",
           align: "center",
           field: "precio_venta_nino",
+          format: formatOrNA
         },
       ],
 
@@ -1431,201 +1589,234 @@ export default {
           label: "Sencilla",
           align: "center",
           field: "sencilla",
+           format: formatOrNA
         },
-        { name: "doble", label: "Doble", align: "center", field: "doble" },
-        { name: "triple", label: "Triple", align: "center", field: "triple" },
+        { name: "doble", label: "Doble", align: "center", field: "doble", format: formatOrNA },
+        { name: "triple", label: "Triple", align: "center", field: "triple" , format: formatOrNA},
         {
           name: "cuadruple",
           label: "Cuádruple",
           align: "center",
           field: "cuadruple",
+           format: formatOrNA
         },
-        { name: "niño", label: "Niño", align: "center", field: "niño" },
+        { name: "niño", label: "Niño", align: "center", field: "niño" , format: formatOrNA},
         {
           name: "Subtotal_sencilla",
           label: "Subtotal Sencilla",
           align: "center",
           field: "Subtotal_sencilla",
+           format: formatOrNA
         },
         {
           name: "Subtotal_doble",
           label: "Subtotal Doble",
           align: "center",
           field: "Subtotal_doble",
+           format: formatOrNA
         },
         {
           name: "Subtotal_triple",
           label: "Subtotal Triple",
           align: "center",
           field: "Subtotal_triple",
+           format: formatOrNA
         },
         {
           name: "Subtotal_cuadruple",
           label: "Subtotal Cuádruple",
           align: "center",
           field: "Subtotal_cuadruple",
+           format: formatOrNA
         },
         {
           name: "Subtotal_nino",
           label: "Subtotal Niño",
           align: "center",
           field: "Subtotal_nino",
+           format: formatOrNA
         },
         {
           name: "Imgreso_sencilla",
           label: "Ingreso Sencilla",
           align: "center",
           field: "Imgreso_sencilla",
+           format: formatOrNA
         },
         {
           name: "Imgreso_doble",
           label: "Ingreso Doble",
           align: "center",
           field: "Imgreso_doble",
+           format: formatOrNA
         },
         {
           name: "Imgreso_triple",
           label: "Ingreso Triple",
           align: "center",
           field: "Imgreso_triple",
+           format: formatOrNA
         },
         {
           name: "Imgreso_cuadruple",
           label: "Ingreso Cuádruple",
           align: "center",
           field: "Imgreso_cuadruple",
+           format: formatOrNA
         },
         {
           name: "Imgreso_nino",
           label: "Ingreso Niño",
           align: "center",
           field: "Imgreso_nino",
+           format: formatOrNA
         },
         {
           name: "utilidad_sencilla",
           label: "Utilidad Sencilla",
           align: "center",
           field: "utilidad_sencilla",
+           format: formatOrNA
         },
         {
           name: "utilidad_doble",
           label: "Utilidad Doble",
           align: "center",
           field: "utilidad_doble",
+           format: formatOrNA
         },
         {
           name: "utilidad_triple",
           label: "Utilidad Triple",
           align: "center",
           field: "utilidad_triple",
+           format: formatOrNA
         },
         {
           name: "utilidad_cuadruple",
           label: "Utilidad Cuádruple",
           align: "center",
           field: "utilidad_cuadruple",
+           format: formatOrNA
         },
         {
           name: "utilidad_nino",
           label: "Utilidad Niño",
           align: "center",
           field: "utilidad_nino",
+           format: formatOrNA
         },
         {
           name: "imptos_tkt",
           label: "Impuestos TKT",
           align: "center",
           field: "imptos_tkt",
+           format: formatOrNA
         },
         {
           name: "iva_sgl",
           label: "IVA Sencilla",
           align: "center",
           field: "iva_sgl",
+           format: formatOrNA
         },
         {
           name: "iva_db",
           label: "IVA Doble",
           align: "center",
           field: "iva_db",
+           format: formatOrNA
         },
         {
           name: "iva_trp",
           label: "IVA Triple",
           align: "center",
           field: "iva_trp",
+           format: formatOrNA
         },
         {
           name: "iva_cdp",
           label: "IVA Cuádruple",
           align: "center",
           field: "iva_cdp",
+           format: formatOrNA
         },
         {
           name: "iva_nino",
           label: "IVA Niño",
           align: "center",
           field: "iva_nino",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_sgl",
           label: "IVA Ingreso Sencilla",
           align: "center",
           field: "iva_imgr_sgl",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_db",
           label: "IVA Ingreso Doble",
           align: "center",
           field: "iva_imgr_db",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_trp",
           label: "IVA Ingreso Triple",
           align: "center",
           field: "iva_imgr_trp",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_cdp",
           label: "IVA Ingreso Cuádruple",
           align: "center",
           field: "iva_imgr_cdp",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_nino",
           label: "IVA Ingreso Niño",
           align: "center",
           field: "iva_imgr_nino",
+           format: formatOrNA
         },
         {
           name: "precio_venta_sencilla",
           label: "Precio Venta Sencilla",
           align: "center",
           field: "precio_venta_sencilla",
+           format: formatOrNA
         },
         {
           name: "precio_venta_doble",
           label: "Precio Venta Doble",
           align: "center",
           field: "precio_venta_doble",
+           format: formatOrNA
         },
         {
           name: "precio_venta_triple",
           label: "Precio Venta Triple",
           align: "center",
           field: "precio_venta_triple",
+           format: formatOrNA
         },
         {
           name: "precio_venta_cuadruple",
           label: "Precio Venta Cuádruple",
           align: "center",
           field: "precio_venta_cuadruple",
+           format: formatOrNA
         },
         {
           name: "precio_venta_nino",
           label: "Precio Venta Niño",
           align: "center",
           field: "precio_venta_nino",
+           format: formatOrNA
         },
       ],
 
@@ -1643,201 +1834,234 @@ export default {
           label: "Sencilla",
           align: "center",
           field: "sencilla",
+           format: formatOrNA
         },
-        { name: "doble", label: "Doble", align: "center", field: "doble" },
-        { name: "triple", label: "Triple", align: "center", field: "triple" },
+        { name: "doble", label: "Doble", align: "center", field: "doble" , format: formatOrNA},
+        { name: "triple", label: "Triple", align: "center", field: "triple" , format: formatOrNA},
         {
           name: "cuadruple",
           label: "Cuádruple",
           align: "center",
           field: "cuadruple",
+           format: formatOrNA
         },
-        { name: "niño", label: "Niño", align: "center", field: "niño" },
+        { name: "niño", label: "Niño", align: "center", field: "niño", format: formatOrNA },
         {
           name: "Subtotal_sencilla",
           label: "Subtotal Sencilla",
           align: "center",
           field: "Subtotal_sencilla",
+           format: formatOrNA
         },
         {
           name: "Subtotal_doble",
           label: "Subtotal Doble",
           align: "center",
           field: "Subtotal_doble",
+           format: formatOrNA
         },
         {
           name: "Subtotal_triple",
           label: "Subtotal Triple",
           align: "center",
           field: "Subtotal_triple",
+           format: formatOrNA
         },
         {
           name: "Subtotal_cuadruple",
           label: "Subtotal Cuádruple",
           align: "center",
           field: "Subtotal_cuadruple",
+           format: formatOrNA
         },
         {
           name: "Subtotal_nino",
           label: "Subtotal Niño",
           align: "center",
           field: "Subtotal_nino",
+           format: formatOrNA
         },
         {
           name: "Imgreso_sencilla",
           label: "Ingreso Sencilla",
           align: "center",
           field: "Imgreso_sencilla",
+           format: formatOrNA
         },
         {
           name: "Imgreso_doble",
           label: "Ingreso Doble",
           align: "center",
           field: "Imgreso_doble",
+           format: formatOrNA
         },
         {
           name: "Imgreso_triple",
           label: "Ingreso Triple",
           align: "center",
           field: "Imgreso_triple",
+           format: formatOrNA
         },
         {
           name: "Imgreso_cuadruple",
           label: "Ingreso Cuádruple",
           align: "center",
           field: "Imgreso_cuadruple",
+           format: formatOrNA
         },
         {
           name: "Imgreso_nino",
           label: "Ingreso Niño",
           align: "center",
           field: "Imgreso_nino",
+           format: formatOrNA
         },
         {
           name: "utilidad_sencilla",
           label: "Utilidad Sencilla",
           align: "center",
           field: "utilidad_sencilla",
+           format: formatOrNA
         },
         {
           name: "utilidad_doble",
           label: "Utilidad Doble",
           align: "center",
           field: "utilidad_doble",
+           format: formatOrNA
         },
         {
           name: "utilidad_triple",
           label: "Utilidad Triple",
           align: "center",
           field: "utilidad_triple",
+           format: formatOrNA
         },
         {
           name: "utilidad_cuadruple",
           label: "Utilidad Cuádruple",
           align: "center",
           field: "utilidad_cuadruple",
+           format: formatOrNA
         },
         {
           name: "utilidad_nino",
           label: "Utilidad Niño",
           align: "center",
           field: "utilidad_nino",
+           format: formatOrNA
         },
         {
           name: "imptos_tkt",
           label: "Impuestos TKT",
           align: "center",
           field: "imptos_tkt",
+           format: formatOrNA
         },
         {
           name: "iva_sgl",
           label: "IVA Sencilla",
           align: "center",
           field: "iva_sgl",
+           format: formatOrNA
         },
         {
           name: "iva_db",
           label: "IVA Doble",
           align: "center",
           field: "iva_db",
+           format: formatOrNA
         },
         {
           name: "iva_trp",
           label: "IVA Triple",
           align: "center",
           field: "iva_trp",
+           format: formatOrNA
         },
         {
           name: "iva_cdp",
           label: "IVA Cuádruple",
           align: "center",
           field: "iva_cdp",
+           format: formatOrNA
         },
         {
           name: "iva_nino",
           label: "IVA Niño",
           align: "center",
           field: "iva_nino",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_sgl",
           label: "IVA Ingreso Sencilla",
           align: "center",
           field: "iva_imgr_sgl",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_db",
           label: "IVA Ingreso Doble",
           align: "center",
           field: "iva_imgr_db",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_trp",
           label: "IVA Ingreso Triple",
           align: "center",
           field: "iva_imgr_trp",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_cdp",
           label: "IVA Ingreso Cuádruple",
           align: "center",
           field: "iva_imgr_cdp",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_nino",
           label: "IVA Ingreso Niño",
           align: "center",
           field: "iva_imgr_nino",
+           format: formatOrNA
         },
         {
           name: "precio_venta_sencilla",
           label: "Precio Venta Sencilla",
           align: "center",
           field: "precio_venta_sencilla",
+           format: formatOrNA
         },
         {
           name: "precio_venta_doble",
           label: "Precio Venta Doble",
           align: "center",
           field: "precio_venta_doble",
+           format: formatOrNA
         },
         {
           name: "precio_venta_triple",
           label: "Precio Venta Triple",
           align: "center",
           field: "precio_venta_triple",
+           format: formatOrNA
         },
         {
           name: "precio_venta_cuadruple",
           label: "Precio Venta Cuádruple",
           align: "center",
           field: "precio_venta_cuadruple",
+           format: formatOrNA
         },
         {
           name: "precio_venta_nino",
           label: "Precio Venta Niño",
           align: "center",
           field: "precio_venta_nino",
+           format: formatOrNA
         },
       ],
 
@@ -1855,201 +2079,234 @@ export default {
           label: "Sencilla",
           align: "center",
           field: "sencilla",
+           format: formatOrNA
         },
-        { name: "doble", label: "Doble", align: "center", field: "doble" },
-        { name: "triple", label: "Triple", align: "center", field: "triple" },
+        { name: "doble", label: "Doble", align: "center", field: "doble" , format: formatOrNA},
+        { name: "triple", label: "Triple", align: "center", field: "triple" , format: formatOrNA},
         {
           name: "cuadruple",
           label: "Cuádruple",
           align: "center",
           field: "cuadruple",
+           format: formatOrNA
         },
-        { name: "niño", label: "Niño", align: "center", field: "niño" },
+        { name: "niño", label: "Niño", align: "center", field: "niño" , format: formatOrNA},
         {
           name: "Subtotal_sencilla",
           label: "Subtotal Sencilla",
           align: "center",
           field: "Subtotal_sencilla",
+           format: formatOrNA
         },
         {
           name: "Subtotal_doble",
           label: "Subtotal Doble",
           align: "center",
           field: "Subtotal_doble",
+           format: formatOrNA
         },
         {
           name: "Subtotal_triple",
           label: "Subtotal Triple",
           align: "center",
           field: "Subtotal_triple",
+           format: formatOrNA
         },
         {
           name: "Subtotal_cuadruple",
           label: "Subtotal Cuádruple",
           align: "center",
           field: "Subtotal_cuadruple",
+           format: formatOrNA
         },
         {
           name: "Subtotal_nino",
           label: "Subtotal Niño",
           align: "center",
           field: "Subtotal_nino",
+           format: formatOrNA
         },
         {
           name: "Imgreso_sencilla",
           label: "Ingreso Sencilla",
           align: "center",
           field: "Imgreso_sencilla",
+           format: formatOrNA
         },
         {
           name: "Imgreso_doble",
           label: "Ingreso Doble",
           align: "center",
           field: "Imgreso_doble",
+           format: formatOrNA
         },
         {
           name: "Imgreso_triple",
           label: "Ingreso Triple",
           align: "center",
           field: "Imgreso_triple",
+           format: formatOrNA
         },
         {
           name: "Imgreso_cuadruple",
           label: "Ingreso Cuádruple",
           align: "center",
           field: "Imgreso_cuadruple",
+           format: formatOrNA
         },
         {
           name: "Imgreso_nino",
           label: "Ingreso Niño",
           align: "center",
           field: "Imgreso_nino",
+           format: formatOrNA
         },
         {
           name: "utilidad_sencilla",
           label: "Utilidad Sencilla",
           align: "center",
           field: "utilidad_sencilla",
+           format: formatOrNA
         },
         {
           name: "utilidad_doble",
           label: "Utilidad Doble",
           align: "center",
           field: "utilidad_doble",
+           format: formatOrNA
         },
         {
           name: "utilidad_triple",
           label: "Utilidad Triple",
           align: "center",
           field: "utilidad_triple",
+           format: formatOrNA
         },
         {
           name: "utilidad_cuadruple",
           label: "Utilidad Cuádruple",
           align: "center",
           field: "utilidad_cuadruple",
+           format: formatOrNA
         },
         {
           name: "utilidad_nino",
           label: "Utilidad Niño",
           align: "center",
           field: "utilidad_nino",
+           format: formatOrNA
         },
         {
           name: "imptos_tkt",
           label: "Impuestos TKT",
           align: "center",
           field: "imptos_tkt",
+           format: formatOrNA
         },
         {
           name: "iva_sgl",
           label: "IVA Sencilla",
           align: "center",
           field: "iva_sgl",
+           format: formatOrNA
         },
         {
           name: "iva_db",
           label: "IVA Doble",
           align: "center",
           field: "iva_db",
+           format: formatOrNA
         },
         {
           name: "iva_trp",
           label: "IVA Triple",
           align: "center",
           field: "iva_trp",
+           format: formatOrNA
         },
         {
           name: "iva_cdp",
           label: "IVA Cuádruple",
           align: "center",
           field: "iva_cdp",
+           format: formatOrNA
         },
         {
           name: "iva_nino",
           label: "IVA Niño",
           align: "center",
           field: "iva_nino",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_sgl",
           label: "IVA Ingreso Sencilla",
           align: "center",
           field: "iva_imgr_sgl",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_db",
           label: "IVA Ingreso Doble",
           align: "center",
           field: "iva_imgr_db",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_trp",
           label: "IVA Ingreso Triple",
           align: "center",
           field: "iva_imgr_trp",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_cdp",
           label: "IVA Ingreso Cuádruple",
           align: "center",
           field: "iva_imgr_cdp",
+           format: formatOrNA
         },
         {
           name: "iva_imgr_nino",
           label: "IVA Ingreso Niño",
           align: "center",
           field: "iva_imgr_nino",
+           format: formatOrNA
         },
         {
           name: "precio_venta_sencilla",
           label: "Precio Venta Sencilla",
           align: "center",
           field: "precio_venta_sencilla",
+           format: formatOrNA
         },
         {
           name: "precio_venta_doble",
           label: "Precio Venta Doble",
           align: "center",
           field: "precio_venta_doble",
+           format: formatOrNA
         },
         {
           name: "precio_venta_triple",
           label: "Precio Venta Triple",
           align: "center",
           field: "precio_venta_triple",
+           format: formatOrNA
         },
         {
           name: "precio_venta_cuadruple",
           label: "Precio Venta Cuádruple",
           align: "center",
           field: "precio_venta_cuadruple",
+           format: formatOrNA
         },
         {
           name: "precio_venta_nino",
           label: "Precio Venta Niño",
           align: "center",
           field: "precio_venta_nino",
+           format: formatOrNA
         },
       ],
       columns_Receptivos: [
@@ -2065,16 +2322,18 @@ export default {
           label: "Sencilla",
           align: "center",
           field: "sencilla",
+           format: formatOrNA
         },
-        { name: "doble", label: "Doble", align: "center", field: "doble" },
-        { name: "triple", label: "Triple", align: "center", field: "triple" },
+        { name: "doble", label: "Doble", align: "center", field: "doble" , format: formatOrNA},
+        { name: "triple", label: "Triple", align: "center", field: "triple" , format: formatOrNA},
         {
           name: "cuadruple",
           label: "Cuádruple",
           align: "center",
           field: "cuadruple",
+           format: formatOrNA
         },
-        { name: "niño", label: "Niño", align: "center", field: "niño" },
+        { name: "niño", label: "Niño", align: "center", field: "niño" , format: formatOrNA},
       ],
 
       columns_Proveedores: [

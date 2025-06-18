@@ -1,7840 +1,2620 @@
 <template>
-  <q-page padding>
-    <div v-if="userData">
-      <h5 padding>Bienvenido, {{ userData.nombreCompleto }}</h5>
-    </div>
-    <div v-else>
-      <p>Cargando datos del usuario...</p>
-    </div>
-    <div style="display: inline-block; margin-right: 10px">
-      <q-btn label="Crear cotizacion" @click="openModal" color="primary" />
-    </div>
-    <div style="display: inline-block">
-      <q-btn
-        label="Crear cotizacion Personalizada"
-        @click="openModalPersonalizado"
-        color="orange"
-      />
-    </div>
-
-    <br />
-    <!-- COMIENZO DE FORMULARIO COTIZACION NORMAL -->
-
-    <q-dialog v-model="modalVisible" content-css="max-width: 600px;">
-      <q-card>
-        <q-card-section class="q-pa-md">
-          <!-- Contenido de las pestañas -->
-          <div v-show="activeTab === 'tab1'">
-            <!-- primera formulario -->
-            <q-card
-              :style="{
-                border: '0',
-                borderRadius: '100%',
-                boxShadow: 'none',
-              }"
-            >
-              <q-card-section class="q-pa-md">
-                <!-- FECHA INICIO -->
-                <div class="row q-col-gutter-md">
-                  <!-- Fecha de inicio -->
-                  <div class="col" style="margin-left: 10px">
-                    <q-input
-                      filled
-                      v-model="dateRange[0]"
-                      mask="date"
-                      :rules="startDateRules"
-                      label="Fecha de inicio"
-                    >
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy
-                            cover
-                            transition-show="scale"
-                            transition-hide="scale"
-                          >
-                            <q-date v-model="dateRange[0]">
-                              <div class="row items-center justify-end">
-                                <q-btn
-                                  v-close-popup
-                                  label="Close"
-                                  color="primary"
-                                  flat
-                                />
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-                  <!-- Fecha de fin -->
-                  <div class="col">
-                    <q-input
-                      filled
-                      v-model="dateRange[1]"
-                      mask="date"
-                      :rules="endDateRules"
-                      label="Fecha de fin"
-                    >
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy
-                            cover
-                            transition-show="scale"
-                            transition-hide="scale"
-                          >
-                            <q-date v-model="dateRange[1]">
-                              <div class="row items-center justify-end">
-                                <q-btn
-                                  v-close-popup
-                                  label="Close"
-                                  color="primary"
-                                  flat
-                                />
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-                </div>
-                <div class="q-gutter-md">
-                  <!-- Salida -->
-                  <q-select
-                    outlined
-                    v-model="selectedDeparture"
-                    label="Salida"
-                    :options="departureOptions"
-                    @update:modelValue="handleDepartureChange"
-                    class="q-mb-md q-ml-md"
-                  />
-
-                  <!-- Destino -->
-                  <q-select
-                    outlined
-                    v-model="destination"
-                    label="Destino"
-                    :options="destinationOptions"
-                    @update:modelValue="updateOptionsByDestination"
-                    class="q-mb-md relative-position"
-                  >
-                    <template #append>
-                      <div
-                        class="error-message"
-                        v-show="!destinationOptions.length"
-                        style="color: red; font-size: 15px; align-items: center"
-                      >
-                        Ups... no hay información
-                      </div>
-                    </template>
-                  </q-select>
-
-                  <!-- Cliente y Nombre del Programa -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="hotel"
-                        label="Hotel"
-                        :options="hotelOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="programName"
-                        label="Nombre del Programa"
-                        :options="matchingPrograms"
-                        option-label="nombrePrograma"
-                        class="q-mb-md"
-                        :error="!programName && !autofillingProgramName"
-                        error-message="UPS... NO HAY TARIFA PARA ESTA TEMPORADA"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Plan y Hotel -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="selectedClient"
-                        label="Cliente"
-                        :options="clientOptions"
-                        filter
-                        use-input
-                        class="q-mb-md q-ml-md"
-                        @update:modelValue="fetchOptionCorreo"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="noche"
-                        label="Duración"
-                        :options="nochesOptions"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                  </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <!-- Checkbox para Noche adicional -->
-                      <q-checkbox
-                        v-model="asesorExternoCheck"
-                        label="¿Asesor Externo?"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <!-- Campo de entrada para el número de noches adicionales -->
-                      <q-select
-                        outlined
-                        v-model="selectedUser"
-                        :options="dropdownOptions"
-                        label="Selecciona un usuario"
-                        class="q-mb-md q-ml-md"
-                        :disable="!asesorExternoCheck"
-                      />
-                    </div>
-                  </div>
-                  <!-- noche adicional -->
-                  <div
-                    class="row q-col-gutter-md"
-                    v-if="!shouldHideAdditionalNightSection()"
-                  >
-                    <div class="col">
-                      <!-- Checkbox para Noche adicional -->
-                      <q-checkbox
-                        v-model="additionalNightSelected"
-                        label="Noche adicional"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <!-- Campo de entrada para el número de noches adicionales -->
-                      <q-input
-                        filled
-                        v-model="additionalNightCount"
-                        label="Noches adicionales"
-                        type="number"
-                        :disable="!additionalNightSelected"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-                  <!-- Número de habitaciones -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="correo"
-                        label="Correo Cliente"
-                        :options="OptionCorreo"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="numRooms"
-                        label="Número de habitaciones"
-                        :options="roomOptions"
-                        class="q-mb-md q-ml-md"
-                        @update:modelValue="handleNumRoomsChange"
-                      />
-                    </div>
-                  </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="transferInOut"
-                        label="¿Necesita agregar algún valor correspondiente a 'transfer in-out'?"
-                        :options="['Sí', 'No']"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col" v-if="transferInOut === 'Sí'">
-                      <q-input
-                        outlined
-                        v-model="transferInOutValue"
-                        label="Valor 'transfer in-out'"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                  </div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="numExtraValues"
-                        label="¿Cuántos valores extra necesita agregar (máximo 2)?"
-                        :options="[0, 1, 2]"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                  </div>
-                  <div v-if="numExtraValues >= 1" class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-input
-                        outlined
-                        v-model="extraValue1"
-                        label="Valor extra 1"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                  </div>
-
-                  <div v-if="numExtraValues === 2" class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-input
-                        outlined
-                        v-model="extraValue2"
-                        label="Valor extra 2"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                  </div>
-                  <!-- Bucle para mostrar el formulario de cada habitación -->
-                  <div v-for="(room, index) in rooms" :key="index">
-                    <q-card
-                      :style="{
-                        border: '0',
-                        borderRadius: '10px',
-                        boxShadow: 'none',
-                        marginTop: '20px',
-                      }"
-                    >
-                      <q-card-section class="q-pa-md">
-                        <p style="text-align: center">
-                          <span style="margin-left: 10px; font-weight: bold">
-                            Habitación {{ index + 1 }}
-                          </span>
-                        </p>
-                        <div class="row q-col-gutter-md">
-                          <div class="col">
-                            <q-select
-                              outlined
-                              v-model="room.roomType"
-                              label="Tipo de Habitación"
-                              :options="roomTypeOptions"
-                              class="q-mb-md"
-                            />
-                          </div>
-                          <div class="col">
-                            <q-select
-                              outlined
-                              v-model="room.adults"
-                              label="Adultos"
-                              :options="adultsOptions"
-                              class="q-mb-md"
-                            />
-                          </div>
-                        </div>
-
-                        <div class="row q-col-gutter-md">
-                          <div class="col">
-                            <q-checkbox
-                              v-model="hasChildren[index]"
-                              label="¿Niños?"
-                              @update:modelValue="handleChildrenChange(index)"
-                            />
-                          </div>
-                          <div class="col">
-                            <q-input
-                              filled
-                              v-model="room.numChildren"
-                              label="Niños"
-                              readonly
-                              :disable="!hasChildren[index]"
-                            />
-                          </div>
-                        </div>
-
-                        <div v-if="mostrarCamposEdad(index)">
-                          <div class="row">
-                            <div class="col-12">
-                              <p class="age-input-label">
-                                Edades y nacionalidad de los adultos:
-                              </p>
-                            </div>
-
-                            <div
-                              v-for="(age, i) in room.adultAges"
-                              :key="'adult' + i + '-' + index"
-                              class="col-6 col-sm-4 col-md-3"
-                            >
-                              <q-input
-                                filled
-                                v-model="room.adultAges[i]"
-                                :label="'Adulto ' + (i + 1) + ' - Edad'"
-                                type="number"
-                              />
-
-                              <q-checkbox
-                                v-model="room.isForeigner[i]"
-                                label="Extranjero"
-                              />
-                            </div>
-                          </div>
-
-                          <div class="row" v-if="hasChildren[index]">
-                            <div class="col-12">
-                              <p class="age-input-label">Edad del niño:</p>
-                            </div>
-                            <div class="col-6 col-sm-4 col-md-3">
-                              <q-input
-                                filled
-                                v-model="room.childAge"
-                                label="Niño"
-                                type="number"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <q-select
-                          outlined
-                          v-model="room.accommodation"
-                          label="Acomodación"
-                          :options="accommodationOptions"
-                          class="q-mb-md"
-                        />
-                      </q-card-section>
-                    </q-card>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-            <div>
-              <!-- Contenido de la primera pestaña -->
-            </div>
-          </div>
-          <div v-show="activeTab === 'tab2'">
-            <!-- segunda pestaña -->
-
-            <!-- Aerolina-->
-
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Información ida</span
-              >
-            </p>
-
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-select
-                    v-model="aerolineaValue1"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- Vuelo-->
-              <div class="col">
-                <q-input
-                  v-model="vueloValue1"
-                  label="Vuelo"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- hora salida -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="horaSalidaValue1"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="horaLlegadaValue1"
-                  label="Hora de llegada"
-                  outlined
-                  type="time"
-                  step="1800"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- CLASE -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="claseValue1"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- FECHA-->
-              <div class="col" style="margin-left: 10px">
-                <q-input
-                  filled
-                  v-model="dateRange[0]"
-                  mask="date"
-                  :rules="startDateRules"
-                  label="Fecha de inicio"
-                >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="dateRange[0]">
-                          <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Close"
-                              color="primary"
-                              flat
-                            />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Información vuelta</span
-              >
-            </p>
-
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-select
-                    v-model="aerolineaValue2"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- Vuelo-->
-              <div class="col">
-                <q-input
-                  v-model="vueloValue2"
-                  label="Vuelo"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- hora salida -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="horaSalidaValue2"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="horaLlegadaValue2"
-                  label="Hora de llegada"
-                  outlined
-                  type="time"
-                  step="1800"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- CLASE -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="claseValue2"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- FECHA-->
-              <!-- Fecha de fin -->
-              <div class="col">
-                <q-input
-                  filled
-                  v-model="dateRange[1]"
-                  mask="date"
-                  :rules="endDateRules"
-                  label="Fecha de fin"
-                >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="dateRange[1]">
-                          <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Close"
-                              color="primary"
-                              flat
-                            />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
-            </div>
-
-            <!-- ESCALA -->
-            <div class="row q-col-gutter-md">
-              <div class="col" style="margin-left: 10px">
-                <q-checkbox
-                  v-model="mostrarEscalas"
-                  label="Escala (Ida y Vuelta)"
-                />
-              </div>
-            </div>
-
-            <div v-if="mostrarEscalas">
-              <p style="text-align: center">
-                <span style="margin-left: 10px; font-weight: bold"
-                  >Información escala ida</span
-                >
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-select
-                    v-model="aerolineaEscalaIda"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="vueloEscalaIda"
-                    label="Vuelo"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="horaSalidaEscalaIda"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="horaLlegadaEscalaIda"
-                    label="Hora de llegada"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="claseEscalaIda"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <p style="text-align: center">
-                <span style="margin-left: 10px; font-weight: bold"
-                  >Información escala vuelta</span
-                >
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-select
-                    v-model="aerolineaEscalaVuelta"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="vueloEscalaVuelta"
-                    label="Vuelo"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="horaSalidaEscalaVuelta"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="horaLlegadaEscalaVuelta"
-                    label="Hora de llegada"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="claseEscalaVuelta"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Suplemento y Campo de entrada para el suplemento -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-checkbox v-model="supplementChecked" label="Suplemento?" />
-                </div>
-              </div>
-            </div>
-
-            <div v-if="supplementChecked">
-              <q-input
-                v-model="numberOfPeople"
-                label="Número de personas"
-                outlined
-                type="number"
-                class="q-mb-md"
-              />
-
-              <div v-for="person in peopleArray" :key="person">
-                <q-input
-                  v-model="supplementValues[person - 1]"
-                  :label="`Suplemento persona ${person}`"
-                  outlined
-                  type="number"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Botones de navegación -->
-          <div class="row q-mt-md justify-center">
-            <div class="col" v-if="activeTab === 'tab2'">
-              <q-btn label="Atrás" @click="goBack" color="primary" />
-            </div>
-
-            <div class="col" v-if="activeTab === 'tab2'">
-              <q-btn label="Registrar" @click="saveFormData" color="primary" />
-            </div>
-            <div
-              class="col"
-              v-if="activeTab === 'tab1' || activeTab === 'tab2'"
-            >
-              <q-btn label="Cerrar" @click="closeModal" color="red" />
-            </div>
-            <div class="col" v-if="activeTab === 'tab1'">
-              <q-btn label="Siguiente" @click="goNext" color="primary" />
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
-    <!-- FIN DE FORMULARIO COTIZACION NORMAL -->
-    <!-- COMIENZO DE FORMULARIO COTIZACION PERSONALIZADA -->
-
-    <q-dialog
-      v-model="modalVisiblePersonalizado"
-      content-css="max-width: 600px;"
+  <q-page class="cotizaciones-page">
+  <video
+      autoplay
+      muted
+      loop
+      playsinline
+      class="video-background"
     >
-      <q-card>
-        <q-card-section class="q-pa-md">
-          <!-- Contenido de las pestañas -->
-          <div v-show="activeTab === 'tab1'">
-            <!-- primera formulario -->
-            <q-card
-              :style="{
-                border: '0',
-                borderRadius: '100%',
-                boxShadow: 'none',
-              }"
-            >
-              <q-card-section class="q-pa-md">
-                <!-- FECHA INICIO -->
-                <div class="row q-col-gutter-md">
-                  <!-- Fecha de inicio -->
-                  <div class="col" style="margin-left: 10px">
-                    <q-input
-                      filled
-                      v-model="dateRange[0]"
-                      mask="date"
-                      :rules="startDateRules"
-                      label="Fecha de inicio"
-                    >
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy
-                            cover
-                            transition-show="scale"
-                            transition-hide="scale"
-                          >
-                            <q-date v-model="dateRange[0]">
-                              <div class="row items-center justify-end">
-                                <q-btn
-                                  v-close-popup
-                                  label="Close"
-                                  color="primary"
-                                  flat
-                                />
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-                  <!-- Fecha de fin -->
-                  <div class="col">
-                    <q-input
-                      filled
-                      v-model="dateRange[1]"
-                      mask="date"
-                      :rules="endDateRules"
-                      label="Fecha de fin"
-                    >
-                      <template v-slot:append>
-                        <q-icon name="event" class="cursor-pointer">
-                          <q-popup-proxy
-                            cover
-                            transition-show="scale"
-                            transition-hide="scale"
-                          >
-                            <q-date v-model="dateRange[1]">
-                              <div class="row items-center justify-end">
-                                <q-btn
-                                  v-close-popup
-                                  label="Close"
-                                  color="primary"
-                                  flat
-                                />
-                              </div>
-                            </q-date>
-                          </q-popup-proxy>
-                        </q-icon>
-                      </template>
-                    </q-input>
-                  </div>
-                </div>
-                <div class="q-gutter-md">
-                  <!-- Salida -->
-                  <q-select
-                    outlined
-                    v-model="selectedDeparture"
-                    label="Salida"
-                    :options="departureOptions"
-                    @update:modelValue="handleDepartureChange"
-                    class="q-mb-md q-ml-md"
-                  />
-
-                  <!-- Destino -->
-                  <q-select
-                    outlined
-                    v-model="destination"
-                    label="Destino"
-                    :options="destinationOptions"
-                    @update:modelValue="updateOptionsByDestination"
-                    class="q-mb-md relative-position"
-                  >
-                    <template #append>
-                      <div
-                        class="error-message"
-                        v-show="!destinationOptions.length"
-                        style="color: red; font-size: 15px; align-items: center"
-                      >
-                        Ups... no hay información
-                      </div>
-                    </template>
-                  </q-select>
-
-                  <!-- Cliente y Nombre del Programa -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="selectedClient"
-                        label="Cliente"
-                        :options="clientOptions"
-                        filter
-                        use-input
-                        class="q-mb-md q-ml-md"
-                        @update:modelValue="fetchOptionCorreo"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="programName"
-                        label="Nombre del Programa"
-                        :options="programNameOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Plan y Hotel -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="noche"
-                        label="Duración"
-                        :options="nochesOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="hotel"
-                        label="Hotel"
-                        :options="hotelOptions"
-                        @update:modelValue="handleSelectionChangeTipo"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-                  <!-- noche adicional -->
-                  <div
-                    class="row q-col-gutter-md"
-                    v-if="!shouldHideAdditionalNightSection()"
-                  >
-                    <div class="col">
-                      <!-- Checkbox para Noche adicional -->
-                      <q-checkbox
-                        v-model="additionalNightSelected"
-                        label="Noche adicional"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <!-- Campo de entrada para el número de noches adicionales -->
-                      <q-input
-                        filled
-                        v-model="additionalNightCount"
-                        label="Noches adicionales"
-                        type="number"
-                        :disable="!additionalNightSelected"
-                        class="q-mb-md"
-                      />
-                    </div>
-                  </div>
-                  <!-- Número de habitaciones -->
-                  <div class="row q-col-gutter-md">
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="correo"
-                        label="Correo Cliente"
-                        :options="OptionCorreo"
-                        class="q-mb-md q-ml-md"
-                      />
-                    </div>
-                    <div class="col">
-                      <q-select
-                        outlined
-                        v-model="numRooms"
-                        label="Número de habitaciones"
-                        :options="roomOptions"
-                        class="q-mb-md q-ml-md"
-                        @update:modelValue="handleNumRoomsChange"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Bucle para mostrar el formulario de cada habitación -->
-                  <div v-for="(room, index) in rooms" :key="index">
-                    <q-card
-                      :style="{
-                        border: '0',
-                        borderRadius: '10px',
-                        boxShadow: 'none',
-                        marginTop: '20px',
-                      }"
-                    >
-                      <q-card-section class="q-pa-md">
-                        <p style="text-align: center">
-                          <span style="margin-left: 10px; font-weight: bold">
-                            Habitación {{ index + 1 }}
-                          </span>
-                        </p>
-                        <div class="row q-col-gutter-md">
-                          <div class="col">
-                            <q-select
-                              outlined
-                              v-model="room.roomType"
-                              label="Tipo de Habitación"
-                              :options="roomTypeOptions"
-                              class="q-mb-md"
-                            />
-                          </div>
-                          <div class="col">
-                            <q-select
-                              outlined
-                              v-model="room.adults"
-                              label="Adultos"
-                              :options="adultsOptions"
-                              class="q-mb-md"
-                            />
-                          </div>
-                        </div>
-
-                        <div class="row q-col-gutter-md">
-                          <div class="col">
-                            <q-checkbox
-                              v-model="hasChildren[index]"
-                              label="¿Niños?"
-                              @update:modelValue="handleChildrenChange(index)"
-                            />
-                          </div>
-                          <div class="col">
-                            <q-input
-                              filled
-                              v-model="room.numChildren"
-                              label="Niños"
-                              readonly
-                              :disable="!hasChildren[index]"
-                            />
-                          </div>
-                        </div>
-
-                        <div v-if="mostrarCamposEdad(index)">
-                          <div class="row">
-                            <div class="col-12">
-                              <p class="age-input-label">
-                                Edades y nacionalidad de los adultos:
-                              </p>
-                            </div>
-
-                            <div
-                              v-for="(age, i) in room.adultAges"
-                              :key="'adult' + i + '-' + index"
-                              class="col-6 col-sm-4 col-md-3"
-                            >
-                              <q-input
-                                filled
-                                v-model="room.adultAges[i]"
-                                :label="'Adulto ' + (i + 1) + ' - Edad'"
-                                type="number"
-                              />
-
-                              <q-checkbox
-                                v-model="room.isForeigner[i]"
-                                label="Extranjero"
-                              />
-                            </div>
-                          </div>
-
-                          <div class="row" v-if="hasChildren[index]">
-                            <div class="col-12">
-                              <p class="age-input-label">Edad del niño:</p>
-                            </div>
-                            <div class="col-6 col-sm-4 col-md-3">
-                              <q-input
-                                filled
-                                v-model="room.childAge"
-                                label="Niño"
-                                type="number"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        <q-select
-                          outlined
-                          v-model="room.accommodation"
-                          label="Acomodación"
-                          :options="accommodationOptions"
-                          class="q-mb-md"
-                        />
-                        <q-input
-                          filled
-                          v-model="room.valor"
-                          label="Valor Persona"
-                          type="number"
-                        />
-                      </q-card-section>
-                    </q-card>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-            <div>
-              <!-- Contenido de la primera pestaña -->
+      <source src="../vid/cotizaciones.mp4" type="video/mp4" />
+      Tu navegador no soporta video HTML5.
+    </video>
+    <!-- Header Principal -->
+    <div class="page-header">
+      <div class="container">
+        <div class="header-content">
+          <div class="header-text">
+            <h1 class="page-title">Módulo de Cotizaciones</h1>
+            <p class="page-subtitle">Gestión integral de cotizaciones empresarial</p>
+          </div>
+          <div class="header-stats">
+            <div class="stat-card">
+              <div class="stat-number">{{ totalCotizaciones }}</div>
+              <div class="stat-label">Total Cotizaciones</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ formatearMonto(montoTotal) }}</div>
+              <div class="stat-label">Valor Total</div>
             </div>
           </div>
-          <div v-show="activeTab === 'tab2'">
-            <!-- segunda pestaña -->
-
-            <!-- Aerolina-->
-
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Información ida</span
-              >
-            </p>
-
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-select
-                    v-model="aerolineaValue1"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- Vuelo-->
-              <div class="col">
-                <q-input
-                  v-model="vueloValue1"
-                  label="Vuelo"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- hora salida -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="horaSalidaValue1"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="horaLlegadaValue1"
-                  label="Hora de llegada"
-                  outlined
-                  type="time"
-                  step="1800"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- CLASE -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="claseValue1"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- FECHA-->
-              <div class="col" style="margin-left: 10px">
-                <q-input
-                  filled
-                  v-model="dateRange[0]"
-                  mask="date"
-                  :rules="startDateRules"
-                  label="Fecha de inicio"
-                >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="dateRange[0]">
-                          <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Close"
-                              color="primary"
-                              flat
-                            />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Información vuelta</span
-              >
-            </p>
-
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-select
-                    v-model="aerolineaValue2"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- Vuelo-->
-              <div class="col">
-                <q-input
-                  v-model="vueloValue2"
-                  label="Vuelo"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- hora salida -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="horaSalidaValue2"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="horaLlegadaValue2"
-                  label="Hora de llegada"
-                  outlined
-                  type="time"
-                  step="1800"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <!-- CLASE -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="claseValue2"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <!-- FECHA-->
-              <!-- Fecha de fin -->
-              <div class="col">
-                <q-input
-                  filled
-                  v-model="dateRange[1]"
-                  mask="date"
-                  :rules="endDateRules"
-                  label="Fecha de fin"
-                >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="dateRange[1]">
-                          <div class="row items-center justify-end">
-                            <q-btn
-                              v-close-popup
-                              label="Close"
-                              color="primary"
-                              flat
-                            />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                </q-input>
-              </div>
-            </div>
-            <!--IMPUESTOS VUELO MANUAL-->
-            <p style="text-align: center">
-              <span style="margin-left: 10px; font-weight: bold"
-                >Impuestos</span
-              >
-            </p>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="Combus"
-                    label="Combus"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="Tasa"
-                  label="Tasa"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="Iva"
-                    label="Iva"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="Ta"
-                  label="Ta"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="IvaTa"
-                    label="IvaTa"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <!-- hora llegada-->
-              <div class="col">
-                <q-input
-                  v-model="Otros"
-                  label="Otros"
-                  outlined
-                  type="text"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="precioTransp"
-                    label="Precio Transporte"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-input
-                    v-model="textoIncluye"
-                    label="Incluye"
-                    filled
-                    type="textarea"
-                    autogrow
-                  >
-                    <template v-slot:control>
-                      <q-editor
-                        v-model="textoIncluye"
-                        toolbar-color="primary"
-                      />
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-
-              <div class="col">
-                <q-input
-                  v-model="textoNoIncluye"
-                  label="No Incluye"
-                  filled
-                  type="textarea"
-                  autogrow
-                >
-                  <template v-slot:control>
-                    <q-editor
-                      v-model="textoNoIncluye"
-                      toolbar-color="primary"
-                    />
-                  </template>
-                </q-input>
-              </div>
-            </div>
-
-            <!--FIN IMPUESTO VUELO MANUAL-->
-            <!-- ESCALA -->
-            <div class="row q-col-gutter-md">
-              <div class="col" style="margin-left: 10px">
-                <q-checkbox
-                  v-model="mostrarEscalas"
-                  label="Escala (Ida y Vuelta)"
-                />
-              </div>
-            </div>
-
-            <div v-if="mostrarEscalas">
-              <p style="text-align: center">
-                <span style="margin-left: 10px; font-weight: bold"
-                  >Información escala ida</span
-                >
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-select
-                    v-model="aerolineaEscalaIda"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="vueloEscalaIda"
-                    label="Vuelo"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="horaSalidaEscalaIda"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="horaLlegadaEscalaIda"
-                    label="Hora de llegada"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="claseEscalaIda"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-
-              <p style="text-align: center">
-                <span style="margin-left: 10px; font-weight: bold"
-                  >Información escala vuelta</span
-                >
-              </p>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-select
-                    v-model="aerolineaEscalaVuelta"
-                    label="Aerolinea"
-                    outlined
-                    :options="aerolineaOptions"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="vueloEscalaVuelta"
-                    label="Vuelo"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="horaSalidaEscalaVuelta"
-                    label="Hora de salida"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model="horaLlegadaEscalaVuelta"
-                    label="Hora de llegada"
-                    outlined
-                    type="time"
-                    step="1800"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-              <div class="row q-col-gutter-md">
-                <div class="col">
-                  <q-input
-                    v-model="claseEscalaVuelta"
-                    label="Clase"
-                    outlined
-                    type="text"
-                    class="q-mb-md"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Suplemento y Campo de entrada para el suplemento -->
-            <div class="row q-col-gutter-md">
-              <div class="col">
-                <div class="q-mb-md q-ml-md">
-                  <q-checkbox v-model="supplementChecked" label="Suplemento?" />
-                </div>
-              </div>
-            </div>
-
-            <div v-if="supplementChecked">
-              <q-input
-                v-model="numberOfPeople"
-                label="Número de personas"
-                outlined
-                type="number"
-                class="q-mb-md"
-              />
-
-              <div v-for="person in peopleArray" :key="person">
-                <q-input
-                  v-model="supplementValues[person - 1]"
-                  :label="`Suplemento persona ${person}`"
-                  outlined
-                  type="number"
-                  class="q-mb-md"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Botones de navegación -->
-          <div class="row q-mt-md justify-center">
-            <div class="col" v-if="activeTab === 'tab2'">
-              <q-btn label="Atrás" @click="goBack" color="primary" />
-            </div>
-            <div class="col" v-if="activeTab === 'tab1'">
-              <q-btn label="Siguiente" @click="goNext" color="primary" />
-            </div>
-            <div class="col" v-if="activeTab === 'tab2'">
-              <q-btn
-                label="Registrar"
-                @click="saveFormDataPersonalizado"
-                color="primary"
-              />
-            </div>
-            <div
-              class="col"
-              v-if="activeTab === 'tab1' || activeTab === 'tab2'"
-            >
-              <q-btn
-                label="Cerrar"
-                @click="closeModalPersonalizado"
-                color="red"
-              />
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
-
-    <!-- FIN DE FORMULARIO COTIZACION PERSONALIZADA -->
-
-    <!--modal liquidación -->
-
-    <q-dialog v-model="mostrarModalPasajeros" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Datos de Pasajeros</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="procesarLiquidacion" class="q-gutter-md">
-            <div
-              v-for="(pasajero, index) in pasajeros"
-              :key="index"
-              class="q-pa-md q-mb-md bg-grey-2 rounded-borders"
-            >
-              <div class="text-subtitle1 q-mb-sm">Pasajero {{ index + 1 }}</div>
-
-              <q-input
-                v-model="pasajero.nombre"
-                label="Nombre"
-                filled
-                dense
-                class="q-mb-md"
-              />
-
-              <div class="row q-mb-md">
-                <div class="col-6 q-pr-sm">
-                  <q-select
-                    v-model="pasajero.tipoDocumento"
-                    :options="opcionesTipoDocumento"
-                    label="Tipo de Documento"
-                    filled
-                    dense
-                  />
-                </div>
-
-                <div class="col-6">
-                  <q-input
-                    v-model="pasajero.numeroDocumento"
-                    label="Número de Documento"
-                    filled
-                    dense
-                  />
-                </div>
-              </div>
-
-              <q-input
-                v-model="pasajero.fechaNacimiento"
-                label="Fecha de Nacimiento"
-                filled
-                dense
-                type="date"
-                :rules="[
-                  (value) =>
-                    !value
-                      ? 'La fecha es requerida'
-                      : new Date(value) > new Date()
-                      ? 'La fecha no puede ser en el futuro'
-                      : true,
-                ]"
-                class="q-mb-lg"
-              />
-            </div>
-            <q-checkbox v-model="tieneTelefono" label="¿Tiene teléfono?" />
-            <q-input
-              v-if="tieneTelefono"
-              v-model="telefono"
-              label="Teléfono"
-              filled
-              dense
-              class="q-mb-md"
-            />
-
-            <q-checkbox v-model="tieneNumero" label="¿Tiene correo?" />
-            <q-input
-              v-if="tieneNumero"
-              v-model="correoPasajero"
-              label="Correo"
-              filled
-              dense
-              class="q-mb-md"
-            />
-
-            <q-card-actions align="right" class="bg-white text-teal">
-              <q-btn flat label="Cancelar" @click="cerrarModalPasajeros" />
-              <q-btn type="submit" label="Guardar" color="primary" />
-            </q-card-actions>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
-    <!--fin modal liquidación -->
-
-    <div>
-      <br />
-      <div class="row">
-        <div class="col-6">
-          <q-select
-            v-model="selectedFilter"
-            :options="['Todos', 'Cot', 'Cot-C']"
-            label="Filtrar por Tipo"
-            filled
-            dense
-            clearable
-            emit-value
-            map-options
-          />
-        </div>
-        <div class="col-6">
-          <q-select
-            v-model="filterStatus"
-            :options="statusOptions"
-            label="Filtrar por Status"
-            filled
-            dense
-            clearable
-            emit-value
-            map-options
-          />
         </div>
       </div>
-      <br />
+    </div>
 
-      <q-table
-        :rows="filteredCotizacionData()"
-        :columns="columns"
-        v-model:sortBy="sortBy"
-        v-model:sortOrder="sortOrder"
+    <!-- Tabs de Cotizaciones -->
+    <div class="container">
+      <q-tabs
+        v-model="tabActual"
+        class="cotizaciones-tabs"
+        indicator-color="primary"
+        active-color="primary"
+        align="justify"
+        narrow-indicator
       >
-        <template v-slot:body-cell-status="props">
-          <q-td :props="props">
-            <q-chip
-              :color="getStatusColor(props.row.status)"
-              text-color="white"
-              square
-            >
-              {{ props.row.status }}
-            </q-chip>
-          </q-td>
-        </template>
-        <template v-slot:body-cell-cotizacion="props">
-          <q-td :props="props">
+        <q-tab name="normales" label="Cotizaciones Normales" icon="receipt_long" />
+        <q-tab name="cristal" label="Caño Cristal" icon="window" />
+        <q-tab name="personalizadas" label="Personalizadas" icon="tune" />
+      </q-tabs>
+
+      <q-separator />
+
+      <q-tab-panels v-model="tabActual" animated class="tab-panels">
+
+        <!-- Panel Cotizaciones Normales -->
+        <q-tab-panel name="normales" class="tab-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <q-icon name="receipt_long" size="md" color="primary" />
+              <h2>Cotizaciones Normales</h2>
+            </div>
             <q-btn
-              @click="descargarCotizacionN(props.row)"
+              @click="abrirFormularioNormal"
               color="primary"
-              label="Descargar Cotización"
+              icon="add"
+              label="Nueva Cotización"
+              unelevated
+              class="action-btn"
             />
-            <br />
-            <br />
+          </div>
+
+          <q-card class="data-card">
+            <q-card-section class="card-header">
+              <div class="card-title">
+                <q-icon name="list" />
+                <span>Listado de Cotizaciones Normales</span>
+              </div>
+              <q-btn
+                @click="() => cargarCotizaciones('normales')"
+                icon="refresh"
+                flat
+                round
+                color="primary"
+                :loading="loading.normales"
+              />
+            </q-card-section>
+
+            <q-separator />
+
+            <q-table
+              :rows="cotizacionesNormales"
+              :columns="columnasNormales"
+              row-key="id"
+              :loading="loading.normales"
+              :pagination="paginacion"
+              class="cotizaciones-table"
+              flat
+              :bordered="false"
+            >
+              <template v-slot:body-cell-status="props">
+                <q-td :props="props">
+                  <q-chip
+                    :color="getEstadoColor(props.value)"
+                    text-color="white"
+                    :label="props.value"
+                    size="sm"
+                  />
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-total="props">
+                <q-td :props="props" class="text-right">
+                  <span class="total-amount">${{ formatearMonto(props.value) }}</span>
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-acciones="props">
+                <q-td :props="props">
+                  <div class="action-buttons">
+                    <q-btn
+                      @click="verDetalle(props.row, 'normal')"
+                      icon="visibility"
+                      color="primary"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Ver detalle</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      @click="editarCotizacion(props.row, 'normal')"
+                      icon="edit"
+                      color="warning"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Editar</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      @click="eliminarCotizacion(props.row.id, 'normal')"
+                      icon="delete"
+                      color="negative"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Eliminar</q-tooltip>
+                    </q-btn>
+                  </div>
+                </q-td>
+              </template>
+
+              <template v-slot:no-data>
+                <div class="no-data">
+                  <q-icon name="receipt_long" size="4em" color="grey-4" />
+                  <div class="no-data-text">No hay cotizaciones normales registradas</div>
+                  <q-btn
+                    @click="abrirFormularioNormal"
+                    color="primary"
+                    label="Crear primera cotización"
+                    outline
+                    class="q-mt-md"
+                  />
+                </div>
+              </template>
+            </q-table>
+          </q-card>
+        </q-tab-panel>
+
+        <!-- Panel Caño Cristal -->
+        <q-tab-panel name="cristal" class="tab-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <q-icon name="window" size="md" color="secondary" />
+              <h2>Cotizaciones Caño Cristal</h2>
+            </div>
             <q-btn
-              @click="enviarCotizacion(props.row)"
+              @click="abrirFormularioCristal"
               color="secondary"
-              label="Enviar Cotización"
+              icon="add"
+              label="Nueva Cotización"
+              unelevated
+              class="action-btn"
             />
-            <br />
-            <br />
+          </div>
+
+          <q-card class="data-card">
+            <q-card-section class="card-header">
+              <div class="card-title">
+                <q-icon name="list" />
+                <span>Listado de Cotizaciones Caño Cristal</span>
+              </div>
+              <q-btn
+                @click="() => cargarCotizaciones('cristal')"
+                icon="refresh"
+                flat
+                round
+                color="secondary"
+                :loading="loading.cristal"
+              />
+            </q-card-section>
+
+            <q-separator />
+
+            <q-table
+              :rows="cotizacionesCristal"
+              :columns="columnasCristal"
+              row-key="id"
+              :loading="loading.cristal"
+              :pagination="paginacion"
+              class="cotizaciones-table"
+              flat
+            >
+              <template v-slot:body-cell-dimensiones="props">
+                <q-td :props="props">
+                  {{ props.row.alto }}cm x {{ props.row.ancho }}cm
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-grosor="props">
+                <q-td :props="props">
+                  <q-chip
+                    color="info"
+                    text-color="white"
+                    :label="`${props.value}mm`"
+                    size="sm"
+                  />
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-status="props">
+                <q-td :props="props">
+                  <q-chip
+                    :color="getEstadoColor(props.value)"
+                    text-color="white"
+                    :label="props.value"
+                    size="sm"
+                  />
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-total="props">
+                <q-td :props="props" class="text-right">
+                  <span class="total-amount">${{ formatearMonto(props.value) }}</span>
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-acciones="props">
+                <q-td :props="props">
+                  <div class="action-buttons">
+                    <q-btn
+                      @click="verDetalle(props.row, 'cristal')"
+                      icon="visibility"
+                      color="primary"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Ver detalle</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      @click="editarCotizacion(props.row, 'cristal')"
+                      icon="edit"
+                      color="warning"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Editar</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      @click="eliminarCotizacion(props.row.id, 'cristal')"
+                      icon="delete"
+                      color="negative"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Eliminar</q-tooltip>
+                    </q-btn>
+                  </div>
+                </q-td>
+              </template>
+
+              <template v-slot:no-data>
+                <div class="no-data">
+                  <q-icon name="window" size="4em" color="grey-4" />
+                  <div class="no-data-text">No hay cotizaciones de caño cristal registradas</div>
+                  <q-btn
+                    @click="abrirFormularioCristal"
+                    color="secondary"
+                    label="Crear primera cotización"
+                    outline
+                    class="q-mt-md"
+                  />
+                </div>
+              </template>
+            </q-table>
+          </q-card>
+        </q-tab-panel>
+
+        <!-- Panel Personalizadas -->
+        <q-tab-panel name="personalizadas" class="tab-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <q-icon name="tune" size="md" color="accent" />
+              <h2>Cotizaciones Personalizadas</h2>
+            </div>
             <q-btn
-              @click="abrirModalPasajeros(props.row)"
-              color="green"
-              label="Pasar a Liquidación"
+              @click="abrirFormularioPersonalizada"
+              color="accent"
+              icon="add"
+              label="Nueva Cotización"
+              unelevated
+              class="action-btn"
             />
-          </q-td>
-        </template>
-      </q-table>
-      <input type="file" ref="fileInput" style="display: none" />
+          </div>
+
+          <q-card class="data-card">
+            <q-card-section class="card-header">
+              <div class="card-title">
+                <q-icon name="list" />
+                <span>Listado de Cotizaciones Personalizadas</span>
+              </div>
+              <q-btn
+                @click="() => cargarCotizaciones('personalizadas')"
+                icon="refresh"
+                flat
+                round
+                color="accent"
+                :loading="loading.personalizadas"
+              />
+            </q-card-section>
+
+            <q-separator />
+
+            <q-table
+              :rows="cotizacionesPersonalizadas"
+              :columns="columnasPersonalizadas"
+              row-key="id"
+              :loading="loading.personalizadas"
+              :pagination="paginacion"
+              class="cotizaciones-table"
+              flat
+            >
+              <template v-slot:body-cell-categoria="props">
+                <q-td :props="props">
+                  <q-chip
+                    color="purple"
+                    text-color="white"
+                    :label="props.value"
+                    size="sm"
+                  />
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-status="props">
+                <q-td :props="props">
+                  <q-chip
+                    :color="getEstadoColor(props.value)"
+                    text-color="white"
+                    :label="props.value"
+                    size="sm"
+                  />
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-total="props">
+                <q-td :props="props" class="text-right">
+                  <span class="total-amount">${{ formatearMonto(props.value) }}</span>
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-acciones="props">
+                <q-td :props="props">
+                  <div class="action-buttons">
+                    <q-btn
+                      @click="verDetalle(props.row, 'personalizada')"
+                      icon="visibility"
+                      color="primary"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Ver detalle</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      @click="editarCotizacion(props.row, 'personalizada')"
+                      icon="edit"
+                      color="warning"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Editar</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      @click="eliminarCotizacion(props.row.id, 'personalizada')"
+                      icon="delete"
+                      color="negative"
+                      flat
+                      round
+                      size="sm"
+                      dense
+                    >
+                      <q-tooltip>Eliminar</q-tooltip>
+                    </q-btn>
+                  </div>
+                </q-td>
+              </template>
+
+              <template v-slot:no-data>
+                <div class="no-data">
+                  <q-icon name="tune" size="4em" color="grey-4" />
+                  <div class="no-data-text">No hay cotizaciones personalizadas registradas</div>
+                  <q-btn
+                    @click="abrirFormularioPersonalizada"
+                    color="accent"
+                    label="Crear primera cotización"
+                    outline
+                    class="q-mt-md"
+                  />
+                </div>
+              </template>
+            </q-table>
+          </q-card>
+        </q-tab-panel>
+      </q-tab-panels>
     </div>
   </q-page>
 </template>
 
 <script>
-import numeral from "numeral";
-import { Notify } from "quasar";
-import { QChip } from "quasar";
-import { jsPDF } from "jspdf";
-import { ref, onMounted, computed, watch } from "vue";
-import { useRouter } from "vue-router";
-import { LocalStorage } from "quasar";
-import axios from "axios";
-import { format, minutesToHours } from "date-fns";
-import emailjs from "emailjs-com";
-import { PDFDocument } from "pdf-lib";
-import Swal from "sweetalert2";
+import { ref, onMounted, computed } from 'vue'
+import { useQuasar } from 'quasar'
+import { api } from 'src/boot/axios'
+import Swal from 'sweetalert2'
 
-
-
-const formatCurrency = (value) => {
-  const formatter = new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "COP", // Cambia 'COP' por la moneda que necesites
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  return formatter.format(value);
-};
 
 export default {
   setup() {
-    //VALORES EXTRA
-    let selectedUser = ref(null);
-    let numExtraValues = ref(0);
-    let autofillingProgramName = ref(true);
-    let extraValue1 = ref(0);
-    let extraValue2 = ref(0);
-    let transferInOut = ref(null); // Inicialmente nulo o 'No' si quieres que empiece así
-    let transferInOutValue = ref(0);
-    //FIN VALORES EXTRA
-    let cormacarena5a11Total = 0;
-    let cormacarena5a11Personas = 0;
-    let cormacarena12a65Total = 0;
-    let cormacarena12a65Personas = 0;
-    let cormacarenaExtranjeroTotal = 0;
-    let cormacarenaExtranjeroPersonas = 0;
-    let pqsNaturales5a24Total = 0;
-    let pqsNaturales5a24Personas = 0;
-    let pqsNaturales25a65Total = 0;
-    let pqsNaturales25a65Personas = 0;
-    let pqsNaturalesExtranjeroTotal = 0;
-    let pqsNaturalesExtranjeroPersonas = 0;
-    let alcaldiaNacionalTotal = 0;
-    let alcaldiaNacionalPersonas = 0;
-    let alcaldiaExtranjeroTotal = 0;
-    let alcaldiaExtranjeroPersonas = 0;
-    let defensaCivilTotal = 0;
-    let defensaCivilPersonas = 0;
-    let sumaTotalAcomodacion = 0;
-    let totalImpuestos = 0;
-    let sumaValorBrutohab = 0;
-    let sumaTotalDescuento = 0;
-    let matchingPrograms = ref([]);
+    const $q = useQuasar()
 
-    const sortBy = ref("idCotizacion");
-    const sortOrder = ref("desc");
-    const peopleArray = computed(() => {
-      return Array.from({ length: numberOfPeople.value }, (_, i) => i + 1);
-    });
-    const cotizacionCounter = ref(0);
-    const additionalNightSelected = ref(false);
-    const asesorExternoCheck = ref(false);
-    const additionalNightCount = ref(null);
-    // Definir un rango de opciones para el número de habitaciones
-    const roomOptions = Array.from({ length: 10 }, (_, i) => i + 1);
-    //otros
-    const mostrarModalPasajeros = ref(false);
-    const totalPasajero = ref(0);
-    const pasajeros = ref([]);
-    const cotizacionSeleccionada = ref(null);
-    const children = ref([]);
-    const hasChildren = ref([]);
-    const numRooms = ref(1);
-    const rooms = ref([]);
-    const nochesOptionsRaw = ref([]);
-    const selectedFilter = ref("Todos");
-    const filterStatus = ref(null); // Valor nulo inicialmente para mostrar todas las filas
-    const statusOptions = [
-      { label: "Aprobado", value: "Aprobado" },
-      { label: "Rechazado", value: "Rechazado" },
-      { label: "Pendiente", value: "pendiente" },
-    ];
-    const showAgeInputs = (index) => {
-      return (
-        destination.value === "La Macarena" &&
-        (programName.value === "Caño Cristales" ||
-          programName.value === "Caño Cristales Semana Receso")
-      );
-    };
-    const addRoom = () => {
-      rooms.value.push({
-        index: rooms.value.length,
-        accommodation: "",
-        adults: 1,
-        adultAges: [null], // Inicializa con un valor nulo para el primer adulto
-        childAge: null,
-        isForeigner: [false], // Inicializa con 'false' para el primer adulto
-        valor: [null],
-      });
-      hasChildren.value.push(false);
-    };
+    const tabActual = ref('normales')
+    const cotizacionesNormales = ref([])
+    const cotizacionesCristal = ref([])
+    const cotizacionesPersonalizadas = ref([])
 
-    // Watcher para actualizar room.adultAges al cambiar room.adults
-    watch(
-      () => rooms.value.map((room) => room.adults),
-      (newAdultsArray) => {
-        rooms.value.forEach((room, index) => {
-          const newAdultAges = Array.from(
-            { length: newAdultsArray[index] },
-            () => null
-          );
-          const newIsForeigner = Array.from(
-            { length: newAdultsArray[index] },
-            () => false
-          );
-          room.adultAges.splice(0, room.adultAges.length, ...newAdultAges);
-          room.isForeigner.splice(
-            0,
-            room.isForeigner.length,
-            ...newIsForeigner
-          ); // Actualizar isForeigner
-        });
-      },
-      { deep: true }
-    );
+    const loading = ref({
+      normales: false,
+      cristal: false,
+      personalizadas: false
+    })
 
-    // Función para calcular las edades de los adultos de una habitación
-    const adultAgesComputed = (room) => {
-      return room ? [...room.adultAges] : [];
-    };
+    const paginacion = ref({
+      page: 1,
+      rowsPerPage: 10,
+      sortBy: 'fechaCreacion',
+      descending: true
+    })
 
-    const updateAccommodationOptions = () => {
-      rooms.value = [];
-      for (let i = 0; i < numRooms.value; i++) {
-        rooms.value.push({
-          index: i,
-          accommodation: null,
-          adultAges: [null],
-          childAge: null,
-          isForeigner: [false],
-        });
+    const totalCotizaciones = computed(() => {
+      if (tabActual.value === 'normales') return cotizacionesNormales.value.length
+      if (tabActual.value === 'cristal') return cotizacionesCristal.value.length
+      if (tabActual.value === 'personalizadas') return cotizacionesPersonalizadas.value.length
+      return 0
+    })
+
+    const montoTotal = computed(() => {
+      let array = []
+      let campo = ''
+
+      if (tabActual.value === 'normales') {
+        array = cotizacionesNormales.value
+        campo = 'totalPrecioCliente'
       }
-    };
-    const mostrarCamposEdad = (index) => {
-      return (
-        destination.value === "La Macarena" &&
-        (programName.value === "Caño Cristales" ||
-          programName.value === "Caño Cristales Semana Receso")
-      );
-    };
 
-    updateAccommodationOptions();
-    const handleNumRoomsChange = () => {
-      console.log("Número de habitaciones cambiado:", numRooms.value);
-      updateAccommodationOptions();
-    };
-
-    //TRAE LA DATA
-    const cotizacionData = ref([]);
-    const usersMap = ref({}); // Mapa de usuarios por ID
-    //trae la data de cotizacion
-    const fetchCotizacionData = async () => {
-      try {
-        const response = await axios.get(
-          "https://backmultidestinos.onrender.com/cotizacion"
-        );
-        cotizacionData.value = response.data;
-        await fetchUsers(); // Llama a fetchUsers después de obtener las cotizaciones
-        replaceUserIdsWithNames(); // Reemplaza los IDs de usuario con nombres completos
-        formatValues(); // Formatea los valores de totalPrecio y valorDescuento
-      } catch (error) {
-        console.error("Error fetching cotizacion data:", error);
+      if (tabActual.value === 'cristal') {
+        array = cotizacionesCristal.value
+        campo = 'total'
       }
-    };
 
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get(
-          "https://backmultidestinos.onrender.com/user/"
-        );
-        const users = response.data;
-        users.forEach((user) => {
-          usersMap.value[user.id] = user.nombreCompleto; // Cambia 'fullName' por el nombre del campo en tu API
-        });
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+      if (tabActual.value === 'personalizadas') {
+        array = cotizacionesPersonalizadas.value
+        campo = 'precioFinal'
       }
-    };
 
-    const replaceUserIdsWithNames = () => {
-      cotizacionData.value.forEach((cotizacion) => {
-        cotizacion.CreadorCotizacion =
-          usersMap.value[cotizacion.CreadorCotizacion];
-        cotizacion.fechaCreacion = formatDate(cotizacion.fechaCreacion);
-        cotizacion.fechaInicio = formatDate(cotizacion.fechaInicio);
-        cotizacion.fechaFin = formatDate(cotizacion.fechaFin);
-      });
-    };
-    const formatValues = () => {
-      cotizacionData.value.forEach((cotizacion) => {
-        cotizacion.precioBrutoTotal = formatCurrency(
-          Number(cotizacion.precioBrutoTotal)
-        );
-        cotizacion.totalPrecioCliente = formatCurrency(
-          Number(cotizacion.totalPrecioCliente)
-        );
-      });
-    };
+      return array.reduce((sum, item) => sum + (item[campo] || 0), 0)
+    })
 
-    const formatDate = (date) => format(new Date(date), "yyyy-MM-dd");
+    const columnasNormales = [
+      { name: 'status', label: 'Estado', field: 'status', align: 'left', sortable: true },
+      { name: 'idCotizacion', label: 'ID De La Cotizacion', field: 'idCotizacion', align: 'left', sortable: true },
+      { name: 'fechaCreacion', label: 'Fecha De Creacion', field: 'fechaCreacion', align: 'left', sortable: true, format: val => val ? val.split('T')[0] : '' },
+      { name: 'area', label: 'Area', field: 'area', align: 'left', sortable: true },
+      { name: 'cliente', label: 'Cliente', field: 'cliente', align: 'center', sortable: true },
+      { name: 'precioBrutoTotal', label: 'Precio Bruto Total', field: 'precioBrutoTotal', align: 'center', sortable: true, format: val => Number(val).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' COP'},
+      { name: 'totalPrecioCliente', label: 'Precio al Cliente', field: 'totalPrecioCliente', align: 'right', sortable: true, format: val => Number(val).toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' COP'},
+      { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
+    ]
 
-    //VUELO ESCALA  DE VUEVLO
+    const columnasCristal = [
+      { name: 'id', label: 'ID', field: 'id', align: 'left', sortable: true },
+      { name: 'cliente', label: 'Cliente', field: 'cliente_nombre', align: 'left', sortable: true },
+      { name: 'tipo_cristal', label: 'Tipo Cristal', field: 'tipo_cristal', align: 'left', sortable: true },
+      { name: 'dimensiones', label: 'Dimensiones', field: 'dimensiones', align: 'center' },
+      { name: 'grosor', label: 'Grosor', field: 'grosor', align: 'center', sortable: true },
+      { name: 'cantidad', label: 'Piezas', field: 'cantidad', align: 'center', sortable: true },
+      { name: 'status', label: 'Estado', field: 'status', align: 'center', sortable: true },
+      { name: 'fecha', label: 'Fecha', field: 'fecha_creacion', align: 'center', sortable: true, format: val => new Date(val).toLocaleDateString() },
+      { name: 'total', label: 'Total', field: 'total', align: 'right', sortable: true },
+      { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
+    ]
 
-    const mostrarEscalas = ref(false);
-    const aerolineaEscalaIda = ref(null);
-    const vueloEscalaIda = ref(null);
-    const horaLlegadaEscalaIda = ref(null);
-    const horaSalidaEscalaIda = ref(null);
-    const claseEscalaIda = ref(null);
-    const aerolineaEscalaVuelta = ref(null);
-    const vueloEscalaVuelta = ref(null);
-    const horaLlegadaEscalaVuelta = ref(null);
-    const horaSalidaEscalaVuelta = ref(null);
-    const claseEscalaVuelta = ref(null);
+    const columnasPersonalizadas = [
+      { name: 'id', label: 'ID', field: 'id', align: 'left', sortable: true },
+      { name: 'cliente', label: 'Cliente', field: 'cliente_nombre', align: 'left', sortable: true },
+      { name: 'titulo', label: 'Título', field: 'titulo', align: 'left', sortable: true },
+      { name: 'categoria', label: 'Categoría', field: 'categoria', align: 'center', sortable: true },
+      { name: 'status', label: 'Estado', field: 'status', align: 'center', sortable: true },
+      { name: 'fecha', label: 'Fecha', field: 'fecha_creacion', align: 'center', sortable: true, format: val => new Date(val).toLocaleDateString() },
+      { name: 'total', label: 'Total', field: 'total', align: 'right', sortable: true },
+      { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
+    ]
 
-    //VUELO INFO DATA
+    const formatearMonto = (val) =>
+      Number(val).toLocaleString('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }) + ' COP'
 
-    const aerolineaValue1 = ref("");
-    const idCotizacion = ref("");
-    const vueloValue1 = ref("");
-    const horaLlegadaValue1 = ref("");
-    const horaSalidaValue1 = ref("");
-    const claseValue1 = ref("");
-    const aerolineaValue2 = ref("");
-    const vueloValue2 = ref("");
-    const horaLlegadaValue2 = ref("");
-    const horaSalidaValue2 = ref("");
-    const claseValue2 = ref("");
-
-    //FORMULARIO PERSONALIZADO
-    const Combus = ref("");
-    const Tasa = ref("");
-    const Iva = ref("");
-    const Ta = ref("");
-    const IvaTa = ref("");
-    const Otros = ref("");
-    const precioTransp = ref("");
-    const textoIncluye = ref("");
-    const textoNoIncluye = ref("");
-
-    //resto
-
-    const activeTab = ref("tab1"); // Pestaña activa por defecto
-    // Método para avanzar a la siguiente página
-    const goNext = () => {
-      if (activeTab.value === "tab1") {
-        // Validación de Fechas
-        if (!dateRange.value[0] || !dateRange.value[1]) {
-          Notify.create({
-            message:
-              "Por favor ingrese una fecha de inicio y una fecha de fin.",
-            color: "negative",
-          });
-          return;
-        }
-
-        // Validación de Selección de Destino y Cliente
-        if (!destination.value || !selectedClient.value) {
-          Notify.create({
-            message: "Por favor seleccione un destino y un cliente.",
-            color: "negative",
-          });
-          return;
-        }
-
-        // Validación de Habitaciones
-        if (
-          rooms.value.length === 0 ||
-          rooms.value.some(
-            (room) => !room.roomType || !room.adults || !room.accommodation
-          )
-        ) {
-          Notify.create({
-            message:
-              "Por favor complete la información de al menos una habitación.",
-            color: "negative",
-          });
-          return;
-        }
-
-        activeTab.value = "tab2";
+    const getEstadoColor = (status) => {
+      const colores = {
+        'Pendiente': 'orange',
+        'Aprobado': 'green',
+        'Rechazada': 'red',
+        'En Proceso': 'blue',
+        'Completada': 'positive'
       }
-    };
-
-    // Método para retroceder a la página anterior
-    const goBack = () => {
-      if (activeTab.value === "tab2") {
-        activeTab.value = "tab1";
-      }
-    };
-    const today = new Date();
-    const correo = ref("");
-    const formattedDate = today.toISOString().split("T")[0];
-    const dateRange = ref([formattedDate, formattedDate]);
-    const adjustEndDate = (newValue) => {
-      if (dateRange.value[1] < newValue) {
-        dateRange.value[1] = newValue;
-      }
-    };
-    const startDateRules = [
-      (val) =>
-        today <= new Date(val) ||
-        "La fecha de inicio no puede ser anterior a hoy",
-    ];
-    const endDateRules = [
-      (val) =>
-        val >= dateRange.value[0] ||
-        "La fecha de fin no puede ser anterior a la fecha de inicio",
-    ];
-    const tieneTelefono = ref(false); // Inicialmente, el pasajero no tiene teléfono
-    const telefono = ref("");
-    const tieneNumero = ref(false); // Inicialmente, el pasajero no tiene número
-    const correoPasajero = ref("");
-    const userData = ref(null);
-    const router = useRouter();
-    const modalVisible = ref(false);
-    const modalVisiblePersonalizado = ref(false);
-    const opcionesTipoDocumento = ref(["C.C", "T.I", "Pasaporte"]);
-    const departureOptions = ref([
-      "Bogota",
-      "Cali",
-      "Medellin",
-      "Porcion Terrestre",
-      "San Andres",
-    ]); // Opciones iniciales de salida
-    const destinationOptions = ref([]);
-    const programNameOptions = ref([]);
-    const hotelOptions = ref([]);
-    const nochesOptions = ref([]);
-    const planOptions = ref([]);
-    const adultsOptions = ref([
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10",
-      "11",
-      "12",
-      "13",
-    ]);
-    let habitacionesDatos = [];
-    let ultimaCotizacionDescargada = null;
-    const childrenOptions = ref(["1", "2", "3", "4", "5", "6", "7", "8", "9"]);
-    const accommodationOptions = ref([]);
-    const roomTypeOptions = ref([]);
-    const clientOptions = ref([]);
-    const OptionCorreo = ref([]);
-    const aerolineaOptions = ref([
-      "Satena",
-      "Avianca",
-      "Latam",
-      "JetSmart",
-      "Clic",
-    ]);
-    const selectedDeparture = ref("");
-    const destination = ref(""); // Propiedad para el destino
-    const programName = ref(""); // Propiedad para el nombre del programa
-    const hotel = ref(""); // Propiedad para el hotel
-    const noche = ref(""); // Propiedad para el noche
-    const plan = ref(""); // Propiedad para el plan
-    const adults = ref(""); // Propiedad para el número de adultos
-    // Propiedad para el número de niños
-    const accommodation = ref(""); // Propiedad para la acomodación
-    const roomType = ref(""); // Propiedad para el tipo de habitación
-    const selectedClient = ref("");
-    const supplementChecked = ref(false);
-    const supplementValue = ref(null);
-    const numberOfPeople = ref(null);
-    const supplementValues = ref([]);
-    const mostrarDialogo = ref(false);
-    const archivoSeleccionado = ref(null);
-    onMounted(() => {
-      console.log(
-        "Intentando recuperar los datos del usuario del almacenamiento local..."
-      );
-      fetchCotizacionData();
-      updateAccommodationOptions();
-      const storedUserData = LocalStorage.getItem("userData");
-      console.log("Datos del usuario recuperados:", storedUserData);
-      if (storedUserData) {
-        userData.value = storedUserData;
-      } else {
-        console.log(
-          "No se encontraron datos de usuario en el almacenamiento local. Redirigiendo a la página de inicio de sesión..."
-        );
-        router.push("/login");
-      }
-    });
-    const clearFields = () => {
-      // Limpiar campos de la primera pestaña
-      selectedDeparture.value = "";
-      destination.value = "";
-      programName.value = "";
-      hotel.value = "";
-      noche.value = "";
-      // plan = "";
-      adults.value = "";
-      children.value = "";
-      accommodation.value = "";
-      roomType.value = "";
-      selectedClient.value = "";
-      transferInOut.value = "";
-      transferInOutValue.value = "";
-      extraValue1.value = "";
-      extraValue2.value = "";
-      numExtraValues.value = 0;
-      // Limpiar campos de las habitaciones
-      rooms.value.forEach((room) => {
-        room.roomType = "";
-        room.adults = "";
-        room.hasChildren = false;
-        room.numChildren = "";
-        room.accommodation = "";
-      });
-      // Limpiar campos de la segunda pestaña
-      aerolineaValue1.value = "";
-      vueloValue1.value = "";
-      horaSalidaValue1.value = "";
-      horaLlegadaValue1.value = "";
-      claseValue1.value = "";
-      aerolineaValue2.value = "";
-      vueloValue2.value = "";
-      horaSalidaValue2.value = "";
-      horaLlegadaValue2.value = "";
-      claseValue2.value = "";
-      supplementChecked.value = false;
-      supplementValue.value = "";
-    };
-    const clearFieldsc = () => {
-      destination.value = "";
-      programName.value = "";
-      hotel.value = "";
-      noche.value = "";
-      // plan.value = "";
-      adults.value = "";
-      children.value = "";
-      accommodation.value = "";
-      roomType.value = "";
-      selectedClient.value = "";
-      correo.value = "";
-    };
-    const clearFieldsPersonalizado = () => {
-      // Limpiar campos de la primera pestaña
-      selectedDeparture.value = "";
-      destination.value = "";
-      programName.value = "";
-      hotel.value = "";
-      noche.value = "";
-      // plan = "";
-      adults.value = "";
-      children.value = "";
-      accommodation.value = "";
-      roomType.value = "";
-      selectedClient.value = "";
-
-      // Limpiar campos de las habitaciones
-      rooms.value.forEach((room) => {
-        room.roomType = "";
-        room.adults = "";
-        room.hasChildren = false;
-        room.numChildren = "";
-        room.accommodation = "";
-        room.valor = "";
-      });
-      // Limpiar campos de la segunda pestaña
-      aerolineaValue1.value = "";
-      vueloValue1.value = "";
-      horaSalidaValue1.value = "";
-      horaLlegadaValue1.value = "";
-      claseValue1.value = "";
-      aerolineaValue2.value = "";
-      vueloValue2.value = "";
-      horaSalidaValue2.value = "";
-      horaLlegadaValue2.value = "";
-      claseValue2.value = "";
-      supplementChecked.value = false;
-      supplementValue.value = "";
-
-      //personalizado
-      Combus.value = "";
-      Tasa.value = "";
-      Iva.value = "";
-      Ta.value = "";
-      IvaTa.value = "";
-      Otros.value = "";
-      precioTransp.value = "";
-      textoIncluye.value = "";
-      textoNoIncluye.value = "";
-    };
-
-    let totalAdultos = 0;
-    let totalNiños = 0;
-    return {
-      tieneTelefono, // Inicialmente, el pasajero no tiene teléfono
-      telefono,
-      tieneNumero, // Inicialmente, el pasajero no tiene número
-      correoPasajero,
-      filterStatus,
-      statusOptions,
-      selectedUser,
-      matchingPrograms,
-      autofillingProgramName,
-      //valores  extra
-      transferInOut,
-      transferInOutValue,
-      numExtraValues,
-      extraValue1,
-      extraValue2,
-
-      //valores extra fin
-      opcionesTipoDocumento,
-      mostrarModalPasajeros,
-      totalPasajero,
-      pasajeros,
-      cotizacionSeleccionada,
-      sortBy,
-      sortOrder,
-      selectedFilter,
-      //impuestos
-      cormacarena5a11Personas,
-      cormacarena12a65Personas,
-      cormacarenaExtranjeroPersonas,
-      pqsNaturales5a24Personas,
-      pqsNaturales25a65Personas,
-      pqsNaturalesExtranjeroPersonas,
-      alcaldiaNacionalPersonas,
-      alcaldiaExtranjeroPersonas,
-      defensaCivilPersonas,
-      cormacarena5a11Total,
-      cormacarena12a65Total,
-      cormacarenaExtranjeroTotal,
-      pqsNaturales5a24Total,
-      pqsNaturales25a65Total,
-      pqsNaturalesExtranjeroTotal,
-      alcaldiaNacionalTotal,
-      alcaldiaExtranjeroTotal,
-      defensaCivilTotal,
-      totalImpuestos,
-      //fin de impuestos
-
-      adultAgesComputed,
-      mostrarCamposEdad,
-      showAgeInputs,
-      nochesOptionsRaw,
-      peopleArray,
-      numberOfPeople,
-      supplementValues,
-      idCotizacion,
-      archivoSeleccionado,
-      mostrarDialogo,
-      ultimaCotizacionDescargada,
-      correo,
-      OptionCorreo,
-      cotizacionCounter,
-      sumaTotalDescuento,
-      sumaTotalAcomodacion,
-      sumaValorBrutohab,
-      habitacionesDatos,
-      additionalNightSelected,
-      asesorExternoCheck,
-      additionalNightCount,
-      // Definir un rango de opciones para el número de habitaciones
-      handleNumRoomsChange,
-      roomOptions,
-      addRoom,
-      hasChildren,
-      numRooms,
-      rooms,
-      updateAccommodationOptions,
-      //TABLA
-      cotizacionData,
-      usersMap,
-      formatDate: (date) => format(new Date(date), "yyyy-MM-dd"),
-
-      columns: [
-        {
-          name: "status",
-          label: "Status",
-          align: "left",
-          field: "status",
-        },
-        {
-          name: "idCotizacion",
-          label: "Id-cotización",
-          align: "left",
-          field: "idCotizacion",
-        },
-        {
-          name: "fechaCreacion",
-          label: "Fecha de Creación",
-          align: "left",
-          field: "fechaCreacion",
-        },
-        {
-          name: "CreadorCotizacion",
-          label: "Usuario que la Creó",
-          align: "left",
-          field: "CreadorCotizacion",
-        },
-        { name: "cliente", label: "Cliente", align: "left", field: "cliente" },
-        {
-          name: "precioBrutoTotal",
-          label: "precio Bruto",
-          align: "left",
-          field: "precioBrutoTotal",
-        },
-        {
-          name: "totalPrecioCliente",
-          label: "Valor Total con Descuento",
-          align: "left",
-          field: "totalPrecioCliente",
-        },
-        {
-          name: "totalAdultos",
-          label: "Adultos",
-          align: "left",
-          field: "totalAdultos",
-        },
-        {
-          name: "totalNinos",
-          label: "Niños",
-          align: "left",
-          field: "totalNinos",
-        },
-        {
-          name: "fechaInicio",
-          label: "Fecha de Inicio",
-          align: "left",
-          field: "fechaInicio",
-        },
-        {
-          name: "fechaFin",
-          label: "Fecha de Fin",
-          align: "left",
-          field: "fechaFin",
-        },
-        { name: "salida", label: "Salida", align: "left", field: "salida" },
-        { name: "destino", label: "Destino", align: "left", field: "destino" },
-        { name: "hotel", label: "Hotel", align: "left", field: "hotel" },
-        {
-          name: "cotizacion",
-          label: "Cotizacion",
-          align: "left",
-          field: "cotizacion",
-          format: (value) => "",
-        },
-        // ...
-      ],
-
-      //VUELO ESCALA
-      mostrarEscalas,
-      aerolineaEscalaIda,
-      vueloEscalaIda,
-      horaLlegadaEscalaIda,
-      horaSalidaEscalaIda,
-      claseEscalaIda,
-      aerolineaEscalaVuelta,
-      vueloEscalaVuelta,
-      horaLlegadaEscalaVuelta,
-      horaSalidaEscalaVuelta,
-      claseEscalaVuelta,
-
-      //vuelo info
-      aerolineaValue1,
-      vueloValue1,
-      horaLlegadaValue1,
-      horaSalidaValue1,
-      claseValue1,
-      aerolineaValue2,
-      vueloValue2,
-      horaLlegadaValue2,
-      horaSalidaValue2,
-      claseValue2,
-
-      //personalizado formulario
-      Combus,
-      Tasa,
-      Iva,
-      Ta,
-      IvaTa,
-      Otros,
-      precioTransp,
-      textoIncluye,
-      textoNoIncluye,
-
-      //otro
-      startDateRules,
-      activeTab,
-      goNext,
-      goBack,
-      params: {
-        hotel: "",
-        nombrePrograma: "",
-        destino: "",
-      },
-      paramsH: {
-        hotel: "",
-        destino: "",
-        noches: "",
-        pertenece: "",
-      },
-      paramsN: {
-        hotel: "",
-        nombrePrograma: "",
-        destino: "",
-        noches: "",
-        pertenece: "",
-      },
-      paramsTransporte: {
-        hotel: "",
-        nombrePrograma: "",
-        destino: "",
-        noches: "",
-        pertenece: "",
-        tipoHabitacion: "",
-      },
-      userData,
-      modalVisible,
-      modalVisiblePersonalizado,
-      departureOptions,
-      destinationOptions,
-      programNameOptions,
-      hotelOptions,
-      nochesOptions,
-      planOptions,
-      adultsOptions,
-      childrenOptions,
-      aerolineaOptions,
-
-      accommodationOptions,
-      roomTypeOptions,
-      selectedDeparture,
-      destination,
-      programName,
-      hotel,
-      noche,
-      plan,
-      adults,
-      children,
-      accommodation,
-      roomType,
-      clientOptions,
-      selectedClient,
-      clearFields,
-      clearFieldsc,
-      clearFieldsPersonalizado,
-      supplementChecked,
-      supplementValue,
-      dateRange,
-      adjustEndDate,
-      endDateRules,
-      totalAdultos,
-      totalNiños,
-    };
-  },
-
-  watch: {
-    selectedDeparture: "fetchProgramName",
-    destination: "fetchProgramName",
-    noche: "fetchProgramName",
-    hotel: "fetchProgramName",
-    dateRange: "fetchProgramName",
-    hotel() {
-      this.fetchOptions();
-    },
-    horaLlegadaValue1(newValue) {
-      this.validarHora(newValue, this.horaSalidaValue1);
-    },
-    horaLlegadaValue2(newValue) {
-      this.validarHora(newValue, this.horaSalidaValue2);
-    },
-  },
-  mounted() {
-    this.dataUsuario(); // Llamar al método para obtener los datos al montar el componente
-  },
-  methods: {
-    async dataUsuario() {
-      // Reemplaza esta URL con la URL de tu API
-      const apiUrl = "https://backmultidestinos.onrender.com/user/";
-
-      axios
-        .get(apiUrl)
-        .then((response) => {
-          const users = response.data;
-          // Filtrar usuarios con rol "Asesor"
-          const asesores = users.filter((user) => user.rol === "Asesor");
-          this.dropdownOptions = asesores.map((user) => ({
-            label: user.nombreCompleto,
-            value: user.id,
-          }));
-        })
-        .catch((error) => {
-          console.error("Error al obtener los datos de usuario:", error);
-        });
-    },
-    getStatusColor(status) {
-      switch (status) {
-        case "Pendiente":
-          return "orange";
-        case "Aprobado":
-          return "green";
-        case "Finalizado":
-          return "red";
-        default:
-          return "grey";
-      }
-    },
-
-    async fetchProgramName() {
-  // Verificamos si ya se hizo un registro reciente y evitamos repetir la lógica
-  if (this.justSubmitted) {
-    console.log("fetchProgramName cancelado porque se acaba de registrar.");
-    return {
-      success: false,
-      reason: "justSubmitted"
-    };
-  }
-
-  console.log("Iniciando fetchProgramName...");
-  this.autofillingProgramName = true;
-
-  // Validación de datos requeridos
-  if (!this.hotel || !this.destination || !this.noche?.label || !this.selectedDeparture) {
-    this.$q.notify({
-      message: "Faltan datos para buscar el programa. Verifica hotel, destino, noches y salida.",
-      color: "negative",
-    });
-    this.autofillingProgramName = false;
-    return {
-      success: false,
-      reason: "missingData"
-    };
-  }
-
-  try {
-    // Parámetros que se mandan al backend
-    this.paramsH.hotel = this.hotel;
-    this.paramsH.destino = this.destination;
-    this.paramsH.noches = this.noche.label;
-    this.paramsH.pertenece = this.selectedDeparture;
-
-    const response = await axios.post(
-      "https://backmultidestinos.onrender.com/hoteles/buscarH",
-      this.paramsH
-    );
-
-    this.programNameOptions = response.data;
-
-    // 1. Filtrar programas con fechas válidas
-    let validPrograms = this.programNameOptions.filter((program) =>
-      program.FechaInicio !== null && program.FechaFin !== null
-    );
-
-    // 2. Validar fechas seleccionadas
-    let selectedStartDate = new Date(this.dateRange[0]);
-    let selectedEndDate = new Date(this.dateRange[1]);
-
-    if (isNaN(selectedStartDate) || isNaN(selectedEndDate)) {
-      this.$q.notify({
-        message: "Error: Fecha inválida seleccionada.",
-        color: "negative",
-      });
-      return {
-        success: false,
-        reason: "invalidDateRange"
-      };
+      return colores[status] || 'grey'
     }
 
-    selectedStartDate.setHours(0, 0, 0, 0);
-    selectedEndDate.setHours(0, 0, 0, 0);
-
-    // 3. Filtrar programas que coinciden con el rango de fechas
-    validPrograms = validPrograms.filter((program) => {
-      let startDate = new Date(program.FechaInicio);
-      let endDate = new Date(program.FechaFin);
-
-      if (isNaN(startDate) || isNaN(endDate)) return false;
-
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-
-      return startDate <= selectedEndDate && endDate >= selectedStartDate;
-    });
-
-    // 4. Eliminar duplicados por nombre
-    validPrograms = validPrograms.filter(
-      (program, index, self) =>
-        index === self.findIndex(p => p.nombrePrograma === program.nombrePrograma)
-    );
-
-    this.matchingPrograms = validPrograms;
-
-    // 5. Asignar nombre de programa
-    if (this.matchingPrograms.length === 1) {
-      this.programName = this.matchingPrograms[0].nombrePrograma;
-    } else if (this.matchingPrograms.length > 1) {
-      this.matchingProgramOptions = this.matchingPrograms.map(p => p.nombrePrograma);
-    } else {
-      this.programName = null;
+    const cargarCotizaciones = async (tipo) => {
+      loading.value[tipo] = true
+      try {
+        const response = await api.post('http://localhost:8010/cotizacion/cotizaciones', { tipo })
+        if (tipo === 'normales') cotizacionesNormales.value = response.data
+        if (tipo === 'cristal') cotizacionesCristal.value = response.data
+        if (tipo === 'personalizadas') cotizacionesPersonalizadas.value = response.data
+      } catch (error) {
+        $q.notify({
+          type: 'negative',
+          message: `Error al cargar cotizaciones ${tipo}`,
+          position: 'top'
+        })
+        console.error(error)
+      } finally {
+        loading.value[tipo] = false
+      }
     }
 
-    // 6. Tipos de habitación únicos
-    const tiposDeHabitacionUnicos = [...new Set(validPrograms.map(item => item.tipoHabitacion))];
-    this.roomTypeOptions = tiposDeHabitacionUnicos;
 
-    // ✅ Si todo salió bien, indicamos que el registro fue exitoso (simulado)
-    this.justSubmitted = true;
+    const Cargar_Datos_Backend = async ({ destino = '', hotel = '', cliente = false, asesor = false, start = '', end = '', soloNoches = false } = {}) => {
+          try {
+            const body = {};
 
-    // Opcional: reiniciar la bandera luego de un tiempo
-    setTimeout(() => {
-      this.justSubmitted = false;
-    }, 2000);
+            if (cliente === true) {
+              body.cliente = true; // para obtener lista de clientes
+            } else if (typeof cliente === 'string') {
+              body.cliente = cliente; // para obtener correo de un cliente
+            }
 
-    return {
-      success: true,
-      matchingPrograms: this.matchingPrograms,
-      programName: this.programName,
-      roomTypes: this.roomTypeOptions
+            if (asesor === true) {
+              body.asesor = true;
+            }
+
+            if (hotel) {
+              body.hotel = hotel;
+            }
+
+            if (soloNoches && hotel) {
+              body.hotel = hotel;
+              body.soloNoches = true;
+            }
+
+            if (destino) {
+              body.destino = destino;
+            }
+
+            if (start && end) {
+              body.start = start;
+              body.end = end;
+            }
+
+            const response = await api.post('http://localhost:8010/cotizacion/lista', body);
+            return response.data;
+          } catch (error) {
+            console.error('Error al cargar datos:', error);
+            return {};
+          }
     };
 
-  } catch (error) {
-    console.error("Error al obtener nombres de programa:", error);
-    this.$q.notify({
-      message: "Ocurrió un error al buscar programas.",
-      color: "negative",
-    });
-    return {
-      success: false,
-      reason: "serverError",
-      error
-    };
-  } finally {
-    this.autofillingProgramName = false;
-  }
-},
 
-    validarHora(horaLlegada, horaSalida) {
-      if (horaLlegada && horaSalida && horaLlegada < horaSalida) {
-        // Mostrar mensaje de error o realizar otra acción
-        this.$q.notify({
-          message:
-            "La hora de llegada no puede ser anterior a la hora de salida.",
-          color: "negative",
-          position: "top",
-          timeout: 2000,
-        });
-        // Opcional: Restablecer el valor
-      }
-    },
-    procesarLiquidacion() {
-      this.cerrarModalPasajeros();
 
-      const idCotizacion = this.cotizacionSeleccionada.idCotizacion;
 
-      // 1. Obtener datos de la cotización desde la API (incluyendo el campo tieneImpuestos)
-      axios
-        .get(
-          `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
-        )
-        .then((response) => {
-          const datosCotizacionAPI = response.data;
-          console.log(
-            "Datos de la cotización desde la API:",
-            datosCotizacionAPI
-          );
 
-          // 2. Preparar los datos para la liquidación
-          const datosLiquidacion = {
-            idCotizacion: this.cotizacionSeleccionada.idCotizacion,
-            salida: this.cotizacionSeleccionada.salida,
-            destino: this.cotizacionSeleccionada.destino,
-            nombrePrograma: this.cotizacionSeleccionada.nombrePrograma,
-            plan: this.cotizacionSeleccionada.plan,
-            hotel: this.cotizacionSeleccionada.hotel,
-            totalAdultos: this.cotizacionSeleccionada.totalAdultos,
-            totalNinos: this.cotizacionSeleccionada.totalNinos,
-            totalPasajeros: this.cotizacionSeleccionada.totalPasajeros,
-            precioBrutoTotal:
-              this.cotizacionSeleccionada.precioBrutoTotal.replace(
-                /[^\d.-]/g,
-                ""
-              ),
-            valorDescuento: this.cotizacionSeleccionada.valorDescuento,
-            ivaValor: this.cotizacionSeleccionada.ivaValor,
-            rteFuente: this.cotizacionSeleccionada.rteFuente,
-            rteIca: this.cotizacionSeleccionada.rteIca,
-            totalComision: this.cotizacionSeleccionada.totalComision,
-            totalPrecioCliente:
-              this.cotizacionSeleccionada.totalPrecioCliente.replace(
-                /[^\d.-]/g,
-                ""
-              ),
-            combus: this.cotizacionSeleccionada.combus,
-            tasa: this.cotizacionSeleccionada.tasa,
-            iva: this.cotizacionSeleccionada.iva,
-            ta: this.cotizacionSeleccionada.ta,
-            ivaTa: this.cotizacionSeleccionada.ivaTa,
-            otros: this.cotizacionSeleccionada.otros,
-            suplemento: this.cotizacionSeleccionada.suplemento,
-            precioTrans: this.cotizacionSeleccionada.precioTrans,
-            noches: this.cotizacionSeleccionada.noches,
-            notas: this.cotizacionSeleccionada.notas,
-            cliente: this.cotizacionSeleccionada.cliente,
-            clientePorcentaje: this.cotizacionSeleccionada.clientePorcentaje,
-            nochesAdicionales: this.cotizacionSeleccionada.nochesAdicionales,
-            CreadorCotizacion: this.cotizacionSeleccionada.CreadorCotizacion,
-            fechaCreacion: this.cotizacionSeleccionada.fechaCreacion,
-            aerolineaIda: this.cotizacionSeleccionada.aerolineaIda,
-            vueloIda: this.cotizacionSeleccionada.vueloIda,
-            horaLlegadaIda: this.cotizacionSeleccionada.horaLlegadaIda,
-            horaSalidaIda: this.cotizacionSeleccionada.horaSalidaIda,
-            claseIda: this.cotizacionSeleccionada.claseIda,
-            fechaInicio: this.cotizacionSeleccionada.fechaInicio,
-            aerolineaVuelta: this.cotizacionSeleccionada.aerolineaVuelta,
-            vueloVuelta: this.cotizacionSeleccionada.vueloVuelta,
-            horaLlegadaVuelta: this.cotizacionSeleccionada.horaLlegadaVuelta,
-            horaSalidaVuelta: this.cotizacionSeleccionada.horaSalidaVuelta,
-            claseVuelta: this.cotizacionSeleccionada.claseVuelta,
-            fechaFin: this.cotizacionSeleccionada.fechaFin,
-            correo: this.cotizacionSeleccionada.correo,
-            impuestosLiq: datosCotizacionAPI[0].tieneImpuestos, // Usar el valor de tieneImpuestos de la cotización
-            extra: this.cotizacionSeleccionada.extra,
-            transfer: this.cotizacionSeleccionada.transfer,
-            incluye: this.cotizacionSeleccionada.incluye,
-            noIncluye: this.cotizacionSeleccionada.noIncluye,
-            status: "Pendiente",
-            telefono: this.telefono || null,
-            correoPasajero: this.correoPasajero || null,
-          };
 
-          // 3. Crear la liquidación
-          axios
-            .post(
-              "https://backmultidestinos.onrender.com/liquidacion",
-              datosLiquidacion
-            )
-            .then((response) => {
-              const idLiquidacion = response.data.idLiquidacion;
+    const abrirFormularioNormal = async () => {
+      const { value: formValues } = await Swal.fire({
+        title: '<div style="color: #4A5568; font-size: 24px; font-weight: 600; margin-bottom: 10px;">✈️ Nueva Cotización</div>',
+        html: `
+          <style>
+            .cotizacion-container {
+              font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+              max-height: 80vh;
+              overflow-y: auto;
+              padding: 0;
+              margin: 0;
+            }
 
-              // 4. Crear los impuestos si tieneImpuestos es true
-              if (datosCotizacionAPI[0].tieneImpuestos) {
-                const datosImpuestos = {
-                  idLiquidacion: idLiquidacion,
-                  defensaCivil: datosCotizacionAPI[0].defensaCivil_Total,
-                  cormacarena5a11: datosCotizacionAPI[0].cormacarena5a11_Total,
-                  cormacarena12a65:
-                    datosCotizacionAPI[0].cormacarena12a65_Total,
-                  cormacarenaExtranjero:
-                    datosCotizacionAPI[0].cormacarenaExtranjero_Total,
-                  pqsNaturales5a24:
-                    datosCotizacionAPI[0].pqsNaturales5a24_Total,
-                  pqsNaturales25a65:
-                    datosCotizacionAPI[0].pqsNaturales25a65_Total,
-                  pqsNaturalesExtranjero:
-                    datosCotizacionAPI[0].pqsNaturalesExtranjero_Total,
-                  alcaldiaNacional:
-                    datosCotizacionAPI[0].alcaldiaNacional_Total,
-                  alcaldiaExtranjero:
-                    datosCotizacionAPI[0].alcaldiaExtranjero_Total,
-                  cormacarena5a11Personas:
-                    datosCotizacionAPI[0].cormacarena5a11_numeroPersonas,
-                  cormacarena12a65Personas:
-                    datosCotizacionAPI[0].cormacarena12a65_numeroPersonas,
-                  cormacarenaExtranjeroPersonas:
-                    datosCotizacionAPI[0].cormacarenaExtranjero_numeroPersonas,
-                  pqsNaturales5a24Personas:
-                    datosCotizacionAPI[0].pqsNaturales5a24_numeroPersonas,
-                  pqsNaturales25a65Personas:
-                    datosCotizacionAPI[0].pqsNaturales25a65_numeroPersonas,
-                  pqsNaturalesExtranjeroPersonas:
-                    datosCotizacionAPI[0].pqsNaturalesExtranjero_numeroPersonas,
-                  alcaldiaNacionalPersonas:
-                    datosCotizacionAPI[0].alcaldiaNacional_numeroPersonas,
-                  alcaldiaExtranjeroPersonas:
-                    datosCotizacionAPI[0].alcaldiaExtranjero_numeroPersonas,
-                  defensaCivilPersonas:
-                    datosCotizacionAPI[0].defensaCivil_numeroPersonas,
-                };
+            .header-gradient {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+              padding: 25px;
+              border-radius: 15px 15px 0 0;
+              color: white;
+              text-align: center;
+              position: relative;
+              overflow: hidden;
+            }
 
-                axios
-                  .post(
-                    "https://backmultidestinos.onrender.com/impuestosLiq",
-                    datosImpuestos
-                  )
-                  .then(() => {
-                    console.log("Impuestos creados exitosamente");
-                  })
-                  .catch((error) => {
-                    console.error("Error al crear los impuestos:", error);
-                  });
+            .header-gradient::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="30" r="3" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="70" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+              animation: float 20s ease-in-out infinite;
+            }
+
+            @keyframes float {
+              0%, 100% { transform: translateY(0px) rotate(0deg); }
+              50% { transform: translateY(-10px) rotate(5deg); }
+            }
+
+            .header-content {
+              position: relative;
+              z-index: 1;
+            }
+
+            .company-title {
+              font-size: 26px;
+              font-weight: 700;
+              margin: 0;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              letter-spacing: -0.5px;
+            }
+
+            .company-subtitle {
+              font-size: 16px;
+              margin: 8px 0 0 0;
+              opacity: 0.95;
+              font-weight: 400;
+            }
+
+            .form-content {
+              padding: 30px;
+              background: #fafbfc;
+            }
+
+            .section-card {
+              background: white;
+              border-radius: 16px;
+              padding: 24px;
+              margin-bottom: 20px;
+              box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+              border: 1px solid rgba(0, 0, 0, 0.04);
+              transition: all 0.3s ease;
+              position: relative;
+              overflow: hidden;
+            }
+
+            .section-card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 4px;
+              height: 100%;
+              background: linear-gradient(180deg, #667eea, #764ba2);
+              border-radius: 0 2px 2px 0;
+            }
+
+            .section-card:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            }
+
+            .section-title {
+              font-size: 18px;
+              font-weight: 600;
+              color: #2d3748;
+              margin: 0 0 20px 0;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+
+            .section-icon {
+              width: 24px;
+              height: 24px;
+              border-radius: 6px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+            }
+
+            .icon-general { background: linear-gradient(135deg, #667eea, #764ba2); }
+            .icon-hotel { background: linear-gradient(135deg, #48bb78, #38a169); }
+            .icon-flight { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+            .icon-client { background: linear-gradient(135deg, #9f7aea, #805ad5); }
+            .icon-money { background: linear-gradient(135deg, #38b2ac, #319795); }
+
+            .form-grid {
+              display: grid;
+              gap: 20px;
+            }
+
+            .grid-2 { grid-template-columns: 1fr 1fr; }
+            .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+            .grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+            .form-group {
+              position: relative;
+            }
+
+            .form-label {
+              display: block;
+              font-size: 14px;
+              font-weight: 500;
+              color: #4a5568;
+              margin-bottom: 8px;
+              transition: color 0.2s ease;
+            }
+
+            .form-input, .form-select {
+              width: 100%;
+              padding: 12px 16px;
+              border: 2px solid #e2e8f0;
+              border-radius: 10px;
+              font-size: 14px;
+              transition: all 0.3s ease;
+              background: white;
+              color: #2d3748;
+              box-sizing: border-box;
+            }
+
+            .form-input:focus, .form-select:focus {
+              outline: none;
+              border-color: #667eea;
+              box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+              transform: translateY(-1px);
+            }
+
+            .form-input::placeholder {
+              color: #a0aec0;
+              font-style: italic;
+            }
+
+            .form-textarea {
+              width: 100%;
+              padding: 12px 16px;
+              border: 2px solid #e2e8f0;
+              border-radius: 10px;
+              font-size: 14px;
+              transition: all 0.3s ease;
+              background: white;
+              color: #2d3748;
+              min-height: 80px;
+              resize: vertical;
+              font-family: inherit;
+              box-sizing: border-box;
+            }
+
+            .form-textarea:focus {
+              outline: none;
+              border-color: #667eea;
+              box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .checkbox-group {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 12px 0;
+            }
+
+            .checkbox-custom {
+              width: 20px;
+              height: 20px;
+              border: 2px solid #e2e8f0;
+              border-radius: 6px;
+              position: relative;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            }
+
+            .checkbox-custom input {
+              opacity: 0;
+              position: absolute;
+              width: 100%;
+              height: 100%;
+              margin: 0;
+              cursor: pointer;
+            }
+
+            .checkbox-custom input:checked + .checkmark {
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              border-color: #667eea;
+            }
+
+            .checkmark {
+              position: absolute;
+              top: 0;
+              left: 0;
+              height: 100%;
+              width: 100%;
+              border-radius: 4px;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-size: 12px;
+            }
+
+            .checkbox-custom input:checked + .checkmark::after {
+              content: '✓';
+              font-weight: bold;
+            }
+
+            .checkbox-label {
+              font-size: 14px;
+              font-weight: 500;
+              color: #4a5568;
+              cursor: pointer;
+              user-select: none;
+            }
+
+            .flight-section {
+              background: #f8fafc;
+              border-radius: 12px;
+              padding: 20px;
+              margin-bottom: 16px;
+              border-left: 4px solid #ed8936;
+            }
+
+            .flight-title {
+              font-size: 16px;
+              font-weight: 600;
+              color: #2d3748;
+              margin: 0 0 16px 0;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .escala-section {
+              background: linear-gradient(135deg, #fff5f5, #fed7d7);
+              border-radius: 12px;
+              padding: 20px;
+              margin-top: 16px;
+              border: 2px dashed #fc8181;
+              display: none;
+            }
+
+            .escala-section.show {
+              display: block;
+              animation: slideDown 0.3s ease;
+            }
+
+            @keyframes slideDown {
+              from {
+                opacity: 0;
+                max-height: 0;
               }
-
-              // 5. Crear los pasajeros (dentro del .then() de la creación de la liquidación)
-              const promesasPasajeros = this.pasajeros.map((pasajero) => {
-                pasajero.idLiquidacion = idLiquidacion; // Asignar idLiquidacion aquí
-                return axios.post(
-                  "https://backmultidestinos.onrender.com/pasajero",
-                  pasajero
-                );
-              });
-
-              Promise.all(promesasPasajeros)
-                .then(() => {
-                  console.log("Liquidación y pasajeros creados exitosamente");
-
-                  // 6. Actualizar el estado de la cotización a "Aprobado"
-                  axios
-                    .post(
-                      `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`,
-                      {
-                        status: "Aprobado",
-                      }
-                    )
-                    .then(() => {
-                      console.log("Cotización actualizada a 'Aprobado'");
-                      // 7. Redirigir o actualizar la interfaz
-                    })
-                    .catch((error) => {
-                      console.error(
-                        "Error al actualizar la cotización:",
-                        error
-                      );
-                    });
-                })
-                .catch((error) => {
-                  console.error("Error al crear los pasajeros:", error);
-                });
-            })
-            .catch((error) => {
-              console.error("Error al crear la liquidación:", error);
-            });
-        })
-        .catch((error) => {
-          console.error("Error al obtener datos de la cotización:", error);
-        });
-    },
-
-    abrirModalPasajeros(cotizacion) {
-      this.cotizacionSeleccionada = cotizacion;
-      this.totalPasajeros = cotizacion.totalPasajeros;
-      this.pasajeros = [];
-
-      for (let i = 0; i < this.totalPasajeros; i++) {
-        this.pasajeros.push({
-          nombre: "",
-          tipoDocumento: "",
-          numeroDocumento: "",
-          fechaNacimiento: "",
-        });
-      }
-      this.tieneTelefono = false; // Inicialmente, el pasajero no tiene teléfono
-      this.telefono = "";
-      this.tieneNumero = false; // Inicialmente, el pasajero no tiene número
-      this.correoPasajero = "";
-      this.mostrarModalPasajeros = true;
-    },
-    cerrarModalPasajeros() {
-      this.mostrarModalPasajeros = false;
-      // Opcional: Puedes reiniciar los datos de los pasajeros aquí si es necesario
-    },
-    async pasarALiquidacion() {
-      console.log("Pasando cotización a liquidación:", cotizacion);
-    },
-    filteredCotizacionData() {
-      const filter = this.selectedFilter;
-      const data = [...this.cotizacionData]; // Copia para no modificar el original
-
-      // Ordenar por idCotizacion
-      data.sort((a, b) => {
-        const idA = a.idCotizacion;
-        const idB = b.idCotizacion;
-
-        // Priorizar COT-C
-        if (idA.includes("-C") && !idB.includes("-C")) {
-          return -1; // COT-C va antes que COT-
-        } else if (!idA.includes("-C") && idB.includes("-C")) {
-          return 1; // COT- va después de COT-C
-        }
-
-        // Extraer los números de ambos IDs (solo si son COT-C)
-        const numA = idA.startsWith("COT-C")
-          ? parseInt(idA.split("-C")[1], 10)
-          : 0;
-        const numB = idB.startsWith("COT-C")
-          ? parseInt(idB.split("-C")[1], 10)
-          : 0;
-
-        // Ordenar numéricamente descendente (solo si son COT-C)
-        if (idA.startsWith("COT-C") && idB.startsWith("COT-C")) {
-          return numB - numA;
-        }
-
-        // Ordenar numéricamente descendente (solo si son COT-)
-        if (idA.startsWith("COT-") && idB.startsWith("COT-")) {
-          const numA = parseInt(idA.split("-")[1], 10);
-          const numB = parseInt(idB.split("-")[1], 10);
-          return numB - numA;
-        }
-
-        // Mantener el orden original si no son COT- ni COT-C
-        return 0;
-      });
-
-      // Filtrar por tipo y status
-      return data.filter((row) => {
-        const tipoMatch =
-          filter === "Todos" ||
-          (filter === "Cot-C" && row.idCotizacion.includes("-C")) ||
-          (filter === "Cot" && !row.idCotizacion.includes("-C"));
-        const statusMatch =
-          this.filterStatus === null || row.status === this.filterStatus;
-        return tipoMatch && statusMatch;
-      });
-    },
-    customSort(rows, sortBy, descending) {
-      const data = [...rows];
-      if (sortBy === "idCotizacion") {
-        data.sort((a, b) => {
-          const [prefixA, numberA] = a[sortBy].split("-");
-          const [prefixB, numberB] = b[sortBy].split("-");
-
-          if (prefixA === "COT-" && prefixB === "COT-") {
-            return descending ? numberB - numberA : numberA - numberB;
-          } else {
-            return 0;
-          }
-        });
-      } else if (sortBy === "fechaCreacion") {
-        data.sort((a, b) => {
-          const dateA = new Date(a[sortBy]);
-          const dateB = new Date(b[sortBy]);
-          return descending ? dateB - dateA : dateA - dateB;
-        });
-      } else {
-        // Ordenamiento alfabético para otras columnas (si es necesario)
-        data.sort((a, b) => {
-          const x = descending ? b : a;
-          const y = descending ? a : b;
-          return x[sortBy] > y[sortBy] ? 1 : x[sortBy] < y[sortBy] ? -1 : 0;
-        });
-      }
-      return data;
-    },
-
-    descargarCotizacionN(row) {
-      if (row.idCotizacion.includes("-C")) {
-        this.descargarCotizacionCano(row.idCotizacion);
-      } else {
-        this.descargarCotizacion(row.idCotizacion);
-      }
-    },
-    shouldHideAdditionalNightSection() {
-      return (
-        this.destination === "Bahía Solano" &&
-        this.programName === "Temporada Baja" &&
-        this.hotel === "El Almejal Ecolodge"
-      );
-    },
-    mostrarDialogoSeleccionArchivo() {
-      this.mostrarDialogo = true;
-    },
-    seleccionarArchivo(event) {
-      this.archivoSeleccionado = event.target.files[0];
-    },
-    async enviarCotizacion(cotizacion) {
-      try {
-        // 1. Generar el PDF
-        const pdfBlob = await (cotizacion.idCotizacion.includes("-C")
-          ? this.descargarCotizacionCano(cotizacion.idCotizacion)
-          : this.descargarCotizacion(cotizacion.idCotizacion));
-
-        // 2. Crear un enlace temporal para descargar el PDF
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(pdfBlob);
-        link.download = `cotizacion_${cotizacion.cliente}.pdf`;
-        link.style.display = "none"; // Ocultar el enlace
-
-        // 3. Agregar el enlace al DOM y simular un clic
-        document.body.appendChild(link);
-        link.click();
-
-        // 4. Esperar un breve tiempo para que el archivo se descargue (opcional)
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // 5. Crear el enlace mailto: (sin archivo adjunto)
-        const mailtoLink = `mailto:${cotizacion.correo}?subject=Cotización para ${cotizacion.cliente}&body=Estimado(a) ${cotizacion.cliente},%0D%0A%0D%0AAdjuntamos su cotización (recién descargada).%0D%0A%0D%0ASaludos cordiales,`;
-
-        // 6. Abrir el cliente de correo predeterminado del usuario
-        window.location.href = mailtoLink;
-
-        // 7. Eliminar el enlace temporal después de un breve retraso
-        setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(link.href); // Limpiar la Blob URL
-        }, 1000);
-
-        // 8. Notificar al usuario
-        this.$q.notify({
-          message: "Abriendo cliente de correo...",
-          color: "info",
-        });
-      } catch (error) {
-        console.error(error);
-        this.$q.notify({
-          message: "Error al enviar la cotización",
-          color: "negative",
-        });
-      }
-    },
-    checkPageOverflow(doc, currentY, elementHeight, marginBottom = 10) {
-      const pageHeight = doc.internal.pageSize.height;
-      if (currentY + elementHeight > pageHeight - marginBottom) {
-        doc.addPage();
-        return margins.top; // Reiniciar currentY en la nueva página
-      }
-      return currentY;
-    },
-    async descargarCotizacionCano(idCotizacion) {
-      try {
-        // Realizar las solicitudes HTTP para obtener los datos
-
-        const [habitacionResponse, cotizacionResponse, impuestoResponse] =
-          await Promise.all([
-            axios.get(
-              `https://backmultidestinos.onrender.com/habitacionCotizacion/${idCotizacion}`
-            ),
-            axios.get(
-              `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
-            ),
-            axios.get(
-              `https://backmultidestinos.onrender.com/ImpuestoCot/${idCotizacion}`
-            ),
-          ]);
-
-        // Verificar si las solicitudes fueron exitosas
-        if (
-          habitacionResponse.status !== 200 ||
-          cotizacionResponse.status !== 200
-        ) {
-          console.error(
-            "Error al obtener datos de habitacionCotizacion o cotizacion"
-          );
-          return;
-        }
-
-        // Obtener los datos de las respuestas
-        const cotizacion = cotizacionResponse.data[0];
-        const impuesto = impuestoResponse.data[0];
-        console.log("impuesto", impuesto);
-        const habitacion = habitacionResponse.data;
-        console.log("habitacion", habitacion);
-
-        //clientes porcentaje
-        const clienteResponse = await axios.get(
-          `https://backmultidestinos.onrender.com/cliente/buscar/${cotizacion.cliente}`
-        );
-        console.log("clienteResponse", clienteResponse);
-        const clienteData = clienteResponse.data[0];
-        console.log("clienteData", clienteData);
-        const tipoBase = clienteData.tipoBase;
-        const vendedorResponse = await axios.get(
-          `https://backmultidestinos.onrender.com/user/${cotizacion.CreadorCotizacion}`
-        );
-        const vendedorData = vendedorResponse.Data;
-        console.log("vendedor", vendedorResponse.data.nombreCompleto);
-        // Agregar parámetros a la URL
-        // Crear el objeto de parámetros
-        const params = {
-          hotel: cotizacion.hotel,
-          nombrePrograma: cotizacion.nombrePrograma,
-          destino: cotizacion.destino,
-        };
-
-        // Realizar la solicitud POST con los parámetros
-        const hotelesResponse = await axios.post(
-          "https://backmultidestinos.onrender.com/hoteles/buscar",
-          params
-        );
-        const hotelincluye = hotelesResponse.data[0].incluye;
-        const hotelnoincluye = hotelesResponse.data[0].noIncluye;
-
-        // Crear el documento PDF
-        const doc = new jsPDF();
-        const margins = { top: 15, bottom: 10, left: 15, right: 15 };
-        const pageWidth = doc.internal.pageSize.width;
-        const pageHeight = doc.internal.pageSize.height;
-
-        // Configuración del encabezado
-        const headerHeight = 50;
-        const headerPadding = { left: 15, right: 15, top: 10, bottom: 10 };
-
-        // Cargar imagen (reemplaza con la ruta correcta)
-        const imgData = await new Promise((resolve, reject) => {
-          const img = new Image();
-          img.src = "https://i.ibb.co/1sFJ7dT/imgAzul.png";
-          img.onload = () => resolve(img);
-          img.onerror = reject;
-        });
-
-        // Calcular dimensiones de la imagen
-        const aspectRatio = imgData.width / imgData.height;
-        const maxImgWidth =
-          pageWidth / 4 - headerPadding.left - headerPadding.right;
-        const imgWidth = Math.min(120, maxImgWidth);
-        const imgHeight = imgWidth / aspectRatio;
-        const imgY = margins.top + (headerHeight - imgHeight) / 2;
-
-        // Dividir el texto del encabezado en dos partes: texto general y número de cotización
-        const headerTextGeneral = `PBX(601)7621133\nCALLE 64 No. 11-37 LOC 301\nEMAIL: MULTIDESTINOS_EXPRESS@YAHOO.COM`;
-        const headerTextCotizacion = `Numero de cotización: ${idCotizacion}`;
-
-        // Agregar imagen al encabezado
-        doc.addImage(
-          imgData,
-          "PNG",
-          margins.left + headerPadding.left,
-          imgY,
-          imgWidth,
-          imgHeight
-        );
-
-        // Calcular ancho disponible para el texto general
-        const availableWidth =
-          pageWidth -
-          margins.left -
-          margins.right -
-          imgWidth -
-          headerPadding.left -
-          headerPadding.right -
-          20;
-
-        // Agregar texto general al encabezado
-        doc.setFontSize(10);
-        doc.setFont("Helvetica", "normal");
-        doc.text(
-          doc.splitTextToSize(headerTextGeneral, availableWidth),
-          margins.left + imgWidth + headerPadding.left + headerPadding.right,
-          margins.top + 15
-        );
-
-        // Calcular posición horizontal para el número de cotización (alinear a la derecha)
-        const cotizacionX =
-          pageWidth -
-          margins.right -
-          doc.getTextWidth(headerTextCotizacion) -
-          headerPadding.right;
-
-        // Aumentar el tamaño de fuente para el número de cotización y mantenerlo en negrita
-        doc.setFontSize(14);
-        doc.setFont("Helvetica-Bold");
-        doc.text(headerTextCotizacion, cotizacionX, margins.top + 15);
-
-        // Dibujar borde del encabezado con bordes redondeados
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(
-          margins.left,
-          margins.top,
-          pageWidth - margins.left - margins.right,
-          headerHeight,
-          10, // Radio de los bordes redondeados
-          10, // Radio de los bordes redondeados
-          "S"
-        );
-
-        // Agregar un fondo de color suave al encabezado
-        doc.setFillColor(51, 102, 204); // Color de fondo azul
-        doc.rect(
-          margins.left,
-          margins.top,
-          pageWidth - margins.left - margins.right,
-          headerHeight,
-          "F"
-        );
-
-        // Sección: SOLICITUD DE RESERVA
-        doc.setFontSize(10); // Tamaño de fuente para el título
-        const bodyY = margins.top + headerHeight + 10;
-        // Sección: SOLICITUD DE RESERVA (Título principal)
-        doc.setFontSize(10); // Tamaño de fuente para el título
-        doc.text("SOLICITUD DE RESERVA:", margins.left, bodyY - 4);
-
-        doc.setFontSize(8); // Cambiando el tamaño de fuente a 8
-
-        const enunciados = [
-          "FECHA SOLICITUD:",
-          "AGENCIA:",
-          "TELÉFONO:",
-          "CONTACTO:",
-          "NIT:",
-          "VENDEDOR:",
-        ];
-        const campos = [
-          new Date(cotizacion.fechaCreacion).toLocaleDateString(),
-          cotizacion.cliente.toString(),
-          clienteData.telefono ? clienteData.telefono.toString() : "N/A",
-          clienteData.nit ? clienteData.nit.toString() : "N/A",
-          clienteData.nit ? clienteData.nit.toString() : "N/A",
-          vendedorResponse.data.nombreCompleto
-            ? vendedorResponse.data.nombreCompleto.toString()
-            : "N/A",
-        ];
-
-        // Calcular el ancho máximo disponible para los campos en una fila
-        const maxCamposPorFila = 6; // Ahora hay 6 campos por fila
-        const anchoDisponiblePorCampo =
-          (pageWidth - margins.left - margins.right) / maxCamposPorFila;
-
-        let currentX = margins.left;
-        let currentY = bodyY;
-
-        // Iterar a través de los enunciados y los campos
-        for (let i = 0; i < enunciados.length; i++) {
-          // Mostrar enunciado en la primera fila
-          doc.text(enunciados[i], currentX, currentY);
-
-          // Mostrar campo debajo del enunciado en la segunda fila
-          const valorCampo = campos[i] !== undefined ? campos[i] : "N/A";
-          const lines = doc.splitTextToSize(
-            valorCampo,
-            anchoDisponiblePorCampo - 2
-          ); // Reducir el ancho del texto por 2 para evitar superposiciones
-          doc.text(lines, currentX, currentY + 5);
-
-          // Avanzar a la siguiente posición horizontal
-          currentX += anchoDisponiblePorCampo;
-
-          // Salto de línea si se llenó la fila o es el último campo
-          if ((i + 1) % maxCamposPorFila === 0 || i === enunciados.length - 1) {
-            currentY += 15; // Avanzar a la siguiente fila
-            currentX = margins.left; // Restaurar la posición horizontal
-          }
-        }
-        function obtenerAcomodacion(habitaciones) {
-          return habitaciones
-            .map((habitacion) => {
-              const adultos = habitacion.adultos;
-              const niños = habitacion.niños;
-              const tipoAcomodacion = `1x${adultos}`;
-              return niños > 0 ? `${tipoAcomodacion} CHD` : tipoAcomodacion;
-            })
-            .join(", ");
-        }
-
-        const acomodacion = obtenerAcomodacion(habitacion);
-
-        // SEGUNDA FILA: Enunciados y campos modificados
-        const enunciados2 = [
-          "NOCHES:",
-          "HOTEL:",
-          "PLAN:",
-          "DESTINO:",
-          "DIRECCION:",
-          "ACOMODACIÓN:",
-        ];
-        const campos2 = [
-          cotizacion.noches ? cotizacion.noches.toString() : "N/A",
-          cotizacion.hotel ? cotizacion.hotel.toString() : "N/A",
-
-          cotizacion.plan ? cotizacion.plan.toString() : "N/A",
-
-          cotizacion.destino ? cotizacion.destino.toString() : "N/A",
-          cotizacion.direccion ? cotizacion.direccion.toString() : "N/A",
-
-          acomodacion.toString(),
-        ];
-        console.log("campso2", campos2);
-        // Calcular el ancho disponible para los campos de la segunda fila
-        const maxCamposPorFila2 = 6; // Ahora son 5 campos en la segunda fila
-        const anchoDisponiblePorCampo2 =
-          (pageWidth - margins.left - margins.right) / maxCamposPorFila2;
-
-        // Ajustar la posición vertical para la nueva fila (mantener el mismo incremento que antes)
-        currentY += 1;
-
-        // Iterar a través de los nuevos enunciados y campos de la SEGUNDA FILA
-        for (let i = 0; i < enunciados2.length; i++) {
-          // Mostrar enunciado
-          doc.text(enunciados2[i], currentX, currentY);
-
-          // Mostrar campo debajo del enunciado
-          const valorCampo2 = campos2[i] !== undefined ? campos2[i] : "N/A";
-          const lines2 = doc.splitTextToSize(
-            valorCampo2,
-            anchoDisponiblePorCampo2 - 2
-          );
-          doc.text(lines2, currentX, currentY + 5);
-
-          // Avanzar a la siguiente posición horizontal
-          currentX += anchoDisponiblePorCampo2;
-        }
-        // SECCIÓN: ITINERARIO (Nuevo título)
-        currentY += 1;
-        doc.setFontSize(10);
-        doc.text("ITINERARIO: ", margins.left, currentY + 12);
-
-        // Mover a la posición donde se empezará a dibujar la tabla
-        currentY += 20;
-
-        // Configuración de la tabla
-        const columns = [
-          "AEROLINEA",
-          "VUELO",
-          "FECHA",
-          "RUTA",
-          "CLASE",
-          "HR SALIDA",
-          "HR LLEGADA",
-          "RECORD",
-        ];
-        const data = [
-          [
-            cotizacion.aerolineaIda || "N/A",
-            cotizacion.vueloIda || "N/A",
-            cotizacion.fechaInicio
-              ? new Date(
-                  new Date(cotizacion.fechaInicio).getTime() +
-                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
-                ).toLocaleDateString()
-              : "N/A",
-            cotizacion.ruta1 || "N/A",
-            cotizacion.claseIda || "N/A",
-            cotizacion.horaSalidaIda || "N/A",
-            cotizacion.horaLlegadaIda || "N/A",
-            cotizacion.recordIda || "N/A",
-          ],
-        ];
-
-        if (cotizacion.aerolineaEscalaIda != null) {
-          data.push([
-            cotizacion.aerolineaEscalaIda || "N/A",
-            cotizacion.vueloEscalaIda || "N/A",
-            cotizacion.fechaInicio
-              ? new Date(
-                  new Date(cotizacion.fechaInicio).getTime() +
-                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
-                ).toLocaleDateString()
-              : "N/A",
-            "Escala Ida", // Puedes ajustar esto según tu lógica
-            cotizacion.claseEscalaIda || "N/A",
-            cotizacion.horaSalidaEscalaIda || "N/A",
-            cotizacion.horaLlegadaEscalaIda || "N/A",
-            "", // No hay record para escalas
-          ]);
-
-          data.push([
-            cotizacion.aerolineaEscalaVuelta || "N/A",
-            cotizacion.vueloEscalaVuelta || "N/A",
-            cotizacion.fechaFin
-              ? new Date(
-                  new Date(cotizacion.fechaFin).getTime() +
-                    new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
-                ).toLocaleDateString()
-              : "N/A",
-            "Escala Vuelta", // Puedes ajustar esto según tu lógica
-            cotizacion.claseEscalaVuelta || "N/A",
-            cotizacion.horaSalidaEscalaVuelta || "N/A",
-            cotizacion.horaLlegadaEscalaVuelta || "N/A",
-            "", // No hay record para escalas
-          ]);
-        }
-
-        data.push([
-          cotizacion.aerolineaVuelta || "N/A",
-          cotizacion.vueloVuelta || "N/A",
-          cotizacion.fechaFin
-            ? new Date(
-                new Date(cotizacion.fechaFin).getTime() +
-                  new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
-              ).toLocaleDateString()
-            : "N/A",
-          cotizacion.ruta2 || "N/A",
-          cotizacion.claseVuelta || "N/A",
-          cotizacion.horaSalidaVuelta || "N/A",
-          cotizacion.horaLlegadaVuelta || "N/A",
-          cotizacion.recordVuelta || "N/A",
-        ]);
-
-        // Calcular el ancho de cada columna
-        const columnWidth =
-          (pageWidth - margins.left - margins.right) / columns.length;
-
-        // Calcular las dimensiones del recuadro del itinerario DESPUÉS de agregar los datos
-        const tableItinerarioWidth = pageWidth - margins.left - margins.right;
-        const tableItinerarioHeight = 10 + 8 * data.length; // Altura de fila reducida a 8
-
-        // Dibujar el recuadro alrededor de la tabla
-        doc.rect(
-          margins.left,
-          currentY, // No restamos 5 aquí
-          tableItinerarioWidth,
-          tableItinerarioHeight,
-          "S"
-        );
-
-        // Dibujar encabezados de la tabla
-        doc.setFontSize(8);
-        columns.forEach((column, index) => {
-          doc.text(column, margins.left + index * columnWidth, currentY + 5); // Pequeño ajuste vertical
-        });
-
-        // Pequeño espacio antes de las filas de datos
-        currentY += 10; // Aumentamos un poco el espacio
-
-        // Dibujar contenido de la tabla
-        data.forEach((row, rowIndex) => {
-          row.forEach((cell, cellIndex) => {
-            doc.text(
-              cell,
-              margins.left + cellIndex * columnWidth,
-              currentY + rowIndex * 8 // Altura de fila reducida a 8
-            );
-          });
-        });
-
-        // Mover a la posición donde se empezará a dibujar la siguiente sección (ajustado)
-        currentY += tableItinerarioHeight + 5; // Ajustamos para incluir el espacio adicional
-
-        //-----------------------------------------------------------------------------------------------------------
-        // SECCIÓN: OBSERVACIONES
-        const observationsText =
-          "Esta cotización está sujeta a cambio y disponibilidad al momento de reservar (Sin servicio confirmado)";
-        const observationsTop = currentY - 10;
-        const observationsHeight = 30; // Altura del recuadro de observaciones
-
-        // Dibujar el recuadro de observaciones con el título dentro
-        doc.setDrawColor(0); // Color del borde
-        doc.rect(
-          margins.left,
-          observationsTop,
-          pageWidth - margins.left - margins.right,
-          observationsHeight
-        );
-        doc.setFontSize(12);
-
-        doc.text("OBSERVACIONES:", margins.left + 2, observationsTop + 6);
-        doc.setFontSize(10);
-        doc.text(observationsText, margins.left + 2, observationsTop + 15, {
-          maxWidth: pageWidth - margins.left - margins.right - 4,
-        });
-        //------------------------------------------------------------------
-        //INCLUYE
-
-        let lineHeight = 6;
-
-        // Ajustes de posición y tamaño
-        const incluyeTop = currentY + 25;
-
-        // Dividir el texto de hotel incluye por el carácter "¿" para obtener líneas individuales
-        const incluyeLines = hotelincluye.split("¿");
-
-        // Calcular la altura del recuadro de INCLUYE dinámicamente, incluyendo el título y el espacio adicional
-        const titleHeight1 = 6;
-        const extraSpaceBelowTitle = 5;
-        let textHeight = 0;
-        incluyeLines.forEach((line) => {
-          textHeight += doc.getTextDimensions(line.trim(), {
-            fontSize: 8,
-            maxWidth: pageWidth - margins.left - margins.right - 4,
-          }).h;
-        });
-        const incluyeHeight =
-          textHeight + titleHeight1 + extraSpaceBelowTitle + 10;
-
-        // Dibujar el recuadro de INCLUYE con el título dentro y el texto
-        doc.setDrawColor(0);
-        doc.rect(
-          margins.left,
-          incluyeTop,
-          pageWidth - margins.left - margins.right,
-          incluyeHeight
-        );
-        doc.setFontSize(12);
-        doc.text("INCLUYE:", margins.left + 2, incluyeTop + 6);
-        doc.setFontSize(8);
-
-        // Mostrar cada línea del texto de INCLUYE, comenzando debajo del título y el espacio adicional
-        let currentLineY = incluyeTop + titleHeight1 + extraSpaceBelowTitle;
-        incluyeLines.forEach((line) => {
-          doc.text(line.trim(), margins.left + 2, currentLineY, {
-            maxWidth: pageWidth - margins.left - margins.right - 4,
-          });
-          currentLineY += doc.getTextDimensions(line.trim(), {
-            fontSize: 8,
-            maxWidth: pageWidth - margins.left - margins.right - 4,
-          }).h;
-        });
-
-        // Añadir una nueva página
-        doc.addPage();
-        currentY = margins.top;
-        const titleHeight = 12;
-        //------------------------------------
-        // Sección: LIQUIDACIÓN
-        // Título de la sección LIQUIDACIÓN
-        doc.setFontSize(10);
-        doc.text("LIQUIDACIÓN:", margins.left, currentY);
-        currentY += 5; // Espacio después del título
-
-        // Variables de configuración de la tabla
-        const liquidacionTop = currentY + 5;
-        const cellPadding = 2;
-        const cellHeight = 6; // Altura de cada celda
-        const tableWidth = pageWidth - margins.left - margins.right;
-        const cellWidth = tableWidth / 6; // Ajustar para 6 columnas
-
-        // Dibujar el borde de la tabla
-        doc.setDrawColor(0); // Color del borde
-
-        // Función para dibujar una fila
-        function drawRow(y) {
-          for (let j = 0; j <= 6; j++) {
-            const x = margins.left + j * cellWidth;
-            doc.line(x, y, x, y + cellHeight); // Dibujar columna
-          }
-          doc.line(margins.left, y, pageWidth - margins.right, y); // Dibujar fila superior
-          doc.line(
-            margins.left,
-            y + cellHeight,
-            pageWidth - margins.right,
-            y + cellHeight
-          ); // Dibujar fila inferior
-        }
-
-        // Variables para las sumas
-        let sumaTotalHabitaciones = 0;
-
-        // Ajustar tamaño de fuente para el contenido de las celdas
-        doc.setFontSize(7);
-
-        // Iterar a través de las habitaciones y añadir datos a la tabla
-        let currentRow = 0;
-
-        habitacion.forEach((habitacionData) => {
-          const y = liquidacionTop + currentRow * cellHeight;
-
-          // Dibujar la fila de la tabla
-          drawRow(y);
-
-          // Primera columna: Valor adul {Acomodacion}
-          const valorAdul = `Valor adul ${habitacionData.acomodacion}`;
-          doc.text(valorAdul, margins.left + cellPadding, y + cellHeight / 2, {
-            baseline: "middle",
-          });
-
-          // Segunda columna: precioComisionableAdulto
-          const precioComisionablePorAdulto = Math.round(
-            habitacionData.precioComisionableAdulto
-          );
-          doc.text(
-            precioComisionablePorAdulto.toString(),
-            margins.left + cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Tercera columna: Número de adultos
-          const numAdultos = habitacionData.adultos;
-          doc.text(
-            numAdultos.toString(),
-            margins.left + 2 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Cuarta columna: Valor original x número adultos
-          const precioComisionableAdulto = Math.round(
-            habitacionData.precioComisionableAdulto * habitacionData.adultos
-          );
-          doc.text(
-            precioComisionableAdulto.toString(),
-            margins.left + 3 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Añadir BASE DE DESCUENTO o BASE COMISIÓN en la quinta columna de la primera fila
-          if (currentRow === 0) {
-            doc.setFontSize(6);
-            const baseText =
-              tipoBase === "Comisión" ? "BASE COMISIÓN" : "BASE DE DESCUENTO";
-            doc.text(
-              baseText,
-              margins.left + 4 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-            doc.setFontSize(7);
-          }
-
-          // Calcular la suma de los valores de la habitación (adultos y niños)
-          let sumaHabitacion = precioComisionableAdulto;
-          if (habitacionData.niños > 0) {
-            sumaHabitacion += Math.round(
-              habitacionData.precioComisionableNino * habitacionData.niños
-            );
-          }
-          sumaTotalHabitaciones += sumaHabitacion;
-
-          currentRow++; // Incrementar la fila para la siguiente iteración
-
-          // Verificar si hay niños
-          if (habitacionData.niños > 0) {
-            const yChild = liquidacionTop + currentRow * cellHeight;
-
-            // Dibujar la fila de la tabla
-            drawRow(yChild);
-
-            // Primera columna: Valor child {Acomodacion}
-            const valorChild = `Valor child ${habitacionData.acomodacion}`;
-            doc.text(
-              valorChild,
-              margins.left + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Segunda columna: precioComisionableNiño
-            const precioComisionablePorNiño = Math.round(
-              habitacionData.precioComisionableNino
-            );
-            doc.text(
-              precioComisionablePorNiño.toString(),
-              margins.left + cellWidth + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Tercera columna: Número de niños
-            const numNiños = habitacionData.niños;
-            doc.text(
-              numNiños.toString(),
-              margins.left + 2 * cellWidth + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Cuarta columna: Valor original x niños
-            const precioComisionableNino = Math.round(
-              habitacionData.precioComisionableNino * habitacionData.niños
-            );
-            doc.text(
-              precioComisionableNino.toString(),
-              margins.left + 3 * cellWidth + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            currentRow++; // Incrementar la fila para la siguiente iteración
-          }
-        });
-
-        // Añadir la suma total en la sexta columna de la primera fila
-        doc.text(
-          sumaTotalHabitaciones.toString(),
-          margins.left + 5 * cellWidth + cellPadding,
-          liquidacionTop + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        currentY = liquidacionTop + currentRow * cellHeight + 10; // Actualizar currentY después de las filas de habitaciones
-
-        // Nombres reflejando los valores
-        const nombres = [
-          // Impuestos adicionales aquí
-
-          "TRANSPORTE NO COMI",
-          "Q",
-          "YS",
-          "CO",
-          "TA",
-          "YS TA",
-
-          "defensaCivil",
-          "alcaldiaNacional",
-          "alcaldiaExtranjero",
-          "pqsNaturalesExtranjero",
-          "pqsNaturales25a65",
-          "pqsNaturales5a24",
-          "cormacarenaExtranjero",
-          "cormacarena5a11",
-          "cormacarena12a65",
-        ];
-
-        // Valores correspondientes
-        const valores = [
-          cotizacion.otros,
-          cotizacion.combus,
-          cotizacion.iva,
-          cotizacion.tasa,
-          cotizacion.ta,
-          cotizacion.ivaTa,
-          impuesto.defensaCivil_Total,
-          impuesto.alcaldiaNacional_Total,
-          impuesto.alcaldiaExtranjero_Total,
-          impuesto.pqsNaturalesExtranjero_Total,
-          impuesto.pqsNaturales25a65_Total,
-          impuesto.pqsNaturales5a24_Total,
-          impuesto.cormacarenaExtranjero_Total,
-          impuesto.cormacarena5a11_Total,
-          impuesto.cormacarena12a65_Total,
-          cotizacion.precioTrans,
-        ];
-        // Definir impuestosAdicionales FUERA del else if
-        const impuestosAdicionales = [
-          "alcaldiaNacional",
-          "alcaldiaExtranjero",
-          "pqsNaturalesExtranjero",
-          "pqsNaturales25a65",
-          "pqsNaturales5a24",
-          "cormacarenaExtranjero",
-          "cormacarena5a11",
-          "cormacarena12a65",
-        ];
-        // Mapeo de nombres originales a nombres para mostrar
-        const nombreAMostrar = {
-          defensaCivil: "Defensa Civil",
-          alcaldiaNacional: "Alcaldía Nacional",
-          alcaldiaExtranjero: "Alcaldía Extranjero",
-          pqsNaturalesExtranjero: "PQS. Naturales Extranjero",
-          pqsNaturales25a65: "PQS. Naturales 25 a 65",
-          pqsNaturales5a24: "PQS. Naturales 5 a 24",
-          cormacarenaExtranjero: "Cormacarena Extranjero",
-          cormacarena5a11: "Cormacarena 5 a 11",
-          cormacarena12a65: "Cormacarena 12 a 65",
-        };
-
-        if (cotizacion.suplemento > 0) {
-          nombres.push("SUPLEMENTO");
-          valores.push(cotizacion.suplemento);
-        }
-        if (cotizacion.extra1) {
-          // Verificar si existe cotizacion.extra1
-          if (cotizacion.extra1.includes("*")) {
-            // Comprobar si hay un asterisco
-            let partes = cotizacion.extra1.split("*"); // Dividir en dos partes
-            let variable1 = partes[0];
-            let variable2 = partes[1];
-
-            // Ahora puedes usar variable1 y variable2 como necesites
-            nombres.push("Valor Extra", "Valor Extra2");
-            valores.push(variable1, variable2);
-          } else {
-            // Si no hay asterisco
-            let valorUnico = cotizacion.extra1;
-
-            // Usar valorUnico
-            nombres.push("Valor Extra");
-            valores.push(valorUnico);
-          }
-        }
-
-        // Añadir los nombres y valores a la tabla
-        nombres.forEach((nombre, index) => {
-          const y = currentY + index * cellHeight;
-
-          // Dibujar la fila de la tabla
-          drawRow(y);
-
-          // Primera columna: Nombre
-          // Obtener el nombre a mostrar usando el mapeo
-          const nombreAMostrarEnTabla = nombreAMostrar[nombre] || nombre; // Si no está en el mapeo, usar el original
-
-          // Primera columna: Nombre (usando el nombre a mostrar)
-          doc.text(
-            nombreAMostrarEnTabla,
-            margins.left + cellPadding,
-            y + cellHeight / 2,
-            {
-              // Cambiar "nombre" por "nombreAMostrarEnTabla"
-              baseline: "middle",
-            }
-          );
-
-          // Segunda columna: Valor dividido (adaptado para impuestos adicionales)
-          const totalPasajeros = cotizacion.totalPasajeros;
-          const valor = valores[index] || 0;
-          let valorDividido = "";
-
-          if (impuestosAdicionales.includes(nombre)) {
-            // Si es un impuesto adicional, dividir por el número de personas de ese impuesto
-            const propiedadNumeroPersonas = `${nombre}_numeroPersonas`;
-            const numeroPersonasImpuesto =
-              impuesto[propiedadNumeroPersonas] || 0;
-            valorDividido =
-              numeroPersonasImpuesto !== 0
-                ? Math.trunc(valor / numeroPersonasImpuesto)
-                : "";
-          } else {
-            // Si no es un impuesto adicional, dividir por el total de pasajeros
-            valorDividido =
-              totalPasajeros !== 0 ? Math.trunc(valor / totalPasajeros) : "";
-          }
-
-          doc.text(
-            valorDividido.toString(),
-            margins.left + cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Tercera columna: Número total de pasajeros
-          const totalPasajerosTexto =
-            totalPasajeros !== 0 ? Math.trunc(totalPasajeros).toString() : "";
-          let textoTerceraColumna = "";
-          if (impuestosAdicionales.includes(nombre)) {
-            const propiedadNumeroPersonas = `${nombre}_numeroPersonas`;
-            textoTerceraColumna = impuesto[propiedadNumeroPersonas] || "";
-          } else {
-            textoTerceraColumna = totalPasajerosTexto;
-          }
-          doc.text(
-            textoTerceraColumna,
-            margins.left + 2 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-          // Cuarta columna: Valor original
-          const valorOriginalTexto =
-            valor !== 0 ? Math.trunc(valor).toString() : "";
-          doc.text(
-            valorOriginalTexto,
-            margins.left + 3 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Columna 5 y 6 para "Q" y "YS"
-          if (nombre === "Q") {
-            doc.text(
-              "Porcentaje",
-              margins.left + 4 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            const descuento = cotizacion.clientePorcentaje || 0;
-            const descuentoTexto = Math.trunc(descuento).toString() + "%";
-            doc.text(
-              descuentoTexto,
-              margins.left + 5 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-          } else if (nombre === "YS") {
-            doc.text(
-              "Valor Descuento",
-              margins.left + 4 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            const valorDescuento = cotizacion.valorDescuento || 0;
-            const valorDescuentoTexto = Math.trunc(valorDescuento).toString();
-            doc.text(
-              valorDescuentoTexto,
-              margins.left + 5 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Agregar filas adicionales si tipoBase es "Comisión"
-            if (tipoBase === "Comisión") {
-              const additionalRows = [
-                {
-                  label: `IVA(${clienteData.porcentajeIva}%) (-)`,
-                  value: cotizacion.ivaValor,
-                },
-                {
-                  label: `RTE FUENTE(${clienteData.rteFuente}%) (+)`,
-                  value: cotizacion.rteFuente,
-                },
-                {
-                  label: `RTE ICA(${clienteData.rteIca}%) (+)`,
-                  value: cotizacion.rteIca,
-                },
-                {
-                  label: "Total Comisión",
-                  value: cotizacion.totalComision,
-                },
-              ];
-
-              additionalRows.forEach((row, idx) => {
-                const yAdditional = y + (idx + 1) * cellHeight;
-
-                drawRow(yAdditional);
-
-                doc.text(
-                  row.label,
-                  margins.left + 4 * cellWidth + cellPadding,
-                  yAdditional + cellHeight / 2,
-                  { baseline: "middle" }
-                );
-
-                doc.text(
-                  row.value.toString(),
-                  margins.left + 5 * cellWidth + cellPadding,
-                  yAdditional + cellHeight / 2,
-                  { baseline: "middle" }
-                );
-              });
-            }
-          }
-        });
-        currentY += nombres.length * cellHeight;
-
-        // Añadir los valores por habitación
-        habitacion.forEach((habitacionData) => {
-          if (habitacionData.adultos > 0) {
-            const y = currentY;
-            drawRow(y);
-
-            // Descripción en la primera columna (sin cambios)
-            doc.text(
-              `Valor total Adt ${habitacionData.acomodacion}`,
-              margins.left + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Formatear el precio con Numeral.js
-            const precioHabitacionAdulto =
-              habitacionData.precioHabitacionAdulto || 0;
-            const precioAdultoTexto = numeral(precioHabitacionAdulto).format(
-              "$0,0"
-            );
-
-            doc.text(
-              precioAdultoTexto,
-              margins.left + 3 * cellWidth + cellPadding, // Movido a la cuarta columna
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            currentY += cellHeight;
-          }
-
-          if (habitacionData.niños > 0) {
-            const y = currentY;
-            drawRow(y);
-
-            // Descripción en la primera columna (sin cambios)
-            doc.text(
-              `Valor total Chd ${habitacionData.acomodacion}`,
-              margins.left + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Formatear el precio con Numeral.js
-            const precioHabitacionNino =
-              habitacionData.precioHabitacionNino || 0;
-            const precioNinoTexto =
-              numeral(precioHabitacionNino).format("$0,0");
-
-            doc.text(
-              precioNinoTexto,
-              margins.left + 3 * cellWidth + cellPadding, // Movido a la cuarta columna
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            currentY += cellHeight;
-          }
-        });
-        // Añadir valor total y otros valores en la misma fila
-        doc.setFontSize(8);
-        currentY += cellHeight; // Espacio antes de la fila final
-        drawRow(currentY); // Dibujar la fila para los valores finales
-        doc.text(
-          "Valor total",
-          margins.left + cellPadding,
-          currentY + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        // Formatear el precio bruto total con Numeral.js
-        const precioBrutoTotal = cotizacion.precioBrutoTotal || 0;
-        const precioBrutoTotalTexto = numeral(precioBrutoTotal).format("$0,0"); // Formato con separador de miles y símbolo de peso
-
-        doc.text(
-          precioBrutoTotalTexto, // Mostrar el precio formateado
-          margins.left + 3 * cellWidth + cellPadding, // Movido a la cuarta columna
-          currentY + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        doc.text(
-          "Precio a pagar",
-          margins.left + 4 * cellWidth + cellPadding,
-          currentY + cellHeight / 2 - 2,
-          { baseline: "middle" }
-        ); // Primera línea
-        doc.text(
-          "a Multidestinos",
-          margins.left + 4 * cellWidth + cellPadding,
-          currentY + cellHeight / 2 + 2,
-          { baseline: "middle" }
-        ); // Segunda línea
-        // Convertir a números antes de sumar
-        const suplemento = parseFloat(cotizacion.suplemento) || 0;
-        const totalPrecioCliente =
-          parseFloat(cotizacion.totalPrecioCliente) || 0;
-
-        // Sumar el suplemento si existe
-        const totalConSuplemento =
-          suplemento > 0 ? totalPrecioCliente + suplemento : totalPrecioCliente;
-        const totalConSuplementoTexto =
-          numeral(totalConSuplemento).format("$0,0");
-        doc.text(
-          totalConSuplementoTexto,
-          margins.left + 5 * cellWidth + cellPadding,
-          currentY + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        currentY += cellHeight + 10; // Espacio después de la fila final
-
-        // Mover a la siguiente sección del documento si es necesario
-
-        // Mover a la siguiente sección del documento si es necesario
-        // Agregar recuadro con el título "Depósito y Condiciones de Pago"
-        const recuadroX = margins.left;
-        let recuadroY = currentY + 5;
-        const recuadroWidth = 190;
-        let recuadroHeight = 30; // Inicializamos con un valor base
-
-        doc.setFontSize(7);
-        doc.setLineWidth(0.5);
-
-        // Condiciones de pago (como un solo párrafo)
-        const condiciones =
-          "PARA CONFIRMACIONES SE DEBE ENVIAR DEPOSITO DEL 50% DEL VALOR DEL PLAN Y EL SALDO 30 DIAS ANTES DE LA SALIDA, SI LA FECHA DE VIAJES CERCANA SE DEBE CANCELAR EL 100%. LOS SERVICIOS DEJADOS DE TOMAR NO SON REMBOLSABLES. LA CANCELACIÓN CON 18 DIAS ANTES DE VIAJE LA PENALIDAD SERA DEL 100% DEL VALOR DEL PLAN, LOS TIQUETES NO SON REEMBOLSABLE, NI ENDOSABLES, PENALIDAD POR CAMBIO (FECHA, NOMBRE, HORA, RUTAS) 200.000. ESTAS POLITICAS ESTAN PUBLICADAS DE MANERA CLARA Y ESPECIFICA EN NUESTRA PAGINA WWW.MULTIDESTINOSEXPRESS.COM. *TARIFAS SUJETA A CAMBIO Y DISPONIBILIDAD SIN PREVIO AVISO*";
-
-        // Dividir el párrafo en líneas que quepan en el recuadro
-        const splitLines = doc.splitTextToSize(condiciones, recuadroWidth - 10);
-
-        // Verificar si el recuadro cabe en la página actual
-        if (recuadroY + recuadroHeight > pageHeight - margins.bottom) {
-          doc.addPage();
-          currentY = margins.top; // Reiniciar currentY en la nueva página
-          recuadroY = currentY + 5;
-        }
-        // Título del recuadro (sin cambios)
-        doc.text(
-          "Deposito y Condiciones de Pago",
-          recuadroX + 5,
-          recuadroY + 3
-        );
-
-        // Reducir tamaño de fuente y ajustar espaciado entre líneas
-        doc.setFontSize(6);
-        const lineHeightPago = 5; // Espacio entre líneas (nombre cambiado)
-        // Calcular la altura necesaria para el recuadro
-        recuadroHeight = 20 + splitLines.length * lineHeightPago; // 20 para el título y margen superior
-        // Dibujar el recuadro
-        doc.rect(recuadroX, recuadroY, recuadroWidth, recuadroHeight);
-
-        // Escribir el texto dentro del recuadro
-        splitLines.forEach((splitLine, splitIndex) => {
-          doc.text(
-            splitLine,
-            recuadroX + 5,
-            recuadroY + 10 + splitIndex * lineHeightPago
-          );
-        });
-
-        // Mover a la posición donde se empezará a dibujar la siguiente sección
-        currentY += recuadroHeight + 5; // Agregar un espacio adicional después del recuadro
-
-        // Obtener el Blob del PDF
-        const pdfBlob = doc.output("blob");
-        // Guardar el documento como archivo PDF
-        doc.save(`cotizacion_${idCotizacion}.pdf`);
-        // Almacenar la ruta del archivo descargado
-        // Devolver el Blob
-        return pdfBlob;
-      } catch (error) {
-        console.error("Error al descargar cotización:", error);
-      }
-    },
-    async descargarCotizacion(idCotizacion) {
-      try {
-        // Realizar las solicitudes HTTP para obtener los datos
-
-        const [habitacionResponse, cotizacionResponse] = await Promise.all([
-          axios.get(
-            `https://backmultidestinos.onrender.com/habitacionCotizacion/${idCotizacion}`
-          ),
-          axios.get(
-            `https://backmultidestinos.onrender.com/cotizacion/${idCotizacion}`
-          ),
-        ]);
-
-        // Verificar si las solicitudes fueron exitosas
-        if (
-          habitacionResponse.status !== 200 ||
-          cotizacionResponse.status !== 200
-        ) {
-          console.error(
-            "Error al obtener datos de habitacionCotizacion o cotizacion"
-          );
-          return;
-        }
-
-        // Obtener los datos de las respuestas
-        const cotizacion = cotizacionResponse.data[0];
-        console.log("cotizacion", cotizacion);
-        const habitacion = habitacionResponse.data;
-        console.log("habitacion", habitacion);
-
-        //clientes porcentaje
-        const clienteResponse = await axios.get(
-          `https://backmultidestinos.onrender.com/cliente/buscar/${cotizacion.cliente}`
-        );
-        console.log("clienteResponse", clienteResponse);
-        const clienteData = clienteResponse.data[0];
-        console.log("clienteData", clienteData);
-        const tipoBase = clienteData?.tipoBase;
-
-        const vendedorResponse = await axios.get(
-          `https://backmultidestinos.onrender.com/user/${cotizacion.CreadorCotizacion}`
-        );
-        const vendedorData = vendedorResponse.Data;
-        console.log("vendedor", vendedorResponse.data.nombreCompleto);
-        // Agregar parámetros a la URL
-        // Crear el objeto de parámetros
-        const params = {
-          hotel: cotizacion.hotel,
-          nombrePrograma: cotizacion.nombrePrograma,
-          destino: cotizacion.destino,
-        };
-
-        // Realizar la solicitud POST con los parámetros
-        const hotelesResponse = await axios.post(
-          "https://backmultidestinos.onrender.com/hoteles/buscar",
-          params
-        );
-        const hotelincluye = cotizacion.incluye
-          ? cotizacion.incluye
-          : hotelesResponse.data[0].incluye;
-        const hotelnoincluye = cotizacion.noIncluye
-          ? cotizacion.noIncluye
-          : hotelesResponse.data[0].noIncluye;
-
-        // Crear el documento PDF
-        const doc = new jsPDF();
-        const margins = { top: 10, bottom: 10, left: 10, right: 10 };
-        const pageWidth = doc.internal.pageSize.width;
-        const pageHeight = doc.internal.pageSize.height;
-        // Configuración del encabezado
-        const headerHeight = 40;
-        const headerPadding = { left: 10, right: 10, top: 5, bottom: 5 };
-
-        // Cargar imagen (reemplaza con la ruta correcta)
-        const imgData = await new Promise((resolve, reject) => {
-          const img = new Image();
-          img.src = "https://i.ibb.co/1sFJ7dT/imgAzul.png";
-          img.onload = () => resolve(img);
-          img.onerror = reject;
-        });
-
-        // Calcular dimensiones de la imagen
-        const aspectRatio = imgData.width / imgData.height;
-        const maxImgWidth =
-          pageWidth / 4 - headerPadding.left - headerPadding.right;
-        const imgWidth = Math.min(100, maxImgWidth);
-        const imgHeight = imgWidth / aspectRatio;
-        const imgY = margins.top + (headerHeight - imgHeight) / 2;
-
-        // Dividir el texto del encabezado en dos partes: texto general y número de cotización
-        const headerTextGeneral = `PBX(601)7621133\nCALLE 64 No. 11-37 LOC 301\nEMAIL: MULTIDESTINOS_EXPRESS@YAHOO.COM`;
-        const headerTextCotizacion = `Numero de cotización: ${idCotizacion}`;
-
-        // Agregar imagen al encabezado
-        doc.addImage(
-          imgData,
-          "PNG",
-          margins.left + headerPadding.left,
-          imgY,
-          imgWidth,
-          imgHeight
-        );
-
-        // Calcular ancho disponible para el texto general
-        const availableWidth =
-          pageWidth -
-          margins.left -
-          margins.right -
-          imgWidth -
-          headerPadding.left -
-          headerPadding.right -
-          10;
-
-        // Agregar texto general al encabezado
-        doc.setFontSize(10);
-        doc.text(
-          doc.splitTextToSize(headerTextGeneral, availableWidth),
-          margins.left + imgWidth + headerPadding.left + headerPadding.right,
-          margins.top + 10
-        );
-
-        // Calcular posición horizontal para el número de cotización (alinear a la derecha)
-        const cotizacionX =
-          pageWidth -
-          margins.right -
-          doc.getTextWidth(headerTextCotizacion) -
-          headerPadding.right;
-
-        // Aumentar el tamaño de fuente para el número de cotización y mantenerlo en negrita
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold", 12);
-        doc.text(headerTextCotizacion, cotizacionX, margins.top + 10);
-
-        // Dibujar borde del encabezado
-        doc.setDrawColor(0);
-        doc.rect(
-          margins.left,
-          margins.top,
-          pageWidth - margins.left - margins.right,
-          headerHeight,
-          "S"
-        );
-
-        // Sección: SOLICITUD DE RESERVA
-        doc.setFontSize(10); // Tamaño de fuente para el título
-        const bodyY = margins.top + headerHeight + 10;
-        // Sección: SOLICITUD DE RESERVA (Título principal)
-        doc.setFontSize(10); // Tamaño de fuente para el título
-        doc.text("SOLICITUD DE RESERVA:", margins.left, bodyY - 4);
-
-        doc.setFontSize(8); // Cambiando el tamaño de fuente a 8
-
-        const enunciados = [
-          "FECHA SOLICITUD:",
-          "AGENCIA:",
-          "TELÉFONO:",
-          "CONTACTO:",
-          "NIT:",
-          "VENDEDOR:",
-        ];
-        const campos = [
-          new Date(
-            new Date(cotizacion.fechaCreacion).getTime() +
-              new Date(cotizacion.fechaCreacion).getTimezoneOffset() * 60000
-          ).toLocaleDateString(),
-          cotizacion.cliente.toString(),
-          clienteData && clienteData.telefono ? clienteData.telefono.toString() : "N/A",
-          "N/A",
-          clienteData && clienteData.nit ? clienteData.nit.toString() : "N/A",
-          vendedorResponse.data.nombreCompleto
-            ? vendedorResponse.data.nombreCompleto.toString()
-            : "N/A",
-        ];
-
-        // Calcular el ancho máximo disponible para los campos en una fila
-        const maxCamposPorFila = 6; // Ahora hay 6 campos por fila
-        const anchoDisponiblePorCampo =
-          (pageWidth - margins.left - margins.right) / maxCamposPorFila;
-
-        let currentX = margins.left;
-        let currentY = bodyY;
-
-        // Iterar a través de los enunciados y los campos
-        for (let i = 0; i < enunciados.length; i++) {
-          // Mostrar enunciado en la primera fila
-          doc.text(enunciados[i], currentX, currentY);
-
-          // Mostrar campo debajo del enunciado en la segunda fila
-          const valorCampo = campos[i] !== undefined ? campos[i] : "N/A";
-          const lines = doc.splitTextToSize(
-            valorCampo,
-            anchoDisponiblePorCampo - 2
-          ); // Reducir el ancho del texto por 2 para evitar superposiciones
-          doc.text(lines, currentX, currentY + 5);
-
-          // Avanzar a la siguiente posición horizontal
-          currentX += anchoDisponiblePorCampo;
-
-          // Salto de línea si se llenó la fila o es el último campo
-          if ((i + 1) % maxCamposPorFila === 0 || i === enunciados.length - 1) {
-            currentY += 15; // Avanzar a la siguiente fila
-            currentX = margins.left; // Restaurar la posición horizontal
-          }
-        }
-        function obtenerAcomodacion(habitaciones) {
-          return habitaciones
-            .map((habitacion) => {
-              const adultos = habitacion.adultos;
-              const niños = habitacion.niños;
-              const tipoAcomodacion = `1x${adultos}`;
-              return niños > 0 ? `${tipoAcomodacion} CHD` : tipoAcomodacion;
-            })
-            .join(", ");
-        }
-
-        const acomodacion = obtenerAcomodacion(habitacion);
-
-        // SEGUNDA FILA: Enunciados y campos modificados
-        const enunciados2 = [
-          "NOCHES:",
-          "HOTEL:",
-          "PLAN:",
-          "DESTINO:",
-          "DIRECCION:",
-          "ACOMODACIÓN:",
-        ];
-        const campos2 = [
-          cotizacion.noches ? cotizacion.noches.toString() : "N/A",
-          cotizacion.hotel ? cotizacion.hotel.toString() : "N/A",
-
-          cotizacion.plan ? cotizacion.plan.toString() : "N/A",
-
-          cotizacion.destino ? cotizacion.destino.toString() : "N/A",
-          cotizacion.direccion ? cotizacion.direccion.toString() : "N/A",
-
-          acomodacion.toString(),
-        ];
-        console.log("campso2", campos2);
-        // Calcular el ancho disponible para los campos de la segunda fila
-        const maxCamposPorFila2 = 6; // Ahora son 5 campos en la segunda fila
-        const anchoDisponiblePorCampo2 =
-          (pageWidth - margins.left - margins.right) / maxCamposPorFila2;
-
-        // Ajustar la posición vertical para la nueva fila (mantener el mismo incremento que antes)
-        currentY += 1;
-
-        // Iterar a través de los nuevos enunciados y campos de la SEGUNDA FILA
-        for (let i = 0; i < enunciados2.length; i++) {
-          // Mostrar enunciado
-          doc.text(enunciados2[i], currentX, currentY);
-
-          // Mostrar campo debajo del enunciado
-          const valorCampo2 = campos2[i] !== undefined ? campos2[i] : "N/A";
-          const lines2 = doc.splitTextToSize(
-            valorCampo2,
-            anchoDisponiblePorCampo2 - 2
-          );
-          doc.text(lines2, currentX, currentY + 5);
-
-          // Avanzar a la siguiente posición horizontal
-          currentX += anchoDisponiblePorCampo2;
-        }
-        // SECCIÓN: ITINERARIO (Nuevo título)
-        currentY += 22; // Incrementar este valor para desplazar todo el itinerario hacia abajo
-
-        // Dibujar el título ANTES de calcular las dimensiones del recuadro
-        doc.setFontSize(10);
-        doc.text("ITINERARIO: ", margins.left, currentY - 10); // Ajustar la posición vertical
-
-        // Configuración de la tabla
-        const columns = [
-          "AEROLINEA",
-          "VUELO",
-          "FECHA",
-          "RUTA",
-          "CLASE",
-          "HR SALIDA",
-          "HR LLEGADA",
-          "RECORD",
-        ];
-        const data = [
-          [
-            cotizacion.aerolineaIda || "N/A",
-            cotizacion.vueloIda || "N/A",
-            cotizacion.fechaInicio
-              ? new Date(
-                  new Date(cotizacion.fechaInicio).getTime() +
-                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
-                ).toLocaleDateString()
-              : "N/A",
-            cotizacion.ruta1 || "N/A",
-            cotizacion.claseIda || "N/A",
-            cotizacion.horaSalidaIda || "N/A",
-            cotizacion.horaLlegadaIda || "N/A",
-            cotizacion.recordIda || "N/A",
-          ],
-        ];
-
-        if (cotizacion.aerolineaEscalaIda != null) {
-          data.push([
-            cotizacion.aerolineaEscalaIda || "N/A",
-            cotizacion.vueloEscalaIda || "N/A",
-            cotizacion.fechaInicio
-              ? new Date(
-                  new Date(cotizacion.fechaInicio).getTime() +
-                    new Date(cotizacion.fechaInicio).getTimezoneOffset() * 60000
-                ).toLocaleDateString()
-              : "N/A",
-            "Escala Ida", // Puedes ajustar esto según tu lógica
-            cotizacion.claseEscalaIda || "N/A",
-            cotizacion.horaSalidaEscalaIda || "N/A",
-            cotizacion.horaLlegadaEscalaIda || "N/A",
-            "", // No hay record para escalas
-          ]);
-
-          data.push([
-            cotizacion.aerolineaEscalaVuelta || "N/A",
-            cotizacion.vueloEscalaVuelta || "N/A",
-            cotizacion.fechaFin
-              ? new Date(
-                  new Date(cotizacion.fechaFin).getTime() +
-                    new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
-                ).toLocaleDateString()
-              : "N/A",
-            "Escala Vuelta", // Puedes ajustar esto según tu lógica
-            cotizacion.claseEscalaVuelta || "N/A",
-            cotizacion.horaSalidaEscalaVuelta || "N/A",
-            cotizacion.horaLlegadaEscalaVuelta || "N/A",
-            "", // No hay record para escalas
-          ]);
-        }
-
-        data.push([
-          cotizacion.aerolineaVuelta || "N/A",
-          cotizacion.vueloVuelta || "N/A",
-          cotizacion.fechaFin
-            ? new Date(
-                new Date(cotizacion.fechaFin).getTime() +
-                  new Date(cotizacion.fechaFin).getTimezoneOffset() * 60000
-              ).toLocaleDateString()
-            : "N/A",
-          cotizacion.ruta2 || "N/A",
-          cotizacion.claseVuelta || "N/A",
-          cotizacion.horaSalidaVuelta || "N/A",
-          cotizacion.horaLlegadaVuelta || "N/A",
-          cotizacion.recordVuelta || "N/A",
-        ]);
-
-        // Calcular el ancho de cada columna
-        const columnWidth =
-          (pageWidth - margins.left - margins.right) / columns.length;
-
-        // Calcular las dimensiones del recuadro del itinerario DESPUÉS de agregar los datos
-        const tableItinerarioWidth = pageWidth - margins.left - margins.right;
-        const tableItinerarioHeight = 12 + 8 * data.length; // Altura de fila reducida a 8
-
-        // Ajustar la posición vertical del recuadro (reducir aún más el valor sumado)
-        currentY += 5; // Puedes seguir ajustando este valor si es necesario
-
-        // Dibujar el recuadro alrededor de la tabla
-        doc.rect(
-          margins.left,
-          currentY - 5,
-          tableItinerarioWidth,
-          tableItinerarioHeight,
-          "S"
-        );
-
-        // Dibujar encabezados de la tabla
-        doc.setFontSize(8);
-        columns.forEach((column, index) => {
-          doc.text(column, margins.left + index * columnWidth, currentY);
-        });
-
-        // Pequeño espacio antes de las filas de datos
-        currentY += 5;
-
-        // Dibujar contenido de la tabla
-        data.forEach((row, rowIndex) => {
-          row.forEach((cell, cellIndex) => {
-            doc.text(
-              cell,
-              margins.left + cellIndex * columnWidth,
-              currentY + (rowIndex + 1) * 8 // Altura de fila reducida a 8
-            );
-          });
-        });
-
-        // Mover a la posición donde se empezará a dibujar la siguiente sección (ajustado)
-        currentY += tableItinerarioHeight - 5;
-
-        // ... (resto del código)
-        //-----------------------------------------------------------------------------------------------------------
-        // SECCIÓN: OBSERVACIONES
-        const observationsText =
-          "Esta cotización está sujeta a cambio y disponibilidad al momento de reservar (Sin servicio confirmado)";
-        const observationsTop = currentY + 10;
-        const observationsHeight = 30; // Altura del recuadro de observaciones
-
-        // Dibujar el recuadro de observaciones con el título dentro
-        doc.setDrawColor(0); // Color del borde
-        doc.rect(
-          margins.left,
-          observationsTop,
-          pageWidth - margins.left - margins.right,
-          observationsHeight
-        );
-        doc.setFontSize(12);
-        doc.text("OBSERVACIONES:", margins.left + 2, observationsTop + 6);
-        doc.setFontSize(10);
-        doc.text(observationsText, margins.left + 2, observationsTop + 15, {
-          maxWidth: pageWidth - margins.left - margins.right - 4,
-        });
-        //------------------------------------------------------------------
-        //INCLUYE
-
-        let lineHeight = 6;
-
-        // Ajustes de posición y tamaño
-        const incluyeTop = currentY + 50;
-
-        // Dividir el texto de hotel incluye por el carácter "¿" para obtener líneas individuales
-        const incluyeLines = hotelincluye.split("¿");
-
-        // Calcular la altura del recuadro de INCLUYE dinámicamente, incluyendo el título y el espacio adicional
-        const titleHeight1 = 6;
-        const extraSpaceBelowTitle = 5;
-        let textHeight = 0;
-        incluyeLines.forEach((line) => {
-          textHeight += doc.getTextDimensions(line.trim(), {
-            fontSize: 8,
-            maxWidth: pageWidth - margins.left - margins.right - 4,
-          }).h;
-        });
-        const incluyeHeight =
-          textHeight + titleHeight1 + extraSpaceBelowTitle + 10;
-
-        // Dibujar el recuadro de INCLUYE con el título dentro y el texto
-        doc.setDrawColor(0);
-        doc.rect(
-          margins.left,
-          incluyeTop,
-          pageWidth - margins.left - margins.right,
-          incluyeHeight
-        );
-        doc.setFontSize(12);
-        doc.text("INCLUYE:", margins.left + 2, incluyeTop + 6);
-        doc.setFontSize(8);
-
-        // Mostrar cada línea del texto de INCLUYE, comenzando debajo del título y el espacio adicional
-        let currentLineY = incluyeTop + titleHeight1 + extraSpaceBelowTitle;
-        incluyeLines.forEach((line) => {
-          doc.text(line.trim(), margins.left + 2, currentLineY, {
-            maxWidth: pageWidth - margins.left - margins.right - 4,
-          });
-          currentLineY += doc.getTextDimensions(line.trim(), {
-            fontSize: 8,
-            maxWidth: pageWidth - margins.left - margins.right - 4,
-          }).h;
-        });
-
-        // Añadir una nueva página
-        doc.addPage();
-        currentY = margins.top;
-        const titleHeight = 12;
-        // Sección: NO INCLUYE
-        const noIncluyeTop = currentY + 5;
-
-        // Dividir el texto de hotelnoinclye en líneas individuales, considerando los saltos de línea y los "¿"
-        const allNoIncluyeLines = hotelnoincluye
-          .split("\n")
-          .flatMap((paragraph) =>
-            paragraph.split("¿").map((line) => line.trim())
-          );
-
-        // Dibujar el recuadro de NO INCLUYE (sin definir la altura aún)
-        doc.setDrawColor(0);
-        doc.rect(
-          margins.left,
-          noIncluyeTop,
-          pageWidth - margins.left - margins.right,
-          0
-        );
-
-        // Escribir el título "NO INCLUYE:"
-        doc.setFont("helvetica");
-        doc.setFontSize(10);
-        doc.setTextColor(0);
-        doc.text("NO INCLUYE:", margins.left + 2, noIncluyeTop + 6);
-        doc.setFontSize(8);
-
-        // Reducir el valor de lineHeight para un espaciado más compacto (ajusta si es necesario)
-        lineHeight = 3;
-
-        // Mostrar cada línea y llevar un seguimiento de la altura máxima alcanzada
-        let maxLineY = noIncluyeTop + titleHeight;
-        let previousLineWasSplit = false;
-
-        allNoIncluyeLines.forEach((line, index) => {
-          if (line === "") return;
-
-          const lineSpacing = previousLineWasSplit
-            ? lineHeight / 3
-            : lineHeight;
-          const lineY = maxLineY + lineSpacing;
-
-          doc.text(line, margins.left + 10, lineY, {
-            maxWidth: pageWidth - margins.left - margins.right - 10,
-          });
-
-          maxLineY = lineY + lineHeight;
-          previousLineWasSplit = line.endsWith("¿");
-        });
-
-        // Ajustar la altura del recuadro y currentY
-        const noIncluyeHeight = maxLineY - noIncluyeTop;
-        doc.rect(
-          margins.left,
-          noIncluyeTop,
-          pageWidth - margins.left - margins.right,
-          noIncluyeHeight
-        );
-        currentY = maxLineY + 15;
-        //------------------------------------
-        // Sección: LIQUIDACIÓN
-        // Título de la sección LIQUIDACIÓN
-        doc.setFontSize(10);
-        doc.text("LIQUIDACIÓN:", margins.left, currentY);
-        currentY += 5; // Espacio después del título
-
-        // Variables de configuración de la tabla
-        const liquidacionTop = currentY + 5;
-        const cellPadding = 2;
-        const cellHeight = 6; // Altura de cada celda
-        const tableWidth = pageWidth - margins.left - margins.right;
-        const cellWidth = tableWidth / 6; // Ajustar para 6 columnas
-
-        // Dibujar el borde de la tabla
-        doc.setDrawColor(0); // Color del borde
-
-        // Función para dibujar una fila
-        function drawRow(y) {
-          for (let j = 0; j <= 6; j++) {
-            const x = margins.left + j * cellWidth;
-            doc.line(x, y, x, y + cellHeight); // Dibujar columna
-          }
-          doc.line(margins.left, y, pageWidth - margins.right, y); // Dibujar fila superior
-          doc.line(
-            margins.left,
-            y + cellHeight,
-            pageWidth - margins.right,
-            y + cellHeight
-          ); // Dibujar fila inferior
-        }
-
-        // Variables para las sumas
-        let sumaTotalHabitaciones = 0;
-
-        // Ajustar tamaño de fuente para el contenido de las celdas
-        doc.setFontSize(7);
-
-        // Iterar a través de las habitaciones y añadir datos a la tabla
-        let currentRow = 0;
-
-        habitacion.forEach((habitacionData) => {
-          const y = liquidacionTop + currentRow * cellHeight;
-
-          // Dibujar la fila de la tabla
-          drawRow(y);
-
-          // Primera columna: Valor adul {Acomodacion}
-          const valorAdul = `Valor adul ${habitacionData.acomodacion}`;
-          doc.text(valorAdul, margins.left + cellPadding, y + cellHeight / 2, {
-            baseline: "middle",
-          });
-
-          // Segunda columna: precioComisionableAdulto
-          const precioComisionablePorAdulto = Math.round(
-            habitacionData.precioComisionableAdulto
-          );
-          doc.text(
-            precioComisionablePorAdulto.toString(),
-            margins.left + cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Tercera columna: Número de adultos
-          const numAdultos = habitacionData.adultos;
-          console.log("numAdultos", numAdultos);
-          doc.text(
-            numAdultos.toString(),
-            margins.left + 2 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Cuarta columna: Valor original x número adultos
-          const precioComisionableAdulto = Math.round(
-            habitacionData.precioComisionableAdulto * habitacionData.adultos
-          );
-          doc.text(
-            precioComisionableAdulto.toString(),
-            margins.left + 3 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Añadir BASE DE DESCUENTO o BASE COMISIÓN en la quinta columna de la primera fila
-          if (currentRow === 0) {
-            doc.setFontSize(6);
-            const baseText =
-              tipoBase === "Comisión" ? "BASE COMISIÓN" : "BASE DE DESCUENTO";
-            doc.text(
-              baseText,
-              margins.left + 4 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-            doc.setFontSize(7);
-          }
-
-          // Calcular la suma de los valores de la habitación (adultos y niños)
-          let sumaHabitacion = precioComisionableAdulto;
-          if (habitacionData.niños > 0) {
-            sumaHabitacion += Math.round(
-              habitacionData.precioComisionableNino * habitacionData.niños
-            );
-          }
-          sumaTotalHabitaciones += sumaHabitacion;
-
-          currentRow++; // Incrementar la fila para la siguiente iteración
-
-          // Verificar si hay niños
-          if (habitacionData.niños > 0) {
-            const yChild = liquidacionTop + currentRow * cellHeight;
-
-            // Dibujar la fila de la tabla
-            drawRow(yChild);
-
-            // Primera columna: Valor child {Acomodacion}
-            const valorChild = `Valor child ${habitacionData.acomodacion}`;
-            doc.text(
-              valorChild,
-              margins.left + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Segunda columna: precioComisionableNiño
-            const precioComisionablePorNiño = Math.round(
-              habitacionData.precioComisionableNino
-            );
-            doc.text(
-              precioComisionablePorNiño.toString(),
-              margins.left + cellWidth + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Tercera columna: Número de niños
-            const numNiños = habitacionData.niños;
-            doc.text(
-              numNiños.toString(),
-              margins.left + 2 * cellWidth + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Cuarta columna: Valor original x niños
-            const precioComisionableNino = Math.round(
-              habitacionData.precioComisionableNino * habitacionData.niños
-            );
-            doc.text(
-              precioComisionableNino.toString(),
-              margins.left + 3 * cellWidth + cellPadding,
-              yChild + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            currentRow++; // Incrementar la fila para la siguiente iteración
-          }
-        });
-
-        // Añadir la suma total en la sexta columna de la primera fila
-        doc.text(
-          sumaTotalHabitaciones.toString(),
-          margins.left + 5 * cellWidth + cellPadding,
-          liquidacionTop + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        currentY = liquidacionTop + currentRow * cellHeight + 10; // Actualizar currentY después de las filas de habitaciones
-
-        const nombresHabitacion = [
-          "sencilla_ImpuestoHotel",
-          "doble_ImpuestoHotel",
-          "triple_ImpuestoHotel",
-          "cuadruple_ImpuestoHotel",
-          "quintuple_ImpuestoHotel",
-          "sextuple_ImpuestoHotel",
-          "niño_ImpuestoHotel",
-          "sencilla_ImpuestoIngr",
-          "doble_ImpuestoIngr",
-          "triple_ImpuestoIngr",
-          "cuadruple_ImpuestoIngr",
-          "quintuple_ImpuestoIngr",
-          "sextuple_ImpuestoIngr",
-          "niño_ImpuestoIngr",
-          "sencilla_Impoconsumo",
-          "doble_Impoconsumo",
-          "triple_Impoconsumo",
-          "cuadruple_Impoconsumo",
-          "quintuple_Impoconsumo",
-          "sextuple_Impoconsumo",
-          "niño_Impoconsumo",
-        ];
-        const nombres = [];
-        const valores = [];
-
-        // *** NUEVA SECCIÓN: Manejo de 'habitacion' (ANTES DE "TOTAL IMPUESTOS") ***
-        if (Array.isArray(habitacion)) {
-          habitacion.forEach((habitacionData) => {
-            nombresHabitacion.forEach((nombre) => {
-              const valor = habitacionData[nombre];
-              if (valor != null && valor != undefined && valor !== "") {
-                nombres.push(nombre);
-                valores.push(valor);
+              to {
+                opacity: 1;
+                max-height: 500px;
               }
-            });
-          });
-        } else if (typeof habitacion === "object" && habitacion !== null) {
-          nombresHabitacion.forEach((nombre) => {
-            const valor = habitacion[nombre];
-            if (valor != null && valor != undefined && valor !== "") {
-              nombres.push(nombre);
-              valores.push(valor);
+            }
+
+            .divider {
+              height: 1px;
+              background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+              margin: 20px 0;
+            }
+
+            .highlight-box {
+              background: linear-gradient(135deg, #667eea10, #764ba210);
+              border: 1px solid #667eea30;
+              border-radius: 10px;
+              padding: 16px;
+              margin: 16px 0;
+            }
+
+            /* Scrollbar personalizado */
+            .cotizacion-container::-webkit-scrollbar {
+              width: 6px;
+            }
+
+            .cotizacion-container::-webkit-scrollbar-track {
+              background: #f1f1f1;
+              border-radius: 3px;
+            }
+
+            .cotizacion-container::-webkit-scrollbar-thumb {
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              border-radius: 3px;
+            }
+
+            /* Animaciones de entrada */
+            .section-card {
+              animation: fadeInUp 0.5s ease forwards;
+              opacity: 0;
+              transform: translateY(20px);
+            }
+
+            .section-card:nth-child(1) { animation-delay: 0.1s; }
+            .section-card:nth-child(2) { animation-delay: 0.2s; }
+            .section-card:nth-child(3) { animation-delay: 0.3s; }
+            .section-card:nth-child(4) { animation-delay: 0.4s; }
+            .section-card:nth-child(5) { animation-delay: 0.5s; }
+
+            @keyframes fadeInUp {
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          </style>
+
+          <div class="cotizacion-container">
+            <!-- Header con gradiente -->
+            <div class="header-gradient">
+              <div class="header-content">
+                <h1 class="company-title">✈️ Multidestinos Express</h1>
+                <p class="company-subtitle">Gestión integral de cotizaciones empresarial</p>
+              </div>
+            </div>
+
+            <div class="form-content">
+              <!-- Sección: Información General -->
+              <div class="section-card">
+                <h3 class="section-title">
+                  <span class="section-icon icon-general">📋</span>
+                  Información General del Viaje
+                </h3>
+
+                <div class="form-grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Fecha de Inicio</label>
+                    <input type="date" id="fechaInicio" class="form-input">
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Fecha de Finalización</label>
+                    <input type="date" id="fechaFin" class="form-input">
+                  </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Ciudad de Salida</label>
+                    <select id="ciudadSalida" class="form-select" style="width: 100%; padding: 8px;">
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Destino Principal</label>
+                    <select id="destino" class="form-select"></select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección: Alojamiento -->
+              <div class="section-card">
+                <h3 class="section-title">
+                  <span class="section-icon icon-hotel">🏨</span>
+                  Información de Alojamiento
+                </h3>
+
+                <div class="form-grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label" for="hotel">Selecciona un Hotel</label>
+                    <select id="hotel" class="form-input"></select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Número de Habitaciones</label>
+                    <input type="number" id="habitaciones" class="form-input" value="1" min="1" max="10">
+                  </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-grid grid-3">
+                   <div class="form-group">
+                    <label class="form-label"></label>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label"></label>
+
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label"></label>
+                  </div>
+                </div>
+                  <div id="habitaciones-container"></div>
+                </div>
+
+               <!-- Sección: Cliente y Opciones -->
+              <div class="section-card">
+                <h3 class="section-title">
+                  <span class="section-icon icon-client">👤</span>
+                  Información del Cliente
+                </h3>
+
+                <div class="form-grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Cliente</label>
+                    <select id="cliente" class="form-select">
+                      <option value="" disabled selected>👤 Seleccionar cliente...</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Duración del Viaje (noches)</label>
+                    <select id="selectNoches" class="form-input" disabled>
+                      <option value="" disabled selected>Seleccione noches</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="form-grid grid-2">
+                  <div class="form-group" style="position: relative;">
+                    <label class="form-label">Correo Electrónico del Cliente</label>
+                    <input type="email" id="correoCliente" class="form-input" placeholder="cliente@ejemplo.com">
+                    <span id="iconoBloqueado" style="position: absolute; right: 10px; top: 35px; font-size: 18px; color: #888; display: none;">🔒</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="programaSelect">✈️ Selecciona el Programa</label>
+                    <select id="programaSelect" class="form-input">
+                      <option value="">🌍 Seleccione un programa</option>
+                    </select>
+                  </div>
+
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="highlight-box">
+                  <div class="form-grid grid-3">
+                    <div class="checkbox-group">
+                      <div class="checkbox-custom">
+                        <input type="checkbox" id="asesorExterno">
+                        <span class="checkmark"></span>
+                      </div>
+                      <label for="asesorExterno" class="checkbox-label">Asesor Externo</label>
+                    </div>
+                    <div class="checkbox-group">
+                      <div class="checkbox-custom">
+                        <input type="checkbox" id="nocheAdicional">
+                        <span class="checkmark"></span>
+                      </div>
+                      <label for="nocheAdicional" class="checkbox-label">Noche Adicional</label>
+                    </div>
+                    <div class="checkbox-group">
+                      <div class="checkbox-custom">
+                        <input type="checkbox" id="suplemento">
+                        <span class="checkmark"></span>
+                      </div>
+                      <label for="suplemento" class="checkbox-label">Suplemento</label>
+                    </div>
+                  </div>
+                </div>
+
+
+                 <!-- Información de Asesor Externo -->
+                  <div id="infoAsesorExterno" class="escala-section" style="display: none;">
+                    <h4 class="flight-title">👤 Información de Asesor Externo</h4>
+                    <div class="form-grid grid-4">
+                      <div class="form-group">
+                        <label class="form-label">Seleccionar un Asesor</label>
+                        <select id="asesor" class="form-select" style="width: 250px;">
+                          <option value="" disabled selected>👤 Seleccionar un Asesor...</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Información de Noche Adicional -->
+                  <div id="infoNocheAdicional" class="escala-section">
+                      <h4 class="flight-title">🌙 Información de Noche Adicional</h4>
+                      <div class="form-grid grid-4">
+                          <div class="form-group">
+                              <label class="form-label">Motivo</label>
+                              <input type="text" id="motivoNoche" class="form-input" style="width: 250px;" placeholder="Ej: Llegada tardía">
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Información de Suplemento -->
+                  <div id="infoSuplemento" class="escala-section">
+                      <h4 class="flight-title">💼 Información de Suplemento</h4>
+                      <div class="form-grid grid-4">
+                          <div class="form-group">
+                              <label class="form-label">Tipo de Suplemento</label>
+                              <input type="text" id="tipoSuplemento" class="form-input" style="width: 250px;" placeholder="Ej: Alimentación, Tour opcional">
+                          </div>
+                      </div>
+                  </div>
+
+              </div>
+
+              <!-- Sección: Vuelos -->
+              <div class="section-card">
+                <h3 class="section-title">
+                  <span class="section-icon icon-flight">✈️</span>
+                  Información de Vuelos
+                </h3>
+
+                <!-- Vuelo de Ida -->
+                <div class="flight-section">
+                  <h4 class="flight-title">🛫 Vuelo de Ida</h4>
+                  <div class="form-grid grid-4">
+                    <div class="form-group">
+                      <label class="form-label">Aerolínea</label>
+                      <select id="aerolineaIda" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Número de Vuelo</label>
+                      <input type="text" id="vueloIda" class="form-input" placeholder="Ej: AV123">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Salida</label>
+                      <input type="time" id="horaSalidaIda" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Llegada</label>
+                      <input type="time" id="horaLlegadaIda" class="form-input">
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="form-group">
+                    <label class="form-label">Clase de Vuelo</label>
+                    <input type="text" id="claseIda" class="form-input" placeholder="Ej: Económica, Ejecutiva, Primera Clase">
+                  </div>
+                </div>
+
+                <!-- Vuelo de Vuelta -->
+                <div class="flight-section">
+                  <h4 class="flight-title">🛬 Vuelo de Regreso</h4>
+                  <div class="form-grid grid-4">
+                    <div class="form-group">
+                      <label class="form-label">Aerolínea</label>
+                      <select id="aerolineaVuelta" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Número de Vuelo</label>
+                      <input type="text" id="vueloVuelta" class="form-input" placeholder="Ej: AV456">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Salida</label>
+                      <input type="time" id="horaSalidaVuelta" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Llegada</label>
+                      <input type="time" id="horaLlegadaVuelta" class="form-input">
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="form-group">
+                    <label class="form-label">Clase de Vuelo</label>
+                    <input type="text" id="claseVuelta" class="form-input" placeholder="Ej: Económica, Ejecutiva, Primera Clase">
+                  </div>
+                </div>
+
+                <!-- Checkbox para escala -->
+                <div class="highlight-box">
+                  <div class="form-grid grid-3">
+                  <div class="checkbox-group">
+                    <div class="checkbox-custom">
+                      <input type="checkbox" id="tieneEscala_Ida">
+                      <span class="checkmark"></span>
+                    </div>
+                    <label for="tieneEscala_Ida" class="checkbox-label">¿El vuelo incluye escalas de Ida?</label>
+                  </div>
+
+                  <div class="checkbox-group">
+                    <div class="checkbox-custom">
+                      <input type="checkbox" id="tieneEscala_Regreso">
+                      <span class="checkmark"></span>
+                    </div>
+                    <label for="tieneEscala_Regreso" class="checkbox-label">¿El vuelo incluye escalas de Regreso?</label>
+                  </div>
+
+                  <div class="checkbox-group">
+                    <div class="checkbox-custom">
+                      <input type="checkbox" id="tieneEscala_Ida_y_Regreso">
+                      <span class="checkmark"></span>
+                    </div>
+                    <label for="tieneEscala_Ida_y_Regreso" class="checkbox-label">¿El vuelo incluye escalas de Ida y Regreso?</label>
+                  </div>
+                  </div>
+                </div>
+
+                <!-- Información de Escala  Ida-->
+                <div id="infoEscala" class="escala-section">
+                  <h4 class="flight-title">🔄 Información de Escala de Ida</h4>
+                  <div class="form-grid grid-4">
+                    <div class="form-group">
+                      <label class="form-label">Aerolínea</label>
+                      <select id="aerolineaEscala1" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Número de Vuelo</label>
+                      <input type="text" id="vueloEscala" class="form-input" placeholder="Ej: CM789">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Salida</label>
+                      <input type="time" id="horaSalidaEscala" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Llegada</label>
+                      <input type="time" id="horaLlegadaEscala" class="form-input">
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="form-group">
+                    <label class="form-label">Clase de Vuelo</label>
+                    <input type="text" id="claseEscala" class="form-input" placeholder="Ej: Económica, Ejecutiva, Primera Clase">
+                  </div>
+                </div>
+
+                <!-- Información de Escala Regreso -->
+                <div id="infoEscala_1" class="escala-section">
+                  <h4 class="flight-title">🔄 Información de Escala de Regreso</h4>
+                  <div class="form-grid grid-4">
+                    <div class="form-group">
+                      <label class="form-label">Aerolínea</label>
+                      <select id="aerolineaEscala2" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Número de Vuelo</label>
+                      <input type="text" id="vueloEscala" class="form-input" placeholder="Ej: CM789">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Salida</label>
+                      <input type="time" id="horaSalidaEscala" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Llegada</label>
+                      <input type="time" id="horaLlegadaEscala" class="form-input">
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="form-group">
+                    <label class="form-label">Clase de Vuelo</label>
+                    <input type="text" id="claseEscala" class="form-input" placeholder="Ej: Económica, Ejecutiva, Primera Clase">
+                  </div>
+                </div>
+
+                <!-- Información de Escala Ida y Regreso -->
+                <div id="infoEscala_2" class="escala-section">
+                  <h4 class="flight-title">🔄 Información de Escala de Ida y Regreso </h4>
+                  <div class="form-grid grid-4">
+                    <div class="form-group">
+                      <label class="form-label">Aerolínea</label>
+                      <select id="aerolineaEscala3" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Número de Vuelo</label>
+                      <input type="text" id="vueloEscala" class="form-input" placeholder="Ej: CM789">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Salida</label>
+                      <input type="time" id="horaSalidaEscala" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Llegada</label>
+                      <input type="time" id="horaLlegadaEscala" class="form-input">
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="form-group">
+                    <label class="form-label">Clase de Vuelo</label>
+                    <input type="text" id="claseEscala" class="form-input" placeholder="Ej: Económica, Ejecutiva, Primera Clase">
+                  </div>
+
+                  <div class="divider"></div>
+
+                  <div class="form-grid grid-4">
+                    <div class="form-group">
+                      <label class="form-label">Aerolínea</label>
+                      <select id="aerolineaEscala4" class="form-input"></select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Número de Vuelo</label>
+                      <input type="text" id="vueloEscala" class="form-input" placeholder="Ej: CM789">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Salida</label>
+                      <input type="time" id="horaSalidaEscala" class="form-input">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Hora de Llegada</label>
+                      <input type="time" id="horaLlegadaEscala" class="form-input">
+                    </div>
+                  </div>
+                  <div class="divider"></div>
+                  <div class="form-group">
+                    <label class="form-label">Clase de Vuelo</label>
+                    <input type="text" id="claseEscala" class="form-input" placeholder="Ej: Económica, Ejecutiva, Primera Clase">
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- Sección: Información Adicional -->
+              <div class="section-card">
+                <h3 class="section-title">
+                  <span class="section-icon icon-money">💰</span>
+                  Información Adicional y Valores
+                </h3>
+
+                <div class="form-group">
+                  <label class="form-label">¿Cuántos valores extra necesita agregar? (máximo 2)</label>
+                  <input type="number" id="valoresExtra" class="form-input" value="0" min="0" max="2">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Información de Transferencias</label>
+                  <textarea id="transferencia" class="form-textarea" placeholder="Describa los detalles de transferencias, traslados aeropuerto-hotel, tours adicionales, etc."></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        width: '900px',
+        showCancelButton: true,
+        confirmButtonText: '💾 Guardar Cotización',
+        cancelButtonText: '❌ Cancelar',
+        confirmButtonColor: '#667eea',
+        cancelButtonColor: '#e53e3e',
+        didOpen: async () => {
+
+          // ============================ Fecha de inicio y fin ============================ //
+          const fechaInicio = document.getElementById('fechaInicio');
+          const fechaFin = document.getElementById('fechaFin');
+
+          // Obtener la fecha actual en formato YYYY-MM-DD
+          const hoy = new Date().toISOString().split('T')[0];
+
+          // Configurar mínimo en fecha de inicio y valor por defecto
+          fechaInicio.min = hoy;
+          fechaInicio.value = hoy;
+
+          // Configurar mínimo en fecha de fin (igual que inicio al principio)
+          fechaFin.min = hoy;
+          fechaFin.value = hoy;
+
+          // Cuando cambia la fecha de inicio, actualizamos el mínimo de fechaFin
+          fechaInicio.addEventListener('change', () => {
+            const nuevaFechaInicio = fechaInicio.value;
+            fechaFin.min = nuevaFechaInicio;
+
+            // Si la fecha de fin es menor que la nueva fecha de inicio, ajustarla
+            if (fechaFin.value < nuevaFechaInicio) {
+              fechaFin.value = nuevaFechaInicio;
             }
           });
-        }
 
-        // *** SECCIÓN ORIGINAL (modificada) ***
+          // ============================ Validacion de Hora  ida ============================ //
 
-        // Datos de cotización (hasta "YS TA")
-        nombres.push("TRANSPORTE NO COMISI");
-        valores.push(cotizacion.otros);
+          const salida = document.getElementById('horaSalidaIda');
+          const llegada = document.getElementById('horaLlegadaIda');
 
-        nombres.push("Q");
-        valores.push(cotizacion.combus);
+          function validarHoras() {
+            const hs = salida.value;
+            const hl = llegada.value;
 
-        nombres.push("YS");
-        valores.push(cotizacion.iva);
-
-        nombres.push("CO");
-        valores.push(cotizacion.tasa);
-
-        nombres.push("TA");
-        valores.push(cotizacion.ta);
-
-        nombres.push("YS TA");
-        valores.push(cotizacion.ivaTa);
-
-        // *** Insertar "TOTAL IMPUESTOS" después de los datos de habitación ***
-        nombres.push("TOTAL IMPUESTOS");
-        valores.push(cotizacion.precioTrans);
-
-        if (cotizacion.suplemento > 0) {
-          nombres.push("SUPLEMENTO");
-          valores.push(cotizacion.suplemento);
-        }
-
-        if (cotizacion.suplemento > 0) {
-          nombres.push("SUPLEMENTO");
-          valores.push(cotizacion.suplemento);
-        }
-        if (cotizacion.extra1) {
-          // Verificar si existe cotizacion.extra1
-          if (cotizacion.extra1.includes("*")) {
-            // Comprobar si hay un asterisco
-            let partes = cotizacion.extra1.split("*"); // Dividir en dos partes
-            let variable1 = partes[0];
-            let variable2 = partes[1];
-
-            // Ahora puedes usar variable1 y variable2 como necesites
-            nombres.push("Valor Extra", "Valor Extra2");
-            valores.push(variable1, variable2);
-          } else {
-            // Si no hay asterisco
-            let valorUnico = cotizacion.extra1;
-
-            // Usar valorUnico
-            nombres.push("Valor Extra");
-            valores.push(valorUnico);
-          }
-        }
-
-        // Añadir los nombres y valores a la tabla
-        nombres.forEach((nombre, index) => {
-          const y = currentY + index * cellHeight;
-
-          // Dibujar la fila de la tabla
-          drawRow(y);
-
-          // Primera columna: Nombre
-          doc.text(nombre, margins.left + cellPadding, y + cellHeight / 2, {
-            baseline: "middle",
-          });
-
-          // Segunda columna: Valor dividido por el total de pasajeros
-          const totalPasajeros = cotizacion.totalPasajeros;
-          const valor = valores[index] || 0;
-          const valorDividido =
-            totalPasajeros !== 0 ? Math.trunc(valor / totalPasajeros) : "";
-          doc.text(
-            valorDividido.toString(),
-            margins.left + cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Tercera columna: Número total de pasajeros
-          const totalPasajerosTexto =
-            totalPasajeros !== 0 ? Math.trunc(totalPasajeros).toString() : "";
-          doc.text(
-            totalPasajerosTexto,
-            margins.left + 2 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Cuarta columna: Valor original
-          const valorOriginalTexto =
-            valor !== 0 ? Math.trunc(valor).toString() : "";
-          doc.text(
-            valorOriginalTexto,
-            margins.left + 3 * cellWidth + cellPadding,
-            y + cellHeight / 2,
-            { baseline: "middle" }
-          );
-
-          // Columna 5 y 6 para "Q" y "YS"
-          if (nombre === "Q") {
-            doc.text(
-              "Porcentaje",
-              margins.left + 4 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            const descuento = cotizacion.clientePorcentaje || 0;
-            const descuentoTexto = Math.trunc(descuento).toString() + "%";
-            doc.text(
-              descuentoTexto,
-              margins.left + 5 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-          } else if (nombre === "YS") {
-            doc.text(
-              "Valor Descuento",
-              margins.left + 4 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            const valorDescuento = cotizacion.valorDescuento || 0;
-            const valorDescuentoTexto = Math.trunc(valorDescuento).toString();
-            doc.text(
-              valorDescuentoTexto,
-              margins.left + 5 * cellWidth + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Agregar filas adicionales si tipoBase es "Comisión"
-            if (tipoBase === "Comisión") {
-              const additionalRows = [
-                {
-                  label: `IVA(${clienteData.porcentajeIva}%) (-)`,
-                  value: cotizacion.ivaValor,
-                },
-                {
-                  label: `RTE FUENTE(${clienteData.rteFuente}%) (+)`,
-                  value: cotizacion.rteFuente,
-                },
-                {
-                  label: `RTE ICA(${clienteData.rteIca}%) (+)`,
-                  value: cotizacion.rteIca,
-                },
-                {
-                  label: "Total Comisión",
-                  value: cotizacion.totalComision,
-                },
-              ];
-
-              additionalRows.forEach((row, idx) => {
-                const yAdditional = y + (idx + 1) * cellHeight;
-
-                drawRow(yAdditional);
-
-                doc.text(
-                  row.label,
-                  margins.left + 4 * cellWidth + cellPadding,
-                  yAdditional + cellHeight / 2,
-                  { baseline: "middle" }
-                );
-
-                doc.text(
-                  row.value.toString(),
-                  margins.left + 5 * cellWidth + cellPadding,
-                  yAdditional + cellHeight / 2,
-                  { baseline: "middle" }
-                );
-              });
-            }
-          }
-        });
-        currentY += nombres.length * cellHeight;
-
-        // Añadir los valores por habitación
-        habitacion.forEach((habitacionData) => {
-          if (habitacionData.adultos > 0) {
-            const y = currentY;
-            drawRow(y);
-
-            // Descripción en la primera columna (sin cambios)
-            doc.text(
-              `Valor total Adt ${habitacionData.acomodacion}`,
-              margins.left + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Formatear el precio con Numeral.js
-            const precioHabitacionAdulto =
-              habitacionData.precioHabitacionAdulto || 0;
-            const precioAdultoTexto = numeral(precioHabitacionAdulto).format(
-              "$0,0"
-            );
-
-            doc.text(
-              precioAdultoTexto,
-              margins.left + 3 * cellWidth + cellPadding, // Movido a la cuarta columna
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            currentY += cellHeight;
-          }
-
-          if (habitacionData.niños > 0) {
-            const y = currentY;
-            drawRow(y);
-
-            // Descripción en la primera columna (sin cambios)
-            doc.text(
-              `Valor total Chd ${habitacionData.acomodacion}`,
-              margins.left + cellPadding,
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            // Formatear el precio con Numeral.js
-            const precioHabitacionNino =
-              habitacionData.precioHabitacionNino || 0;
-            const precioNinoTexto =
-              numeral(precioHabitacionNino).format("$0,0");
-
-            doc.text(
-              precioNinoTexto,
-              margins.left + 3 * cellWidth + cellPadding, // Movido a la cuarta columna
-              y + cellHeight / 2,
-              { baseline: "middle" }
-            );
-
-            currentY += cellHeight;
-          }
-        });
-        // Añadir valor total y otros valores en la misma fila
-        doc.setFontSize(8);
-        currentY += cellHeight; // Espacio antes de la fila final
-        drawRow(currentY); // Dibujar la fila para los valores finales
-        doc.text(
-          "Valor total",
-          margins.left + cellPadding,
-          currentY + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        // Formatear el precio bruto total con Numeral.js
-        const precioBrutoTotal = cotizacion.precioBrutoTotal || 0;
-        const precioBrutoTotalTexto = numeral(precioBrutoTotal).format("$0,0"); // Formato con separador de miles y símbolo de peso
-
-        doc.text(
-          precioBrutoTotalTexto, // Mostrar el precio formateado
-          margins.left + 3 * cellWidth + cellPadding, // Movido a la cuarta columna
-          currentY + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        doc.text(
-          "Precio a pagar",
-          margins.left + 4 * cellWidth + cellPadding,
-          currentY + cellHeight / 2 - 2,
-          { baseline: "middle" }
-        ); // Primera línea
-        doc.text(
-          "a Multidestinos",
-          margins.left + 4 * cellWidth + cellPadding,
-          currentY + cellHeight / 2 + 2,
-          { baseline: "middle" }
-        ); // Segunda línea
-        // Convertir a números antes de sumar
-        const suplemento = 0;
-        const totalPrecioCliente =
-          parseFloat(cotizacion.totalPrecioCliente) || 0;
-
-        // Sumar el suplemento si existe
-        const totalConSuplemento =
-          suplemento > 0 ? totalPrecioCliente + suplemento : totalPrecioCliente;
-        const totalConSuplementoTexto =
-          numeral(totalConSuplemento).format("$0,0");
-        doc.text(
-          totalConSuplementoTexto,
-          margins.left + 5 * cellWidth + cellPadding,
-          currentY + cellHeight / 2,
-          { baseline: "middle" }
-        );
-
-        currentY += cellHeight + 10; // Espacio después de la fila final
-
-        // Mover a la siguiente sección del documento si es necesario
-
-        // Mover a la siguiente sección del documento si es necesario
-        // Agregar recuadro con el título "Depósito y Condiciones de Pago"
-        const recuadroX = margins.left;
-        let recuadroY = currentY + 5;
-        const recuadroWidth = 190;
-        let recuadroHeight = 30; // Inicializamos con un valor base
-
-        doc.setFontSize(7);
-        doc.setLineWidth(0.5);
-
-        // Reducir tamaño de fuente y ajustar espaciado entre líneas
-        doc.setFontSize(6);
-        const lineHeightPago = 5; // Espacio entre líneas (nombre cambiado)
-
-        // Condiciones de pago (como un solo párrafo)
-        const condiciones =
-          "PARA CONFIRMACIONES SE DEBE ENVIAR DEPOSITO DEL 50% DEL VALOR DEL PLAN Y EL SALDO 30 DIAS ANTES DE LA SALIDA, SI LA FECHA DE VIAJES CERCANA SE DEBE CANCELAR EL 100%. LOS SERVICIOS DEJADOS DE TOMAR NO SON REMBOLSABLES. LA CANCELACIÓN CON 18 DIAS ANTES DE VIAJE LA PENALIDAD SERA DEL 100% DEL VALOR DEL PLAN, LOS TIQUETES NO SON REEMBOLSABLE, NI ENDOSABLES, PENALIDAD POR CAMBIO (FECHA, NOMBRE, HORA, RUTAS) 200.000. ESTAS POLITICAS ESTAN PUBLICADAS DE MANERA CLARA Y ESPECIFICA EN NUESTRA PAGINA WWW.MULTIDESTINOSEXPRESS.COM. *TARIFAS SUJETA A CAMBIO Y DISPONIBILIDAD SIN PREVIO AVISO*";
-
-        // Dividir el párrafo en líneas que quepan en el recuadro
-        const splitLines = doc.splitTextToSize(condiciones, recuadroWidth - 10);
-
-        // Calcular la altura necesaria para el recuadro
-        recuadroHeight = 20 + splitLines.length * lineHeightPago; // 20 para el título y margen superior
-
-        // Verificar si el recuadro cabe en la página actual
-        if (recuadroY + recuadroHeight > pageHeight - margins.bottom) {
-          doc.addPage();
-          currentY = margins.top; // Reiniciar currentY en la nueva página
-        }
-        // Actualizar recuadroY para que coincida con la posición actual
-        recuadroY = currentY;
-        // Dibujar el recuadro
-        doc.rect(recuadroX, currentY, recuadroWidth, recuadroHeight);
-        // Título del recuadro (sin cambios)
-        doc.text(
-          "Deposito y Condiciones de Pago",
-          recuadroX + 5,
-          recuadroY + 3
-        );
-
-        // Escribir el texto dentro del recuadro
-        splitLines.forEach((splitLine, splitIndex) => {
-          doc.text(
-            splitLine,
-            recuadroX + 5,
-            recuadroY + 10 + splitIndex * lineHeightPago
-          );
-        });
-
-        // Mover a la posición donde se empezará a dibujar la siguiente sección
-        currentY += recuadroHeight + 5; // Agregar un espacio adicional después del recuadro
-
-        // ... (resto del código para generar el PDF)
-
-        // Obtener el Blob del PDF
-        const pdfBlob = doc.output("blob");
-        // Guardar el documento como archivo PDF
-        doc.save(`cotizacion_${idCotizacion}.pdf`);
-        // Almacenar la ruta del archivo descargado
-        // Devolver el Blob
-        return pdfBlob;
-      } catch (error) {
-        console.error("Error al descargar cotización:", error);
-      }
-    },
-
-    handleChildrenChange(index) {
-      // Si el checkbox está marcado, establecer el número de niños en 1; de lo contrario, en 0
-      this.rooms[index].numChildren = this.hasChildren[index] ? 1 : 0;
-    },
-    //TABLA
-
-    //TRAE DATOS
-    async fetchCotizacionData() {
-      try {
-        const response = await axios.get(
-          "https://backmultidestinos.onrender.com/cotizacion"
-        );
-        this.cotizacionData = response.data;
-      } catch (error) {
-        console.error("Error fetching cotizacion data:", error);
-      }
-    },
-    //METODO DE CLIENTES
-    async fetchClientOptions() {
-      try {
-        console.log("Obteniendo opciones de clientes...");
-        const response = await axios.get(
-          "https://backmultidestinos.onrender.com/cliente"
-        );
-        console.log("Opciones de clientes nombre:", response.data.nombre);
-        const allclientes = response.data.map((item) => item.nombre);
-        console.log("Opciones de clientes:", allclientes);
-
-        this.clientOptions = allclientes;
-      } catch (error) {
-        console.error("Error al obtener opciones de clientes:", error);
-      }
-    },
-    async fetchOptionCorreo() {
-      this.correo = "";
-
-      this.OptionCorreo = [];
-
-      try {
-        const response = await axios.get(
-          `https://backmultidestinos.onrender.com/cliente/buscar/${this.selectedClient}`
-        );
-        const allCorreo = response.data.flatMap((item) =>
-          item.correo.split(",")
-        );
-        this.OptionCorreo = allCorreo;
-      } catch (error) {
-        console.error("Error al obtener opciones de clientes:", error);
-      }
-    },
-    // Método para realizar la solicitud HTTP y cargar las opciones
-    async fetchOptions() {
-      try {
-        if (!this.selectedDeparture || this.selectedDeparture.trim() === "") {
-          console.warn("Debe seleccionar una ciudad de salida.");
-          return;
-        }
-
-        console.log("Realizando solicitud HTTP para cargar opciones...");
-        console.log("Salida seleccionada:", this.selectedDeparture);
-
-        const response = await axios.get(
-          `https://backmultidestinos.onrender.com/planes/porCiudad/${this.selectedDeparture}`
-        );
-
-        console.log("Respuesta del servidor:", response.data);
-
-        const optionsByDestination = {};
-        const originalOptionsByDestination = {};
-
-        response.data.forEach((item) => {
-          const destino = item.destino;
-          if (!optionsByDestination[destino]) {
-            optionsByDestination[destino] = {
-              programNameOptions: [],
-              hotelOptions: [],
-              nochesOptions: [],
-              accommodationOptions: [],
-            };
-            originalOptionsByDestination[destino] = {
-              nochesOptions: [],
-            };
-          }
-
-          optionsByDestination[destino].programNameOptions.push(item.nombrePrograma);
-          optionsByDestination[destino].hotelOptions.push(...item.hotel.split("*"));
-          optionsByDestination[destino].nochesOptions.push(...item.noches.split("*"));
-          optionsByDestination[destino].accommodationOptions.push(...item.acomodacion.split("*"));
-          originalOptionsByDestination[destino].nochesOptions.push(...item.noches.split("*"));
-        });
-
-        this.optionsByDestination = optionsByDestination;
-        this.originalOptionsByDestination = originalOptionsByDestination;
-
-        const allDestinations = response.data.map((item) => item.destino);
-        this.destinationOptions = [...new Set(allDestinations)];
-
-
-      } catch (error) {
-        console.error("Error al cargar opciones:", error);
-      }
-    },
-
-    updateOptionsByDestination(selectedDestination) {
-      const selectedOptions = this.optionsByDestination[selectedDestination];
-
-      if (selectedOptions) {
-        this.programNameOptions = [
-          ...new Set(selectedOptions.programNameOptions),
-        ];
-        this.hotelOptions = [...new Set(selectedOptions.hotelOptions)];
-        this.accommodationOptions = [
-          ...new Set(selectedOptions.accommodationOptions),
-        ];
-        this.nochesOptions = [...new Set(selectedOptions.nochesOptions)].map(
-          (noche) => ({
-            label: noche,
-            value: parseInt(noche.split(" ")[0]),
-          })
-        );
-
-        // Limpiamos las selecciones de nombre de programa, duración y hotel
-        this.programName = null;
-        this.noche = null;
-        this.hotel = null;
-      } else {
-        // Manejo de opciones no encontradas
-        this.programNameOptions = [];
-        this.hotelOptions = [];
-        this.nochesOptions = [];
-        this.accommodationOptions = [];
-        this.programName = null; // Limpiamos también en este caso
-        this.noche = null;
-        this.hotel = null;
-      }
-    },
-
-    // filterNightsByHotel() {
-    //   // Filtramos las noches según el hotel seleccionado, partiendo de allNochesOptions
-    //   this.nochesOptions = this.allNochesOptions.filter((opcion) => {
-    //     if (this.hotel === "") {
-    //       return opcion.value <= 2;
-    //     } else {
-    //       return opcion.value !== 1;
-    //     }
-    //   });
-
-    //   // Eliminamos la asignación automática de la noche
-    //   // if (this.nochesOptions.length && !this.nochesOptions.some(opcion => opcion.value === this.noche)) {
-    //   //   this.noche = this.nochesOptions[0].value;
-    //   // }
-    // },
-
-    buscarTiposDeHabitacion() {
-      // Realizar la solicitud POST al servidor con los parámetros actuales
-      axios
-        .post(
-          "https://backmultidestinos.onrender.com/hoteles/buscar",
-          this.params
-        )
-        .then((response) => {
-          // Obtener la lista de tipos de habitación de la respuesta del servidor
-          const tiposDeHabitacion = response.data.map(
-            (hotel) => hotel.tipoDeHabitacion
-          );
-
-          // Eliminar duplicados utilizando un Set
-          const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
-
-          // Asignar los tipos de habitación únicos a la opción de tipo de habitación
-          this.tipoDeHabitacionOptions = tiposDeHabitacionUnicos;
-        })
-        .catch((error) => {
-          console.error("Error al buscar hoteles:", error);
-        });
-    },
-    // Método para manejar el cambio en la selección de salida
-    handleDepartureChange() {
-      this.clearFieldsc();
-      this.destinationOptions = [];
-      this.programNameOptions = [];
-      this.nochesOptions = [];
-
-      // this.planOptions = [];
-      this.accommodationOptions = [];
-      this.OptionCorreo = [];
-      this.hotelOptions = [];
-      this.roomTypeOptions = [];
-      console.log("Cambio en la selección de salida. Cargando opciones...");
-      this.fetchOptions();
-      this.fetchClientOptions();
-    },
-    // Método para manejar el cambio en la selección de hotel, programa y destino
-
-    handleSelectionChangeTipo(selectedValue) {
-      const newValue = selectedValue?.value;
-
-      // Validar que los datos requeridos estén definidos
-      if (!this.hotel || !this.programName || !this.destination || !this.selectedDeparture) {
-        console.warn("Faltan datos para buscar tipos de habitación");
-        return;
-      }
-
-      // Validar que this.noche y this.noche.label existen
-      const nocheLabel = this.noche?.label;
-      if (!nocheLabel) {
-        console.warn("No se ha seleccionado una noche válida.");
-        return;
-      }
-
-      // Actualizar los parámetros con los valores seleccionados
-      this.paramsN.hotel = this.hotel;
-      this.paramsN.nombrePrograma = this.programName;
-      this.paramsN.destino = this.destination;
-      this.paramsN.noches = nocheLabel;
-      this.paramsN.pertenece = this.selectedDeparture;
-
-      console.log("Noche escogida:", nocheLabel);
-      console.log("Parámetros enviados:", this.paramsN);
-
-      // Realizar la búsqueda de tipos de habitación
-      axios
-        .post(
-          "https://backmultidestinos.onrender.com/hoteles/buscarN",
-          this.paramsN
-        )
-        .then((response) => {
-          console.log("Respuesta del servidor:", response.data);
-
-          // Obtener la lista de tipos de habitación de la respuesta del servidor
-          const tiposDeHabitacion = response.data.map(
-            (item) => item.tipoHabitacion
-          );
-
-          // Eliminar duplicados utilizando un Set
-          const tiposDeHabitacionUnicos = [...new Set(tiposDeHabitacion)];
-          console.log("Tipos de habitación únicos:", tiposDeHabitacionUnicos);
-
-          // Asignar los tipos de habitación únicos a la opción de tipo de habitación
-          this.roomTypeOptions = tiposDeHabitacionUnicos;
-        })
-        .catch((error) => {
-          console.error("Error al buscar hoteles:", error);
-          this.$q.notify({
-            message: "Hubo un error al cargar los tipos de habitación",
-            color: "negative",
-          });
-        });
-    },
-
-    // Método para abrir el modal
-    openModalPersonalizado() {
-      this.modalVisiblePersonalizado = true;
-    },
-    openModal() {
-      this.modalVisible = true;
-    },
-    closeModalPersonalizado() {
-      this.modalVisiblePersonalizado = false;
-      this.clearFieldsPersonalizado();
-    },
-    // Método para cerrar el modal
-    closeModal() {
-      this.modalVisible = false;
-      this.clearFields();
-    },
-    resetVariables() {
-      // Reinicializar todas las variables utilizadas
-      this.aerolineaEscalaIda = "";
-      this.vueloEscalaIda = "";
-      this.horaLlegadaEscalaIda = "";
-      this.horaSalidaEscalaIda = "";
-      this.claseEscalaIda = "";
-      this.aerolineaEscalaVuelta = "";
-      this.vueloEscalaVuelta = "";
-      this.horaLlegadaEscalaVuelta = "";
-      this.horaSalidaEscalaVuelta = "";
-      this.claseEscalaVuelta = "";
-      this.aerolineaValue1 = "";
-      this.vueloValue1 = "";
-      this.aerolineaValue2 = "";
-      this.vueloValue2 = "";
-      this.horaSalidaValue1 = "";
-      this.horaLlegadaValue1 = "";
-      this.horaSalidaValue2 = "";
-      this.horaLlegadaValue2 = "";
-      this.claseValue1 = "";
-      this.claseValue2 = "";
-      this.totalAdultos = 0;
-      this.totalNiños = 0;
-      this.hasChildren = [];
-      this.additionalNightSelected = false;
-      this.additionalNightCount = 0;
-      this.habitacionesDatos = [];
-      this.totalImpuestos = 0;
-      this.sumaTotalAcomodacion = 0;
-      this.sumaValorBrutohab = 0;
-      this.sumaTotalDescuento = 0;
-      this.childrenPriceNumber = 0;
-      this.cormacarena5a11Total = 0;
-      this.cormacarena12a65Total = 0;
-      this.cormacarenaExtranjeroTotal = 0;
-      this.pqsNaturales5a24Total = 0;
-      this.pqsNaturales25a65Total = 0;
-      this.pqsNaturalesExtranjeroTotal = 0;
-      this.alcaldiaNacionalTotal = 0;
-      this.alcaldiaExtranjeroTotal = 0;
-      this.defensaCivilTotal = 0;
-      this.cormacarena5a11Personas = 0;
-      this.cormacarena12a65Personas = 0;
-      this.cormacarenaExtranjeroPersonas = 0;
-      this.pqsNaturales5a24Personas = 0;
-      this.pqsNaturales25a65Personas = 0;
-      this.pqsNaturalesExtranjeroPersonas = 0;
-      this.alcaldiaNacionalPersonas = 0;
-      this.alcaldiaExtranjeroPersonas = 0;
-      this.defensaCivilPersonas = 0;
-    },
-    async obtenerInformacionTiquete(salida, destino) {
-      try {
-        // Realizar la solicitud GET para obtener la información del tiquete
-        const response = await axios.get(
-          `https://backmultidestinos.onrender.com/tiquete/buscar/${salida}/${destino}`
-        );
-
-        // Aquí puedes manejar la respuesta recibida
-        console.log("Información del tiquete:", response.data);
-
-        // Puedes retornar la respuesta si necesitas usarla en otro lugar
-        return response.data;
-      } catch (error) {
-        // Manejar cualquier error que pueda ocurrir durante la solicitud
-        console.error("Error al obtener la información del tiquete:", error);
-        throw error; // Propaga el error para que pueda ser manejado fuera de esta función si es necesario
-      }
-    },
-
-    async saveFormData() {
-      //
-      // Iterar sobre los datos de transporte y calcular totales
-      if (
-        !this.aerolineaValue1 ||
-        !this.vueloValue1 ||
-        !this.aerolineaValue2 ||
-        !this.vueloValue2
-      ) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de aerolínea y vuelo para ambas direcciones.",
-          color: "negative",
-        });
-        return; // Detiene el proceso si hay campos obligatorios sin completar
-      }
-
-      if (
-        !this.horaSalidaValue1 ||
-        !this.horaLlegadaValue1 ||
-        !this.horaSalidaValue2 ||
-        !this.horaLlegadaValue2
-      ) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de horas de salida y llegada para ambas direcciones.",
-          color: "negative",
-        });
-        return;
-      }
-
-      if (!this.claseValue1 || !this.claseValue2) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de clase para ambas direcciones.",
-          color: "negative",
-        });
-        return;
-      }
-
-      if (!this.dateRange[0] || !this.dateRange[1]) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de fechas de inicio y fin.",
-          color: "negative",
-        });
-        return;
-      }
-      let combus = 0;
-      let tasa = 0;
-      let iva = 0;
-      let ta = 0;
-      let ivaTa = 0;
-      let otros = 0;
-      let precioTrans = 0;
-
-      const impuestosResponse = await axios.get(
-        "https://backmultidestinos.onrender.com/CanoCristal/"
-      );
-      const impuestosData = impuestosResponse.data;
-      console.log("Datos de impuestos obtenidos:", impuestosData);
-      try {
-        //clientes porcentaje
-        const clienteResponse = await axios.get(
-          `https://backmultidestinos.onrender.com/cliente/buscar/${this.selectedClient}`
-        );
-        console.log("clienteResponse", clienteResponse);
-
-        // Obtener el porcentaje del cliente
-        let clientePorcentaje = null;
-        let clienteTipoBase = null;
-        let rteFuente = null;
-        let rteIca = null;
-        let ivaValor = null;
-
-        clienteResponse.data.forEach((cliente) => {
-          if (cliente.nombre === this.selectedClient) {
-            clientePorcentaje =
-              this.programName === "Caño Cristales"
-                ? parseFloat(cliente.lmc) // Valor si es "Caño Cristales"
-                : parseFloat(cliente.demas); // Valor por defecto
-            clienteTipoBase = cliente.tipoBase;
-            rteFuente = cliente.rteFuente;
-            rteIca = cliente.rteIca;
-            ivaValor = cliente.porcentajeIva;
-          }
-        });
-
-        console.log("clientePorcentaje", clientePorcentaje);
-        console.log("clienteTipoBase", clienteTipoBase);
-        console.log("rteFuente", rteFuente);
-        console.log("rteIca", rteIca);
-        console.log("ivaValor", ivaValor);
-
-        //fin de porcentaje clientes
-        // HASTA ACA ESTA BIEN.
-
-        //ACA SUPLEMENTO
-
-        // Obtener información del tiquete
-        const informacionTiquete = await this.obtenerInformacionTiquete(
-          this.selectedDeparture,
-          this.destination
-        );
-
-        // Puedes usar la información del tiquete aquí como lo necesites
-        console.log("Información del tiquete obtenida:", informacionTiquete);
-        const tiquete = informacionTiquete[0].total;
-        const tiqueteNum = parseFloat(tiquete);
-        console.log("tiquete", tiquete);
-        console.log("tiqueteNum", tiqueteNum);
-        // Después de obtener la información del tiquete
-        let valorSuplemento = 0; // Valor predeterminado si no hay suplemento
-
-        if (this.supplementValues) {
-          // Si hay un suplemento, calcula el valor restando el suplemento del precio del tiquete
-          for (let i = 0; i < this.supplementValues.length; i++) {
-            if (this.supplementValues[i]) {
-              console.log("persona", [i], this.supplementValues[i]);
-
-              valorSuplemento +=
-                parseFloat(this.supplementValues[i]) - tiqueteNum;
-            }
-            console.log("Total suplemento", [i], valorSuplemento);
-          }
-        }
-
-        // Ahora puedes usar valorSuplemento según sea necesario
-        console.log("Valor del suplemento:", valorSuplemento);
-        //----------------------------------------------------------------
-        //HABITACION PETICION
-
-        // Construir el cuerpo de la solicitud para obtener los precios de las habitaciones
-        // Iterar sobre las habitaciones en el formulario
-        const preciosRequestDataArray = [];
-
-        this.rooms.forEach((room, index) => {
-          // Crear el objeto de solicitud para esta habitación
-          const preciosRequestData = {
-            pertenece: this.selectedDeparture,
-            destino: this.destination,
-            nombrePrograma: this.programName,
-            hotel: this.hotel,
-            tipoHabitacion: room.roomType, // Usar el tipo de habitación de esta habitación específica
-            noches: this.noche.value,
-          };
-          // Agregar el objeto de solicitud al array
-          preciosRequestDataArray.push(preciosRequestData);
-        });
-
-        console.log("edades", preciosRequestDataArray);
-        try {
-          // Realizar todas las solicitudes simultáneamente
-          const preciosResponseArray = await Promise.all(
-            preciosRequestDataArray.map((data) =>
-              axios.post(
-                "https://backmultidestinos.onrender.com/hoteles/buscarT",
-                data
-              )
-            )
-          );
-          console.log("preciosResponseArray", preciosResponseArray);
-          console.log("preciosResponseArray data", preciosResponseArray.data);
-          // corresponde a las habitaciones y precios
-          const datosProcesados = [];
-          // Iterar sobre cada objeto en preciosResponseArray
-          preciosResponseArray.forEach((response) => {
-            // Verificar si hay datos en esta respuesta
-            if (response.data.length > 0) {
-              // Agregar los datos completos al array local
-              datosProcesados.push(...response.data);
+            if (hs && hl && hl <= hs) {
+              Swal.showValidationMessage('⚠️ La hora de llegada no puede ser menor o igual a la hora de salida.');
+              llegada.value = ''; // Limpia el valor incorrecto
             } else {
-              console.log("No se encontraron datos en esta respuesta");
+              Swal.resetValidationMessage(); // Limpia el mensaje si es válido
             }
-          });
+          }
 
-          // Ahora puedes usar datosProcesados para acceder a los datos de manera más conveniente
-          console.log(datosProcesados);
-          this.plan = datosProcesados[0].plan;
+          salida.addEventListener('change', validarHoras);
+          llegada.addEventListener('change', validarHoras);
 
-          //TRANSPORTE Y IVAS Y OTROS
+          // ============================ Validacion de Hora regreso  ============================ //
 
-          // Realizar la solicitud para obtener información sobre transporte
-          const transporteRequestData = {
-            pertenece: this.selectedDeparture,
-            destino: this.destination,
+
+          const salidaVuelta = document.getElementById('horaSalidaVuelta');
+          const llegadaVuelta = document.getElementById('horaLlegadaVuelta');
+
+          function validarHorasVuelta() {
+            const hs = salidaVuelta.value;
+            const hl = llegadaVuelta.value;
+
+            if (hs && hl && hl <= hs) {
+              Swal.showValidationMessage('⚠️ La hora de llegada de vuelta no puede ser menor o igual a la hora de salida.');
+              llegadaVuelta.value = '';
+            } else {
+              Swal.resetValidationMessage();
+            }
+          }
+
+          salidaVuelta.addEventListener('change', validarHorasVuelta);
+          llegadaVuelta.addEventListener('change', validarHorasVuelta);
+
+          // ============================ Validacion de Hora escalas  ============================ //
+
+
+        const salidas = document.querySelectorAll('#horaSalidaEscala');
+        const llegadas = document.querySelectorAll('#horaLlegadaEscala');
+
+        salidas.forEach((salida, i) => {
+          const llegada = llegadas[i];
+
+          const validar = () => {
+            const hs = salida.value;
+            const hl = llegada.value;
+
+            if (hs && hl && hl <= hs) {
+              Swal.showValidationMessage(`⚠️ En la Escala ${i + 1}, la hora de llegada debe ser mayor a la de salida.`);
+              llegada.value = '';
+            } else {
+              Swal.resetValidationMessage();
+            }
           };
-          const transporteResponse = await axios.get(
-            "https://backmultidestinos.onrender.com/transporte/buscar",
-            {
-              params: transporteRequestData,
-            }
-          );
-          console.log("transporteResponse", transporteResponse);
-          console.log("entrando a trans");
 
-          transporteResponse.data.forEach((transporte) => {
-            console.log("transporte.combus", transporte.combus);
+          salida.addEventListener('change', validar);
+          llegada.addEventListener('change', validar);
 
-            combus += parseFloat(transporte.combus) || 0;
-            console.log("combus", combus);
-
-            tasa += parseFloat(transporte.tasa) || 0;
-            iva += parseFloat(transporte.iva) || 0;
-            ta += parseFloat(transporte.ta) || 0;
-            ivaTa += parseFloat(transporte.ivaTa) || 0;
-            otros += parseFloat(transporte.otros) || 0;
-            precioTrans += parseFloat(transporte.total) || 0;
           });
-          console.log("saliendo de trans trans");
-          console.log("normalcombus", combus);
-          console.log("this.normalcombus", this.combus);
 
-          console.log("precioTrans", this.precioTrans);
-          //FIN TRASNPORTES------------------------------------------------------------------------------------------------
-          // Inicializar variables para el total de adultos y niños
+          // ============================ Aerolineas ============================ //
 
-          let childrenPrice = 0;
-          // Iterar sobre cada habitación en el formulario
-          let impuestosFiltrados = [];
-          await Promise.all(
-            this.rooms.map(async (room, index) => {
-              console.log(`Procesando habitación ${index + 1}`);
-
-              // Obtener el tipo de habitación seleccionado en el formulario para esta habitación
-              //roomAccommodation es igual a la acomodacion
-              const roomAccommodation = room.accommodation;
-              //roomtype es igual al tipo de habitacion
-              const roomType = room.roomType;
-              console.log(`Tipo de habitación seleccionado: ${roomType}`);
-
-              // Obtener los datos de precio para el tipo de habitación seleccionado
-              const roomPriceData = datosProcesados.find(
-                (data) => data.tipoHabitacion === roomType
-              );
-              console.log("Datos de precio encontrados:", roomPriceData);
-              // Obtener la acomodación y el tipo de habitación
-              const acomodacion = room.accommodation;
-              const tipoHabitacion = room.roomType;
-
-              // Crear paramsN con los valores de this
-              const paramsN = {
-                pertenece: this.selectedDeparture,
-                destino: this.destination,
-                nombrePrograma: this.programName,
-                hotel: this.hotel,
-                tipoHabitacion: tipoHabitacion,
-                noches: `${this.noche.value} noches`,
-              };
-
-              console.log("noche escogida", this.noche.value);
-              console.log(paramsN);
-              let impuestosParaBD;
-              try {
-                // Realizar la búsqueda de transportes
-                const response = await axios.get(
-                  "https://backmultidestinos.onrender.com/transporte/por-parametros",
-                  { params: paramsN }
-                );
-
-                // 1. Obtener los nombres de los impuestos por acomodación desde la respuesta
-                const nombresImpuestosPorAcomodacion = Object.keys(
-                  response.data[0] || {}
-                ).filter((clave) =>
-                  clave
-                    .toLowerCase()
-                    .startsWith(roomAccommodation.toLowerCase() + "_")
-                );
-
-                // 2. Mostrar los nombres de los impuestos por acomodación
-                console.log(
-                  "Nombres de impuestos por acomodación:",
-                  nombresImpuestosPorAcomodacion
-                );
-
-                // 3. Crear un objeto con los impuestos y sus valores, usando los nombres de las columnas de la BD
-                this.impuestosParaBD = nombresImpuestosPorAcomodacion.reduce(
-                  (obj, nombreImpuesto) => {
-                    // Construir el nombre del campo para la BD (ej. "sencilla_ImpuestoHotel")
-                    const nombreCampoBD = `${nombreImpuesto.split("_")[0]}_${
-                      nombreImpuesto.split("_")[1]
-                    }`;
-                    // Obtener el valor del impuesto directamente desde la respuesta
-                    obj[nombreCampoBD] = response.data[0][nombreImpuesto];
-                    return obj;
-                  },
-                  {}
-                );
-
-                // 4. Mostrar el objeto impuestosParaBD
-                console.log("Impuestos para la BD:", impuestosParaBD);
-
-                // Obtener los datos de precio para el tipo de habitación seleccionado
-                const roomPriceData = datosProcesados.find(
-                  (data) => data.tipoHabitacion === roomType
-                );
-                console.log("Datos de precio encontrados:", roomPriceData);
-
-                // ... (resto del código para procesar los datos de la habitación) ...
-              } catch (error) {
-                console.error("Error al buscar transportes:", error);
-                // ... (código para manejar el error) ...
-              }
-              // Verificar si se encontraron datos de precio para este tipo de habitación
-              if (roomPriceData) {
-                // Extraer el precio de la acomodación
-                const accommodationPrice = roomPriceData[roomAccommodation]; // Utilizar el tipo de habitación como clave
-                console.log(`la acomodacio es: ${roomAccommodation}`);
-                console.log(`Precio de la acomodación: ${accommodationPrice}`);
-
-                // Guardar el precio de la acomodación en la habitación
-                room.accommodationPrice = accommodationPrice;
-                // Inicializar el precio total
-                let totalPrice = 0;
-                // Si hay niños en esta habitación, obtener su precio
-                let childrenPriceNumber = 0;
-                if (this.hasChildren[index]) {
-                  // Obtener el precio de los niños según el tipo de acomodación
-                  childrenPrice = roomPriceData.niño;
-                  console.log("childrenPrice", childrenPrice);
-                  this.childrenPriceNumber = parseFloat(
-                    childrenPrice.replace(/\./g, "")
-                  );
-
-                  totalPrice += childrenPrice;
-                }
-                console.log("childrenPriceNumber1", this.childrenPriceNumber);
-
-                // Verificar si hay noches adicionales seleccionadas
-                let additionalNightTotalPriceAdulto = 0;
-                let additionalNightTotalPriceNiño = 0;
-                if (
-                  this.additionalNightSelected &&
-                  this.additionalNightCount > 0
-                ) {
-                  // Obtener el precio de la noche adicional para adultos según el tipo de acomodación
-                  const additionalNightPriceAdulto = parseFloat(
-                    roomPriceData[`nocheAdicional${roomAccommodation}`].replace(
-                      /\./g,
-                      ""
-                    )
-                  );
-                  console.log(
-                    "additionalNightPriceAdulto",
-                    additionalNightPriceAdulto
-                  );
-                  const nochesAdicionales = this.additionalNightCount;
-                  console.log("nochesAdicionales", nochesAdicionales);
-                  // Calcular el precio total de las noches adicionales para adultos
-                  additionalNightTotalPriceAdulto =
-                    additionalNightPriceAdulto * this.additionalNightCount;
-                  console.log(
-                    "additionalNightTotalPriceAdulto",
-                    additionalNightTotalPriceAdulto
-                  );
-
-                  // Agregar el precio total de las noches adicionales para adultos al precio total
-                  totalPrice += additionalNightTotalPriceAdulto;
-
-                  // Si hay niños en esta habitación, obtener el precio de la noche adicional para niños
-                  if (this.hasChildren[index]) {
-                    const additionalNightPriceNiño = parseFloat(
-                      roomPriceData[`nocheAdicionalniño`].replace(/\./g, "")
-                    );
-                    console.log(
-                      "additionalNightPriceNiño",
-                      additionalNightPriceNiño
-                    );
-
-                    // Calcular el precio total de las noches adicionales para niños
-                    additionalNightTotalPriceNiño =
-                      additionalNightPriceNiño *
-                      this.additionalNightCount *
-                      room.numChildren;
-                    console.log(
-                      "additionalNightTotalPriceNiño",
-                      additionalNightTotalPriceNiño
-                    );
-
-                    // Agregar el precio total de las noches adicionales para niños al precio total
-                    totalPrice += additionalNightTotalPriceNiño;
-                  }
-                }
-                // // Calcular el precio total sumando el precio de la acomodación y otros costos adicionales
-                // room.totalPrice = totalPrice + accommodationPrice;
-
-                //SACAR VALOR COMISIONABLE.
-
-                const accommodationPriceNumber = parseFloat(
-                  accommodationPrice.replace(/\./g, "")
-                );
-                console.log(
-                  "accommodationPriceNumber",
-                  accommodationPriceNumber
-                );
-                console.log("precioTrans", precioTrans);
-
-                const ValorComisionableAdultos =
-                  accommodationPriceNumber -
-                  precioTrans +
-                  (this.additionalNightSelected
-                    ? additionalNightTotalPriceAdulto
-                    : 0);
-                this.ValorComisionableNiños = 0;
-                let ValorClienteNiño = 0;
-                console.log(
-                  "antes de childrenPriceNumber",
-                  this.childrenPriceNumber
-                );
-                if (this.hasChildren[index]) {
-                  this.ValorComisionableNiños =
-                    this.childrenPriceNumber -
-                    precioTrans +
-                    additionalNightTotalPriceNiño;
-
-                  this.ValorClienteNiño =
-                    this.ValorComisionableNiños -
-                    this.ValorComisionableNiños * (clientePorcentaje / 100);
-                }
-                console.log("this.ValorClienteNiño", this.ValorClienteNiño);
-                console.log(
-                  "ValorComisionableAdultos",
-                  ValorComisionableAdultos
-                );
-                console.log(
-                  "ValorComisionableNiños",
-                  this.ValorComisionableNiños
-                );
-
-                // PORCENTAJE
-
-                //PRECIO CON PORCENTAJE
-                const ValorClienteAdulto =
-                  ValorComisionableAdultos -
-                  ValorComisionableAdultos * (clientePorcentaje / 100);
-                console.log("ValorClienteAdulto", ValorClienteAdulto);
-                console.log("ValorClienteNiño", ValorClienteNiño);
-
-                //valor total descuento con adulto + niño x habitacion
-
-                const ValorCliente = ValorClienteAdulto + ValorClienteNiño;
-
-                console.log("ValorCliente", ValorCliente);
-
-                const numAdultos = parseInt(room.adults);
-                console.log("numAdultos", numAdultos);
-                const numNiños = this.hasChildren[index] ? room.numChildren : 0;
-                const valorBrutoAdulto = accommodationPriceNumber * numAdultos;
-                const valorBrutoniño =
-                  (this.childrenPriceNumber ? this.childrenPriceNumber : 0) *
-                  numNiños;
-                let valorBrutoTotal = valorBrutoAdulto + valorBrutoniño;
-                console.log("valorBrutoAdulto", valorBrutoAdulto);
-                console.log("valorBrutoniño", valorBrutoniño);
-                console.log("valorBrutoTotal", valorBrutoTotal);
-
-                console.log(
-                  `Número de adultos en la habitación ${
-                    index + 1
-                  }: ${numAdultos}`
-                );
-                console.log(
-                  `Número de niños en la habitación ${index + 1}: ${numNiños}`
-                );
-
-                const TotalAcomodacionAdulto = ValorClienteAdulto * numAdultos;
-                console.log("TotalAcomodacionAdulto", TotalAcomodacionAdulto);
-                let TotalAcomodacionNiño = this.ValorClienteNiño * numNiños;
-                console.log("TotalAcomodacionNiño", TotalAcomodacionNiño);
-                if (
-                  TotalAcomodacionNiño === null ||
-                  isNaN(TotalAcomodacionNiño)
-                ) {
-                  TotalAcomodacionNiño = 0;
-                }
-                console.log(
-                  "TotalAcomodacionNiño después de la condición",
-                  TotalAcomodacionNiño
-                );
-                let TotalAcomodacion =
-                  TotalAcomodacionNiño + TotalAcomodacionAdulto;
-
-                console.log("TotalAcomodacion", TotalAcomodacion);
-                console.log("totalAdultos", numAdultos);
-
-                // Agregar el número de adultosy niños al total
-                this.totalAdultos += numAdultos;
-                console.log("totalAdultos", numAdultos);
-
-                this.totalNiños += numNiños;
-                const Valorporcentaje =
-                  ValorComisionableAdultos * numAdultos +
-                  this.ValorComisionableNiños * numNiños;
-                const descuento = Valorporcentaje * (clientePorcentaje / 100);
-                console.log("descuento", descuento);
-                console.log("Valorporcentaje", Valorporcentaje);
-
-                //IMPUESTOS CAÑO CRISTAL
-
-                // Calcular impuestos
-                let impuestosHabitacion = {
-                  cormacarena5a11: 0,
-                  cormacarena12a65: 0,
-                  cormacarenaExtranjero: 0,
-                  pqsNaturales5a24: 0,
-                  pqsNaturales25a65: 0,
-                  pqsNaturalesExtranjero: 0,
-                  alcaldiaNacional: 0,
-                  alcaldiaExtranjero: 0,
-                  defensaCivil: 0,
-                };
-                let impuestosHabitacionPersonas = {
-                  cormacarena5a11: 0,
-                  cormacarena12a65: 0,
-                  cormacarenaExtranjero: 0,
-                  pqsNaturales5a24: 0,
-                  pqsNaturales25a65: 0,
-                  pqsNaturalesExtranjero: 0,
-                  alcaldiaNacional: 0,
-                  alcaldiaExtranjero: 0,
-                  defensaCivil: 0,
-                };
-                console.log("Habitación actual:", room);
-
-                // Verificar si hay edades para calcular impuestos
-
-                if (
-                  room.adultAges.length > 0 &&
-                  this.destination === "La Macarena"
-                ) {
-                  // Calcular impuestos para cada persona (adultos y niños)
-                  for (let i = 0; i < room.adultAges.length; i++) {
-                    const edadPersona = room.adultAges[i];
-                    const esExtranjero = room.isForeigner[i];
-
-                    console.log(
-                      `Calculando impuestos para la persona ${
-                        i + 1
-                      } (edad: ${edadPersona}, extranjero: ${esExtranjero})`
-                    );
-
-                    for (const impuesto of impuestosData) {
-                      const nombreImpuesto = impuesto.IMPUESTO;
-
-                      console.log(`Impuesto actual: ${nombreImpuesto}`);
-
-                      if (nombreImpuesto === "cormacarena") {
-                        if (esExtranjero) {
-                          impuestosHabitacion.cormacarenaExtranjero +=
-                            parseFloat(impuesto.EXTRANJERO) || 0;
-                          impuestosHabitacionPersonas.cormacarenaExtranjero++;
-                        } else if (edadPersona >= 5 && edadPersona <= 11) {
-                          impuestosHabitacion.cormacarena5a11 +=
-                            parseFloat(impuesto["5 a 11 años"]) || 0;
-                          impuestosHabitacionPersonas.cormacarena5a11++;
-                        } else if (edadPersona >= 12 && edadPersona <= 65) {
-                          impuestosHabitacion.cormacarena12a65 +=
-                            parseFloat(impuesto["12 a 65 años"]) || 0;
-                          impuestosHabitacionPersonas.cormacarena12a65++;
-                        }
-                      } else if (nombreImpuesto === "pqsNaturales") {
-                        if (esExtranjero) {
-                          impuestosHabitacion.pqsNaturalesExtranjero +=
-                            parseFloat(impuesto.EXTRANJERO) || 0;
-                          impuestosHabitacionPersonas.pqsNaturalesExtranjero++;
-                        } else if (edadPersona >= 5 && edadPersona <= 24) {
-                          impuestosHabitacion.pqsNaturales5a24 +=
-                            parseFloat(impuesto["5 a 24 años"]) || 0;
-                          impuestosHabitacionPersonas.pqsNaturales5a24++;
-                        } else if (edadPersona >= 25 && edadPersona <= 65) {
-                          impuestosHabitacion.pqsNaturales25a65 +=
-                            parseFloat(impuesto["25 a 65 años"]) || 0;
-                          impuestosHabitacionPersonas.pqsNaturales25a65++;
-                        }
-                      } else if (nombreImpuesto === "alcaldia") {
-                        if (esExtranjero) {
-                          impuestosHabitacion.alcaldiaExtranjero +=
-                            parseFloat(impuesto.EXTRANJERO) || 0;
-                          impuestosHabitacionPersonas.alcaldiaExtranjero++;
-                        } else if (edadPersona >= 5 && edadPersona <= 1000) {
-                          // Solo para nacionales mayores de 12 años
-                          impuestosHabitacion.alcaldiaNacional +=
-                            parseFloat(impuesto["12 a 65 años"]) || 0;
-                          impuestosHabitacionPersonas.alcaldiaNacional++;
-                        }
-                      } else if (nombreImpuesto === "defensaCivil") {
-                        // Asumiendo que el impuesto de Defensa Civil se aplica a todos por igual
-                        impuestosHabitacion.defensaCivil +=
-                          parseFloat(impuesto["5 a 11 años"]) || 0;
-                        impuestosHabitacionPersonas.defensaCivil++;
-                      }
-
-                      console.log(
-                        `   Impuesto ${nombreImpuesto} (acumulado): ${impuestosHabitacion[nombreImpuesto]}`
-                      ); // Mostrar el acumulado de cada impuesto
-                    }
-                  }
-                }
-
-                console.log(
-                  "Impuestos totales por habitación:",
-                  impuestosHabitacion
-                );
-
-                // Convertir impuestos a null si son 0
-                for (const impuesto in impuestosHabitacion) {
-                  if (impuestosHabitacion[impuesto] === 0) {
-                    impuestosHabitacion[impuesto] = null;
-                  }
-                }
-
-                console.log(
-                  "Impuestos calculados para la habitación:",
-                  impuestosHabitacion
-                ); // Verificar impuestos calculados
-                console.log(
-                  "Número de personas por impuesto:",
-                  impuestosHabitacionPersonas
-                );
-                //FIN IMPUESTOS CAÑO CRISTAL
-                console.log(
-                  "        this.impuestosParaBD ",
-                  this.impuestosParaBD
-                );
-                this.habitacionesDatos.push({
-                  idCotizacion: "",
-                  adultos: numAdultos,
-                  niños: numNiños,
-                  acomodacion: roomAccommodation,
-                  tipoHabitacion: roomType,
-
-                  //preciosTotales
-                  precioFlayerAdulto: accommodationPriceNumber,
-                  precioFlayerNino: this.childrenPriceNumber,
-
-                  //valores brutos
-                  precioHabitacionNino: valorBrutoniño,
-                  precioHabitacionAdulto: valorBrutoAdulto,
-                  precioHabitacionTotal: valorBrutoTotal,
-
-                  //comisionables
-                  precioComisionableAdulto: ValorComisionableAdultos,
-                  precioComisionableNino: this.ValorComisionableNiños,
-
-                  //descuentos
-
-                  valorDescuentoHabitacionNino: this.ValorClienteNiño,
-
-                  valorDescuentoHabitacionAdulto: ValorClienteAdulto,
-                  valorDescuentoCliente: ValorCliente,
-                  descuento: descuento,
-
-                  TotalAcomodacionAdulto: TotalAcomodacionAdulto,
-                  TotalAcomodacionNino: TotalAcomodacionNiño,
-                  TotalAcomodacion: TotalAcomodacion,
-
-                  //EDADES SOLO SI ES CAÑO CRISTAL
-                  edadesAdultos: room.adultAges
-                    .filter((age) => age !== null)
-                    .join(","),
-                  edadNino: room.childAge !== null ? room.childAge : null,
-                  extranjero: room.isForeigner // Nuevo campo con la información de extranjeros
-                    .map((isForeign) => (isForeign ? "SI" : "NO")) // Convertir a "SI" o "NO"
-                    .join(","), // Unir en una cadena separada por comas
-                  ...this.impuestosParaBD,
-
-                  //impuestos:
-                  // defensaCivil: impuestosHabitacion.defensaCivil,
-                  // defensaCivilPersonas: impuestosHabitacionPersonas.defensaCivil,
-
-                  //2
-                  // alcaldiaNacional: impuestosHabitacion.alcaldiaNacional,
-                  // alcaldiaNacionalPersonas:
-                  //   impuestosHabitacionPersonas.alcaldiaNacional,
-                  // alcaldiaExtranjero: impuestosHabitacion.alcaldiaExtranjero,
-                  // alcaldiaExtranjeroPersonas:
-                  //   impuestosHabitacionPersonas.alcaldiaExtranjero,
-
-                  //3
-                  // pqsNaturalesExtranjero:
-                  //   impuestosHabitacion.pqsNaturalesExtranjero,
-                  // pqsNaturalesExtranjeroPersonas:
-                  //   impuestosHabitacionPersonas.pqsNaturalesExtranjero,
-                  // pqsNaturales25a65: impuestosHabitacion.pqsNaturales25a65,
-                  // pqsNaturales25a65Personas:
-                  //   impuestosHabitacionPersonas.pqsNaturales25a65,
-                  // pqsNaturales5a24: impuestosHabitacion.pqsNaturales5a24,
-                  // pqsNaturales5a24Personas:
-                  //   impuestosHabitacionPersonas.pqsNaturales5a24,
-                  //3
-                  // cormacarenaExtranjero:
-                  //   impuestosHabitacion.cormacarenaExtranjero,
-                  // cormacarenaExtranjeroPersonas:
-                  //   impuestosHabitacionPersonas.cormacarenaExtranjero,
-                  // cormacarena5a11: impuestosHabitacion.cormacarena5a11,
-                  // cormacarena5a11Personas:
-                  //   impuestosHabitacionPersonas.cormacarena5a11,
-                  // cormacarena12a65: impuestosHabitacion.cormacarena12a65,
-                  // cormacarena12a65Personas:
-                  //   impuestosHabitacionPersonas.cormacarena12a65,
-                  // Agrega otros valores que desees enviar
-                });
-                console.log(
-                  "habitacionesDatos después del push:",
-                  this.habitacionesDatos
-                );
-              } else {
-                console.log(
-                  "No se encontraron datos de precio para esta habitación"
-                );
-              }
-            })
-          );
-        } catch (error) {
-          // Maneja cualquier error que pueda ocurrir durante las solicitudes
-          console.log("error");
-          this.$q.notify({
-            message: "¡Ha ocurrido un error al guardar las habitaciones!",
-            color: "negative",
-          });
-        }
-        // fin ciclo de hablitaciones
-        //---------------------------------------------------------
-        //FIN HABITACIONES
-
-        // Ahora tienes el total de adultos y niños de todos los cuartos
-        console.log("Array de habitacionesDatos:", this.habitacionesDatos);
-        console.log("Total de adultos:", this.totalAdultos);
-        console.log("Total de niños:", this.totalNiños);
-
-        //otros
-        //suma
-        //PENDIENTES IMPUESTOS
-        // let totalImpuestos = 0;
-        // for (const impuesto in impuestosHabitacion) {
-        //   totalImpuestos += impuestosHabitacion[impuesto];
-        // }
-
-        // //FIN IMPUESTOS CAÑO CRISTAL
-
-        // // Add to TotalAcomodacion
-        // TotalAcomodacion += totalImpuestos;
-        // valorBrutoTotal += totalImpuestos;
-        // console.log(
-        //   "TOTALACOMODACION DESPUES DE IMPUESTOS ",
-        //   TotalAcomodacion
-        // );
-        // console.log("TOTALBRUTO DESPUES DE IMPUESTOS ", valorBrutoTotal);
-        // fin otros
-        // Iterar sobre el array habitacionesDatos
-        console.log("ENTRANDOOOOO HABITACION COSOTOS");
-        this.habitacionesDatos.forEach((habitacion) => {
-          // Nombres de las columnas de impuestos
-          console.log("ENTRANDOOOOO222 HABITACION COSOTOS");
-
-          console.log(
-            "habitacion.TotalAcomodacion;",
-            habitacion.TotalAcomodacion
-          );
-
-          const nombresColumnasImpuestos = [
-            "sencilla_ImpuestoHotel",
-            "doble_ImpuestoHotel",
-            "triple_ImpuestoHotel",
-            "cuadruple_ImpuestoHotel",
-            "quintuple_ImpuestoHotel",
-            "sextuple_ImpuestoHotel",
-            "niño_ImpuestoHotel",
-            "sencilla_ImpuestoIngr",
-            "doble_ImpuestoIngr",
-            "triple_ImpuestoIngr",
-            "cuadruple_ImpuestoIngr",
-            "quintuple_ImpuestoIngr",
-            "sextuple_ImpuestoIngr",
-            "niño_ImpuestoIngr",
-            "sencilla_Impoconsumo",
-            "doble_Impoconsumo",
-            "triple_Impoconsumo",
-            "cuadruple_Impoconsumo",
-            "quintuple_Impoconsumo",
-            "sextuple_Impoconsumo",
-            "niño_Impoconsumo",
+          const aerolineasDisponibles = [
+            "Avianca", "LATAM", "Satena", "JetSmart", "Clic", "Wingo",
+            "Plus ultra",
           ];
 
-          // Sumar el valor de TotalAcomodacion de cada habitación a la suma total
-          this.sumaTotalAcomodacion += habitacion.TotalAcomodacion;
-          console.log(
-            "suma total antes de los totales otros",
-            this.sumaTotalAcomodacion
-          );
-          //VALOR SUMA SUMATOTALACOMODACION
-          for (const propiedad in habitacion) {
-            console.log("propiedad", propiedad);
-            const valor = habitacion[propiedad];
-            const valorEntero = Number(valor);
-
-            // Verificar si la propiedad es un impuesto y si tiene un valor numérico
-            if (nombresColumnasImpuestos.includes(propiedad)) {
-              console.log("si paso", valorEntero);
-              console.log(
-                "suma total antesitos de los totales otros",
-                this.sumaTotalAcomodacion
-              );
-              const valorEntero2 = habitacion.adultos * valorEntero;
-              habitacion[propiedad] = valorEntero2;
-
-              console.log("cantidad adultos", habitacion.adultos);
-              console.log("cantidad adultos2", valorEntero2);
-
-              console.log("valor despues de multiplicaion", valorEntero);
-              if (habitacion.niños) {
-                console.log("entro a niños");
-
-                valorEntero2 += habitacion.niños * valorEntero;
-                habitacion[propiedad] += valorEntero2;
-
-                console.log("entro a niños valor:", valorEntero2);
-              }
-              this.sumaTotalAcomodacion += valorEntero2; // Sumar el valor del impuesto
-              this.sumaValorBrutohab += valorEntero2; // Sumar el valor del impuesto
-              console.log(
-                "suma total despusito de los totales otros",
-                this.sumaTotalAcomodacion
-              );
-            }
-          }
-          console.log(
-            "despues suma total antes de los totales otros",
-            this.sumaTotalAcomodacion
-          );
-
-          this.sumaValorBrutohab += habitacion.precioHabitacionTotal;
-          this.sumaTotalDescuento += habitacion.descuento;
-
-          this.cormacarena5a11Total += habitacion.cormacarena5a11 || 0;
-
-          this.cormacarena12a65Total += habitacion.cormacarena12a65 || 0;
-          this.cormacarenaExtranjeroTotal +=
-            habitacion.cormacarenaExtranjero || 0;
-          this.pqsNaturales5a24Total += habitacion.pqsNaturales5a24 || 0;
-          this.pqsNaturales25a65Total += habitacion.pqsNaturales25a65 || 0;
-          this.pqsNaturalesExtranjeroTotal +=
-            habitacion.pqsNaturalesExtranjero || 0;
-          this.alcaldiaNacionalTotal += habitacion.alcaldiaNacional || 0;
-          this.alcaldiaExtranjeroTotal += habitacion.alcaldiaExtranjero || 0;
-          this.defensaCivilTotal += habitacion.defensaCivil || 0;
-
-          //numero de personas
-          this.cormacarena5a11Personas += habitacion.cormacarena5a11Personas;
-          this.cormacarena12a65Personas += habitacion.cormacarena12a65Personas;
-          this.cormacarenaExtranjeroPersonas +=
-            habitacion.cormacarenaExtranjeroPersonas;
-          this.pqsNaturales5a24Personas += habitacion.pqsNaturales5a24Personas;
-          this.pqsNaturales25a65Personas +=
-            habitacion.pqsNaturales25a65Personas;
-          this.pqsNaturalesExtranjeroPersonas +=
-            habitacion.pqsNaturalesExtranjeroPersonas;
-          this.alcaldiaNacionalPersonas += habitacion.alcaldiaNacionalPersonas;
-          this.alcaldiaExtranjeroPersonas +=
-            habitacion.alcaldiaExtranjeroPersonas;
-          this.defensaCivilPersonas +=
-            habitacion.pqsNaturalesExtranjeroPersonas;
-        });
-        // Suma total de impuestos (considerando valores nulos como 0)
-        this.totalImpuestos =
-          (this.cormacarena5a11Total || 0) +
-          (this.cormacarena12a65Total || 0) +
-          (this.cormacarenaExtranjeroTotal || 0) +
-          (this.pqsNaturales5a24Total || 0) +
-          (this.pqsNaturales25a65Total || 0) +
-          (this.pqsNaturalesExtranjeroTotal || 0) +
-          (this.alcaldiaNacionalTotal || 0) +
-          (this.alcaldiaExtranjeroTotal || 0) +
-          (this.defensaCivilTotal || 0);
-        //fin suma total impuestos
-
-        console.log(
-          "VALOR ANTES DE IMPUESTOS CAÑO CRISTAL",
-          "VALOR BRUTO",
-          this.sumaValorBrutohab,
-          "VALORCLIENTE",
-          this.sumaTotalAcomodacion
-        );
-        //sumas a valor bruto a cliente TOTAL IMPUESTOS
-        this.sumaValorBrutohab += this.totalImpuestos;
-        this.sumaTotalAcomodacion += this.totalImpuestos;
-
-        console.log("VALOR TOTAL IMPUESTOS", this.totalImpuestos);
-        console.log(
-          "VALOR DESPUES DE IMPUESTOS CAÑO CRISTAL",
-          "VALOR BRUTO",
-          this.sumaValorBrutohab,
-          "VALORCLIENTE",
-          this.sumaTotalAcomodacion
-        );
-        //suplemento
-        this.sumaValorBrutohab += valorSuplemento;
-        this.sumaTotalAcomodacion += valorSuplemento;
-
-        console.log(
-          "valor de sumaValorBrutohab antes de extras",
-          this.sumaValorBrutohab
-        );
-        console.log(
-          "valor de sumaTotalAcomodacion antes de extras",
-          this.sumaTotalAcomodacion
-        );
-        //valores extras
-
-        this.sumaValorBrutohab +=
-          parseFloat(
-            this.extraValue1 === "" || this.extraValue1 === null
-              ? "0"
-              : this.extraValue1
-          ) ??
-          0 +
-            parseFloat(
-              this.extraValue2 === "" || this.extraValue2 === null
-                ? "0"
-                : this.extraValue2
-            ) ??
-          0 +
-            parseFloat(
-              this.transferInOutValue === "" || this.transferInOutValue === null
-                ? "0"
-                : this.transferInOutValue
-            ) ??
-          0;
-
-        this.sumaTotalAcomodacion +=
-          parseFloat(
-            this.extraValue1 === "" || this.extraValue1 === null
-              ? "0"
-              : this.extraValue1
-          ) ??
-          0 +
-            parseFloat(
-              this.extraValue2 === "" || this.extraValue2 === null
-                ? "0"
-                : this.extraValue2
-            ) ??
-          0 +
-            parseFloat(
-              this.transferInOutValue === "" || this.transferInOutValue === null
-                ? "0"
-                : this.transferInOutValue
-            ) ??
-          0;
-
-        console.log(
-          "valor de sumaValorBrutohab despues de extras",
-          this.sumaValorBrutohab
-        );
-        console.log(
-          "valor de sumaTotalAcomodacion despues de extras",
-          this.sumaTotalAcomodacion
-        );
-        // Imprimir la suma total
-        console.log(
-          "La suma total de TotalAcomodacion en todas las habitaciones es:",
-          this.sumaTotalAcomodacion
-        );
-        console.log(
-          "La suma total de sumaValorBrutohab en todas las habitaciones es:",
-          this.sumaValorBrutohab
-        );
-        console.log(
-          "La suma total de descuetno en todas las habitaciones es:",
-          this.sumaTotalDescuento
-        );
-
-        //SI ES COMISION O NO
-        // Variables para almacenar los valores calculados
-        let rteFuenteCalculado = null;
-        let ivaCalculado = null;
-        let rteIcaCalculado = null;
-        let totalComision = null;
-        if (clienteTipoBase === "Comisión") {
-          console.log("si es comison");
-          this.total;
-          totalComision = this.sumaTotalDescuento;
-          if (ivaValor !== null && ivaValor !== 0) {
-            // Calcula y redondea el valor de ivaCalculado
-            ivaCalculado = Math.round(
-              this.sumaTotalDescuento * (ivaValor / 100)
-            );
-            this.ivaCalculado = ivaCalculado;
-            totalComision += ivaCalculado;
-          }
-
-          if (rteFuente !== null && rteFuente !== 0) {
-            // Calcula y redondea el valor de rteFuenteCalculado
-            rteFuenteCalculado = Math.round(
-              this.sumaTotalDescuento * (rteFuente / 100)
-            );
-            this.rteFuenteCalculado = rteFuenteCalculado;
-            totalComision -= rteFuenteCalculado;
-          }
-
-          if (rteIca !== null && rteIca !== 0) {
-            // Calcula y redondea el valor de rteIcaCalculado
-            rteIcaCalculado = Math.round(
-              this.sumaTotalDescuento * (rteIca / 100)
-            );
-            this.rteIcaCalculado = rteIcaCalculado;
-            totalComision -= rteIcaCalculado;
-          }
-        }
-
-        // Imprime los valores calculados en la consola
-        console.log("this.ivaCalculado", ivaCalculado);
-        console.log("this.rteFuenteCalculado", rteFuenteCalculado);
-        console.log("this.rteIcaCalculado", rteIcaCalculado);
-        console.log("this.totalComision", totalComision);
-
-        //transporte
-
-        const totalPasajeros =
-          this.totalAdultos + (this.totalNiños ? this.totalNiños : 0);
-
-        console.log("totalPasajeros", totalPasajeros);
-        console.log("1combus", this.combus);
-
-        combus *= totalPasajeros;
-        tasa *= totalPasajeros;
-        console.log("despuescombus2.0", combus);
-
-        iva *= totalPasajeros;
-        ta *= totalPasajeros;
-        ivaTa *= totalPasajeros;
-        otros *= totalPasajeros;
-        precioTrans *= totalPasajeros;
-        this.sumaTotalAcomodacion += precioTrans;
-
-        console.log("combus multi", combus);
-        console.log("precioTrans", precioTrans);
-        //suma nueva total precioClienteAcomodacion
-        if (clienteTipoBase === "Comisión") {
-          this.sumaTotalAcomodacion = 0;
-          this.sumaTotalAcomodacion = this.sumaValorBrutohab - totalComision;
-        }
-        //fecha
-        const fechaCreacion = new Date();
-        fechaCreacion.setHours(0, 0, 0, 0); // Establece la hora a 00:00:00.000
-        console.log(fechaCreacion.toISOString().split("T")[0]); // Obtiene solo la parte de la fecha
-        //id usuario
-        const userData = LocalStorage.getItem("userData");
-        console.log(userData);
-        let numeroNoches = parseInt(this.noche.value); // Extrae el número usando una expresión regular
-        let totalNoche =
-          parseInt(numeroNoches) + // Asegúrate de que numeroNoches sea un número válido
-          parseInt(this.additionalNightCount ? this.additionalNightCount : 0); // Asegúrate de que additionalNightCount sea un número válido o establece 0 como valor por defecto si no está definido
-
-        // Imprime los valores de numeroNoches y additionalNightCount para depurar
-        console.log("numeroNoches:", numeroNoches);
-        console.log("additionalNightCount:", this.additionalNightCount);
-
-        console.log("totalNoche:", totalNoche); // Imprime el resultado de la suma
-
-        const extraValuesString =
-          this.numExtraValues === 0
-            ? null
-            : [this.extraValue1, this.extraValue2]
-                .filter((value) => value !== null && value !== "")
-                .join(this.numExtraValues === 2 ? "*" : ""); // Usamos el separador solo si hay dos valores
-        // SI APLICA RTE FUENTE O NO.
-        console.log("extraValue1", this.extraValue1);
-        console.log("extraValuesString", extraValuesString);
-        if (this.programName !== "Caño Cristales") {
-          this.tieneImpuestos = false; // No tiene impuestos
-        } else {
-          this.tieneImpuestos = true; // Tiene impuestos
-        }
-
-        console.log("llego a formData");
-        console.log("combus", this.combus);
-
-        const formData = {
-          // idCotizacion: idCotizacion,
-          salida: this.selectedDeparture,
-          destino: this.destination,
-          nombrePrograma: this.programName,
-          noches: totalNoche,
-          plan: this.plan,
-          hotel: this.hotel,
-          totalAdultos: this.totalAdultos,
-          totalNinos: this.totalNiños,
-          totalPasajeros: totalPasajeros,
-          precioBrutoTotal: this.sumaValorBrutohab,
-          totalPrecioCliente: this.sumaTotalAcomodacion,
-          valorDescuento: this.sumaTotalDescuento,
-
-          //transporte
-          combus: combus,
-          tasa: tasa,
-          iva: iva,
-          ta: ta,
-          ivaTa: ivaTa,
-          otros: otros,
-          precioTrans: precioTrans, // Este es el valor real, no una cadena literal
-
-          suplemento: valorSuplemento,
-
-          // esto siempre va.
-          cliente: this.selectedClient,
-          clientePorcentaje: clientePorcentaje,
-          CreadorCotizacion: userData.id,
-          fechaCreacion: fechaCreacion.toISOString().split("T")[0],
-          aerolineaIda: this.aerolineaValue1,
-          vueloIda: this.vueloValue1,
-          horaLlegadaIda: this.horaLlegadaValue1,
-          horaSalidaIda: this.horaSalidaValue1,
-          claseIda: this.claseValue1,
-          fechaInicio: this.dateRange[0],
-          aerolineaVuelta: this.aerolineaValue2,
-          vueloVuelta: this.vueloValue2,
-          horaLlegadaVuelta: this.horaLlegadaValue2,
-          horaSalidaVuelta: this.horaSalidaValue2,
-          claseVuelta: this.claseValue2,
-          fechaFin: this.dateRange[1],
-
-          //VUELOS ESCALA
-          aerolineaEscalaIda: this.aerolineaEscalaIda || null,
-          vueloEscalaIda: this.vueloEscalaIda || null,
-          horaLlegadaEscalaIda: this.horaLlegadaEscalaIda || null,
-          horaSalidaEscalaIda: this.horaSalidaEscalaIda || null,
-          claseEscalaIda: this.claseEscalaIda || null,
-
-          aerolineaEscalaVuelta: this.aerolineaEscalaVuelta || null,
-          vueloEscalaVuelta: this.vueloEscalaVuelta || null,
-          horaLlegadaEscalaVuelta: this.horaLlegadaEscalaVuelta || null,
-          horaSalidaEscalaVuelta: this.horaSalidaEscalaVuelta || null,
-          claseEscalaVuelta: this.claseEscalaVuelta || null,
-
-          //valores si es comision
-          rteFuente: rteFuenteCalculado,
-          ivaValor: ivaCalculado,
-          rteIca: rteIcaCalculado,
-          totalComision: totalComision,
-          correo: this.correo,
-
-          transfer: this.transferInOutValue || null,
-          asesorExterno: "this.selectedUser.value || null",
-          extra1: extraValuesString || null,
-          incluye: null,
-          noIncluye: null,
-          status: "pendiente",
-          tieneImpuestos: this.tieneImpuestos,
-        };
-        console.log("formData", formData);
-        console.log("formData", formData);
-
-        // Realizar la solicitud para guardar la cotización con los precios de las habitaciones
-        const cotizacionResponse = await axios.post(
-          this.programName !== "Caño Cristales"
-            ? "https://backmultidestinos.onrender.com/cotizacion"
-            : "https://backmultidestinos.onrender.com/cotizacion/c",
-          formData
-        );
-        if (cotizacionResponse.data.success) {
-          // Obtener el idCotizacion generado por el backend
-          console.log("mirar el numero", cotizacionResponse.data.success);
-          console.log("mirar el numero1", cotizacionResponse.data.idCotizacion);
-          this.idCotizacion = cotizacionResponse.data.idCotizacion;
-
-          this.$q.notify({
-            message: `Cotización guardada con éxito. ID: ${this.idCotizacion}`,
-            color: "positive",
-          });
-          console.log("idCotizacion", this.idCotizacion);
-        }
-        console.log("Respuesta del servidor:", cotizacionResponse.data);
-        console.log("idCotizacion1", this.idCotizacion);
-
-        const formImpuestos = {
-          idCotizacion: this.idCotizacion,
-          cormacarena5a11_Total: this.cormacarena5a11Total,
-          cormacarena12a65_Total: this.cormacarena12a65Total,
-          cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
-          pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
-          pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
-          pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
-          alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
-          alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
-          defensaCivil_Total: this.defensaCivilTotal,
-          //personas Impuestos Total
-          defensaCivil_numeroPersonas: this.defensaCivilPersonas,
-          alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
-          alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
-          pqsNaturalesExtranjero_numeroPersonas:
-            this.pqsNaturalesExtranjeroPersonas,
-          pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
-          pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
-          cormacarenaExtranjero_numeroPersonas:
-            this.cormacarenaExtranjeroPersonas,
-          cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
-          cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
-        };
-
-        if (this.programName == "Caño Cristales") {
-          const cotizacionImpuesto = await axios.post(
-            "https://backmultidestinos.onrender.com/ImpuestoCot",
-            formImpuestos
-          );
-          // ... procesar la respuesta de cotizacionImpuesto si es necesario
-        }
-
-        // Obtener el idCotizacion generado
-        // Realizar las solicitudes para guardar las habitaciones
-        const habitacionesPromises = this.habitacionesDatos.map(
-          async (habitacion) => {
-            // Agregar el idCotizacion correspondiente al objeto de la habitación
-            habitacion.idCotizacion = this.idCotizacion;
-
-            // Realizar la solicitud POST para guardar los datos de la habitación
-            const habitacionResponse = await axios.post(
-              "https://backmultidestinos.onrender.com/habitacionCotizacion/",
-              habitacion
-            );
-            console.log("Respuesta de la habitación:", habitacionResponse.data);
-
-            return habitacionResponse.data; // Retornar la respuesta de la solicitud POST
-          }
-        );
-
-        const habitacionesResponses = await Promise.all(habitacionesPromises);
-        console.log(
-          "Respuestas de todas las habitaciones:",
-          habitacionesResponses
-        );
-        // Muestra el mensaje de éxito
-        this.$q.notify({
-          message: "¡Se ha registrado con éxito!",
-          color: "positive",
-        });
-
-        location.reload();
-
-        // Llama al método para cerrar el modal
-        this.closeModal();
-        this.resetVariables();
-
-        // window.location.reload(); QUITAR
-        // Manejar la respuesta del servidor si es necesario
-      } catch (error) {
-        console.error("Error al guardar la cotización:", error);
-        this.closeModal();
-
-        this.resetVariables();
-
-        this.$q.notify({
-          message: "¡Ha ocurrido un error al guardar la cotización!",
-          color: "negative",
-        });
-      }
-    },
-
-    //GUARDAR PARA EL PERSONALIZADO.
-    async saveFormDataPersonalizado() {
-      //
-      // Iterar sobre los datos de transporte y calcular totales
-      if (
-        !this.aerolineaValue1 ||
-        !this.vueloValue1 ||
-        !this.aerolineaValue2 ||
-        !this.vueloValue2
-      ) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de aerolínea y vuelo para ambas direcciones.",
-          color: "negative",
-        });
-        return; // Detiene el proceso si hay campos obligatorios sin completar
-      }
-
-      if (
-        !this.horaSalidaValue1 ||
-        !this.horaLlegadaValue1 ||
-        !this.horaSalidaValue2 ||
-        !this.horaLlegadaValue2
-      ) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de horas de salida y llegada para ambas direcciones.",
-          color: "negative",
-        });
-        return;
-      }
-
-      if (!this.claseValue1 || !this.claseValue2) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de clase para ambas direcciones.",
-          color: "negative",
-        });
-        return;
-      }
-
-      if (!this.dateRange[0] || !this.dateRange[1]) {
-        this.$q.notify({
-          message:
-            "Por favor complete la información de fechas de inicio y fin.",
-          color: "negative",
-        });
-        return;
-      }
-      let combus = 0,
-        tasa = 0,
-        iva = 0,
-        ta = 0,
-        ivaTa = 0,
-        otros = 0,
-        precioTrans = 0;
-
-      const impuestosResponse = await axios.get(
-        "https://backmultidestinos.onrender.com/canoCristal/"
-      );
-      const impuestosData = impuestosResponse.data;
-      console.log("Datos de impuestos obtenidos:", impuestosData);
-      try {
-        //clientes porcentaje
-        const clienteResponse = await axios.get(
-          `https://backmultidestinos.onrender.com/cliente/buscar/${this.selectedClient}`
-        );
-        console.log("clienteResponse", clienteResponse);
-
-        // Obtener el porcentaje del cliente
-        let clientePorcentaje = null;
-        let clienteTipoBase = null;
-        let rteFuente = null;
-        let rteIca = null;
-        let ivaValor = null;
-
-        clienteResponse.data.forEach((cliente) => {
-          if (cliente.nombre === this.selectedClient) {
-            clientePorcentaje =
-              this.programName === "Caño Cristales"
-                ? parseFloat(cliente.lmc) // Valor si es "Caño Cristales"
-                : parseFloat(cliente.demas); // Valor por defecto
-            clienteTipoBase = cliente.tipoBase;
-            rteFuente = cliente.rteFuente;
-            rteIca = cliente.rteIca;
-            ivaValor = cliente.porcentajeIva;
-          }
-        });
-
-        console.log("clientePorcentaje", clientePorcentaje);
-        console.log("clienteTipoBase", clienteTipoBase);
-        console.log("rteFuente", rteFuente);
-        console.log("rteIca", rteIca);
-        console.log("ivaValor", ivaValor);
-
-        //fin de porcentaje clientes
-        // HASTA ACA ESTA BIEN.
-
-        //ACA SUPLEMENTO
-
-        // Obtener información del tiquete
-        const informacionTiquete = await this.obtenerInformacionTiquete(
-          this.selectedDeparture,
-          this.destination
-        );
-
-        // Puedes usar la información del tiquete aquí como lo necesites
-        console.log("Información del tiquete obtenida:", informacionTiquete);
-        const tiquete = informacionTiquete[0].total;
-        const tiqueteNum = parseFloat(tiquete);
-        console.log("tiquete", tiquete);
-        console.log("tiqueteNum", tiqueteNum);
-        // Después de obtener la información del tiquete
-        let valorSuplemento = 0; // Valor predeterminado si no hay suplemento
-
-        if (this.supplementValues) {
-          // Si hay un suplemento, calcula el valor restando el suplemento del precio del tiquete
-          for (let i = 0; i < this.supplementValues.length; i++) {
-            if (this.supplementValues[i]) {
-              console.log("persona", [i], this.supplementValues[i]);
-
-              valorSuplemento +=
-                parseFloat(this.supplementValues[i]) - tiqueteNum;
-            }
-            console.log("Total suplemento", [i], valorSuplemento);
-          }
-        }
-
-        // Ahora puedes usar valorSuplemento según sea necesario
-        console.log("Valor del suplemento:", valorSuplemento);
-        //----------------------------------------------------------------
-        //HABITACION PETICION
-
-        // Construir el cuerpo de la solicitud para obtener los precios de las habitaciones
-        // Iterar sobre las habitaciones en el formulario
-        const preciosRequestDataArray = [];
-
-        try {
-          // Realizar todas las solicitudes simultáneamente
-          const preciosResponseArray = await Promise.all(
-            preciosRequestDataArray.map((data) =>
-              axios.post(
-                "https://backmultidestinos.onrender.com/hoteles/buscarT",
-                data
-              )
-            )
-          );
-          console.log("preciosResponseArray", preciosResponseArray);
-          console.log("preciosResponseArray data", preciosResponseArray.data);
-          // corresponde a las habitaciones y precios
-          const datosProcesados = [];
-
-          // Iterar sobre cada objeto en preciosResponseArray
-          preciosResponseArray.forEach((response) => {
-            // Verificar si hay datos en esta respuesta
-            if (response.data.length > 0) {
-              // Agregar los datos completos al array local
-              datosProcesados.push(...response.data);
-            } else {
-              console.log("No se encontraron datos en esta respuesta");
-            }
-          });
-
-          // Ahora puedes usar datosProcesados para acceder a los datos de manera más conveniente
-          console.log(datosProcesados);
-
-          //TRANSPORTE Y IVAS Y OTROS
-
-          combus += parseFloat(this.Combus) || 0;
-          tasa += parseFloat(this.Tasa) || 0;
-          iva += parseFloat(this.Iva) || 0;
-          ta += parseFloat(this.Ta) || 0;
-          ivaTa += parseFloat(this.IvaTa) || 0;
-          otros += parseFloat(this.otros) || 0;
-          precioTrans += parseFloat(this.precioTransp) || 0;
-
-          console.log("precioTrans", precioTrans);
-          //FIN TRASNPORTES------------------------------------------------------------------------------------------------
-          // Inicializar variables para el total de adultos y niños
-
-          let childrenPrice = 0;
-          //   this.habitacionesDatos.forEach((habitacion) => {
-          //   // Sumar el valor de TotalAcomodacion de cada habitación a la suma total
-
-          //   this.sumaTotalAcomodacion += habitacion.TotalAcomodacion;
-          //   this.sumaValorBrutohab += habitacion.precioHabitacionTotal;
-          //   this.sumaTotalDescuento += habitacion.descuento;
-
-          // });
-          // Iterar sobre cada habitación en el formulario
-          this.rooms.forEach(async (room, index) => {
-            console.log(`Procesando habitación ${index + 1}`);
-
-            // Obtener el tipo de habitación seleccionado en el formulario para esta habitación
-            //roomAccommodation es igual a la acomodacion
-            const roomAccommodation = room.accommodation;
-            //roomtype es igual al tipo de habitacion
-            const roomType = room.roomType;
-            const precioHabitacionComision = parseFloat(room.valor);
-            const precioHabitacionFlayer =
-              precioHabitacionComision + parseFloat(precioTrans);
-            // Obtener los datos de precio para el tipo de habitación seleccionado
-            const roomPriceData = 1;
-
-            // Verificar si se encontraron datos de precio para este tipo de habitación
-            if (roomPriceData) {
-              const numAdultos = room.adults;
-              const numNiños = this.hasChildren[index] ? room.numChildren : 0;
-              // Extraer el precio de la acomodación
-              const accommodationPrice = precioHabitacionFlayer; // Utilizar el tipo de habitación como clave
-              console.log(`Precio de la acomodación: ${accommodationPrice}`);
-
-              // Guardar el precio de la acomodación en la habitación
-              room.accommodationPrice = accommodationPrice;
-              // Inicializar el precio total
-              let totalPrice = 0;
-              // Si hay niños en esta habitación, obtener su precio
-              let childrenPriceNumber = 0;
-
-              //SACAR VALOR COMISIONABLE.
-
-              console.log("precioTrans", precioTrans);
-
-              const ValorComisionableAdultos = precioHabitacionComision;
-              this.ValorComisionableNiños = 0;
-              let ValorClienteNiño = 0;
-              console.log(
-                "antes de childrenPriceNumber",
-                this.childrenPriceNumber
-              );
-              if (this.hasChildren[index]) {
-                this.ValorComisionableNiños =
-                  this.childrenPriceNumber -
-                  precioTrans +
-                  additionalNightTotalPriceNiño;
-
-                this.ValorClienteNiño =
-                  this.ValorComisionableNiños -
-                  this.ValorComisionableNiños * (clientePorcentaje / 100);
-              }
-              console.log("this.ValorClienteNiño", this.ValorClienteNiño);
-              console.log("ValorComisionableAdultos", ValorComisionableAdultos);
-              console.log(
-                "ValorComisionableNiños",
-                this.ValorComisionableNiños
-              );
-
-              // PORCENTAJE
-
-              //PRECIO CON PORCENTAJE
-              const ValorClienteAdulto =
-                ValorComisionableAdultos -
-                ValorComisionableAdultos * (clientePorcentaje / 100);
-              console.log("ValorClienteAdulto", ValorClienteAdulto);
-              console.log("ValorClienteNiño", ValorClienteNiño);
-
-              //valor total descuento con adulto + niño x habitacion
-
-              const ValorCliente = ValorClienteAdulto + ValorClienteNiño;
-
-              console.log("ValorCliente", ValorCliente);
-
-              const valorBrutoAdulto = accommodationPrice * numAdultos;
-              const valorBrutoniño =
-                (this.childrenPriceNumber ? this.childrenPriceNumber : 0) *
-                numNiños;
-              let valorBrutoTotal = valorBrutoAdulto + valorBrutoniño;
-              console.log("valorBrutoAdulto", valorBrutoAdulto);
-              console.log("valorBrutoniño", valorBrutoniño);
-              console.log("valorBrutoTotal", valorBrutoTotal);
-
-              console.log(
-                `Número de adultos en la habitación ${index + 1}: ${numAdultos}`
-              );
-              console.log(
-                `Número de niños en la habitación ${index + 1}: ${numNiños}`
-              );
-
-              const TotalAcomodacionAdulto = ValorClienteAdulto * numAdultos;
-              console.log("TotalAcomodacionAdulto", TotalAcomodacionAdulto);
-              let TotalAcomodacionNiño = this.ValorClienteNiño * numNiños;
-              console.log("TotalAcomodacionNiño", TotalAcomodacionNiño);
-              if (
-                TotalAcomodacionNiño === null ||
-                isNaN(TotalAcomodacionNiño)
-              ) {
-                TotalAcomodacionNiño = 0;
-              }
-              console.log(
-                "TotalAcomodacionNiño después de la condición",
-                TotalAcomodacionNiño
-              );
-              let TotalAcomodacion =
-                TotalAcomodacionNiño + TotalAcomodacionAdulto;
-
-              console.log("TotalAcomodacion", TotalAcomodacion);
-
-              // Agregar el número de adultos y niños al total
-              this.totalAdultos += parseInt(numAdultos);
-              this.totalNiños += numNiños;
-              const Valorporcentaje =
-                ValorComisionableAdultos * numAdultos +
-                this.ValorComisionableNiños * numNiños;
-              const descuento = Valorporcentaje * (clientePorcentaje / 100);
-              console.log("descuento", descuento);
-              console.log("Valorporcentaje", Valorporcentaje);
-
-              //IMPUESTOS CAÑO CRISTAL
-
-              // Calcular impuestos
-              let impuestosHabitacion = {
-                cormacarena5a11: 0,
-                cormacarena12a65: 0,
-                cormacarenaExtranjero: 0,
-                pqsNaturales5a24: 0,
-                pqsNaturales25a65: 0,
-                pqsNaturalesExtranjero: 0,
-                alcaldiaNacional: 0,
-                alcaldiaExtranjero: 0,
-                defensaCivil: 0,
-              };
-              let impuestosHabitacionPersonas = {
-                cormacarena5a11: 0,
-                cormacarena12a65: 0,
-                cormacarenaExtranjero: 0,
-                pqsNaturales5a24: 0,
-                pqsNaturales25a65: 0,
-                pqsNaturalesExtranjero: 0,
-                alcaldiaNacional: 0,
-                alcaldiaExtranjero: 0,
-                defensaCivil: 0,
-              };
-              console.log("Habitación actual:", room);
-
-              // Verificar si hay edades para calcular impuestos
-
-              if (room.adultAges.length > 0) {
-                // Calcular impuestos para cada persona (adultos y niños)
-                for (let i = 0; i < room.adultAges.length; i++) {
-                  const edadPersona = room.adultAges[i];
-                  const esExtranjero = room.isForeigner[i];
-
-                  console.log(
-                    `Calculando impuestos para la persona ${
-                      i + 1
-                    } (edad: ${edadPersona}, extranjero: ${esExtranjero})`
-                  );
-
-                  for (const impuesto of impuestosData) {
-                    const nombreImpuesto = impuesto.IMPUESTO;
-
-                    console.log(`Impuesto actual: ${nombreImpuesto}`);
-
-                    if (nombreImpuesto === "cormacarena") {
-                      if (esExtranjero) {
-                        impuestosHabitacion.cormacarenaExtranjero +=
-                          parseFloat(impuesto.EXTRANJERO) || 0;
-                        impuestosHabitacionPersonas.cormacarenaExtranjero++;
-                      } else if (edadPersona >= 5 && edadPersona <= 11) {
-                        impuestosHabitacion.cormacarena5a11 +=
-                          parseFloat(impuesto["5 a 11 años"]) || 0;
-                        impuestosHabitacionPersonas.cormacarena5a11++;
-                      } else if (edadPersona >= 12 && edadPersona <= 65) {
-                        impuestosHabitacion.cormacarena12a65 +=
-                          parseFloat(impuesto["12 a 65 años"]) || 0;
-                        impuestosHabitacionPersonas.cormacarena12a65++;
-                      }
-                    } else if (nombreImpuesto === "pqsNaturales") {
-                      if (esExtranjero) {
-                        impuestosHabitacion.pqsNaturalesExtranjero +=
-                          parseFloat(impuesto.EXTRANJERO) || 0;
-                        impuestosHabitacionPersonas.pqsNaturalesExtranjero++;
-                      } else if (edadPersona >= 5 && edadPersona <= 24) {
-                        impuestosHabitacion.pqsNaturales5a24 +=
-                          parseFloat(impuesto["5 a 24 años"]) || 0;
-                        impuestosHabitacionPersonas.pqsNaturales5a24++;
-                      } else if (edadPersona >= 25 && edadPersona <= 65) {
-                        impuestosHabitacion.pqsNaturales25a65 +=
-                          parseFloat(impuesto["25 a 65 años"]) || 0;
-                        impuestosHabitacionPersonas.pqsNaturales25a65++;
-                      }
-                    } else if (nombreImpuesto === "alcaldia") {
-                      if (esExtranjero) {
-                        impuestosHabitacion.alcaldiaExtranjero +=
-                          parseFloat(impuesto.EXTRANJERO) || 0;
-                        impuestosHabitacionPersonas.alcaldiaExtranjero++;
-                      } else if (edadPersona >= 5 && edadPersona <= 1000) {
-                        // Solo para nacionales mayores de 12 años
-                        impuestosHabitacion.alcaldiaNacional +=
-                          parseFloat(impuesto["12 a 65 años"]) || 0;
-                        impuestosHabitacionPersonas.alcaldiaNacional++;
-                      }
-                    } else if (nombreImpuesto === "defensaCivil") {
-                      // Asumiendo que el impuesto de Defensa Civil se aplica a todos por igual
-                      impuestosHabitacion.defensaCivil +=
-                        parseFloat(impuesto["5 a 11 años"]) || 0;
-                      impuestosHabitacionPersonas.defensaCivil++;
-                    }
-
-                    console.log(
-                      `   Impuesto ${nombreImpuesto} (acumulado): ${impuestosHabitacion[nombreImpuesto]}`
-                    ); // Mostrar el acumulado de cada impuesto
-                  }
-                }
-              }
-
-              console.log(
-                "Impuestos totales por habitación:",
-                impuestosHabitacion
-              );
-
-              // Convertir impuestos a null si son 0
-              for (const impuesto in impuestosHabitacion) {
-                if (impuestosHabitacion[impuesto] === 0) {
-                  impuestosHabitacion[impuesto] = null;
-                }
-              }
-
-              console.log(
-                "Impuestos calculados para la habitación:",
-                impuestosHabitacion
-              ); // Verificar impuestos calculados
-              console.log(
-                "Número de personas por impuesto:",
-                impuestosHabitacionPersonas
-              );
-              //FIN IMPUESTOS CAÑO CRISTAL
-
-              this.habitacionesDatos.push({
-                idCotizacion: "",
-                adultos: numAdultos,
-                niños: numNiños,
-                acomodacion: roomAccommodation,
-                tipoHabitacion: roomType,
-
-                //preciosTotales
-                precioFlayerAdulto: accommodationPrice,
-                precioFlayerNino: this.childrenPriceNumber,
-
-                //valores brutos
-                precioHabitacionNino: valorBrutoniño,
-                precioHabitacionAdulto: valorBrutoAdulto,
-                precioHabitacionTotal: valorBrutoTotal,
-
-                //comisionables
-                precioComisionableAdulto: ValorComisionableAdultos,
-                precioComisionableNino: this.ValorComisionableNiños,
-
-                //descuentos
-
-                valorDescuentoHabitacionNino: this.ValorClienteNiño,
-
-                valorDescuentoHabitacionAdulto: ValorClienteAdulto,
-                valorDescuentoCliente: ValorCliente,
-                descuento: descuento,
-
-                TotalAcomodacionAdulto: TotalAcomodacionAdulto,
-                TotalAcomodacionNino: TotalAcomodacionNiño,
-                TotalAcomodacion: TotalAcomodacion,
-
-                //EDADES SOLO SI ES CAÑO CRISTAL
-                edadesAdultos: room.adultAges
-                  .filter((age) => age !== null)
-                  .join(","),
-                edadNino: room.childAge !== null ? room.childAge : null,
-                extranjero: room.isForeigner // Nuevo campo con la información de extranjeros
-                  .map((isForeign) => (isForeign ? "SI" : "NO")) // Convertir a "SI" o "NO"
-                  .join(","), // Unir en una cadena separada por comas
-
-                //impuestos:
-                defensaCivil: impuestosHabitacion.defensaCivil,
-                defensaCivilPersonas: impuestosHabitacionPersonas.defensaCivil,
-
-                //2
-                alcaldiaNacional: impuestosHabitacion.alcaldiaNacional,
-                alcaldiaNacionalPersonas:
-                  impuestosHabitacionPersonas.alcaldiaNacional,
-                alcaldiaExtranjero: impuestosHabitacion.alcaldiaExtranjero,
-                alcaldiaExtranjeroPersonas:
-                  impuestosHabitacionPersonas.alcaldiaExtranjero,
-
-                //3
-                pqsNaturalesExtranjero:
-                  impuestosHabitacion.pqsNaturalesExtranjero,
-                pqsNaturalesExtranjeroPersonas:
-                  impuestosHabitacionPersonas.pqsNaturalesExtranjero,
-                pqsNaturales25a65: impuestosHabitacion.pqsNaturales25a65,
-                pqsNaturales25a65Personas:
-                  impuestosHabitacionPersonas.pqsNaturales25a65,
-                pqsNaturales5a24: impuestosHabitacion.pqsNaturales5a24,
-                pqsNaturales5a24Personas:
-                  impuestosHabitacionPersonas.pqsNaturales5a24,
-                //3
-                cormacarenaExtranjero:
-                  impuestosHabitacion.cormacarenaExtranjero,
-                cormacarenaExtranjeroPersonas:
-                  impuestosHabitacionPersonas.cormacarenaExtranjero,
-                cormacarena5a11: impuestosHabitacion.cormacarena5a11,
-                cormacarena5a11Personas:
-                  impuestosHabitacionPersonas.cormacarena5a11,
-                cormacarena12a65: impuestosHabitacion.cormacarena12a65,
-                cormacarena12a65Personas:
-                  impuestosHabitacionPersonas.cormacarena12a65,
-                // Agrega otros valores que desees enviar
+          const idsAerolineas = [
+            "aerolineaIda",
+            "aerolineaVuelta",
+            "aerolineaEscala1",
+            "aerolineaEscala2",
+            "aerolineaEscala3",
+            "aerolineaEscala4"
+          ];
+
+          idsAerolineas.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+              // Limpiar contenido previo
+              select.innerHTML = '';
+
+              // Opción por defecto (placeholder)
+              const defaultOption = document.createElement("option");
+              defaultOption.value = "";
+              defaultOption.textContent = "✈️ Ej: Satena";
+              defaultOption.disabled = true;
+              defaultOption.selected = true;
+              select.appendChild(defaultOption);
+
+              // Agregar aerolíneas disponibles
+              aerolineasDisponibles.forEach(aerolinea => {
+                const option = document.createElement("option");
+                option.value = aerolinea;
+                option.textContent = aerolinea;
+                select.appendChild(option);
               });
-            } else {
-              console.log(
-                "No se encontraron datos de precio para esta habitación"
-              );
             }
           });
+
+
+
+
+
+
+          // ============================ ESCALA OPCIONAL ============================ //
+
+          const checkboxConfig = [
+            { checkboxId: 'tieneEscala_Ida', sectionId: 'infoEscala' },
+            { checkboxId: 'tieneEscala_Regreso', sectionId: 'infoEscala_1' },
+            { checkboxId: 'tieneEscala_Ida_y_Regreso', sectionId: 'infoEscala_2' },
+            { checkboxId: 'asesorExterno', sectionId: 'infoAsesorExterno' },
+            { checkboxId: 'nocheAdicional', sectionId: 'infoNocheAdicional' },
+            { checkboxId: 'suplemento', sectionId: 'infoSuplemento' }
+          ];
+
+          // Referencias a checkboxes y secciones
+          const checkboxes = {};
+          const sections = {};
+
+          checkboxConfig.forEach(({ checkboxId, sectionId }) => {
+            checkboxes[checkboxId] = document.getElementById(checkboxId);
+            sections[sectionId] = document.getElementById(sectionId);
+          });
+
+          function actualizarEscalas() {
+            // Captura el estado actual (si están marcadas o no)
+            const ida = checkboxes['tieneEscala_Ida'].checked;
+            const regreso = checkboxes['tieneEscala_Regreso'].checked;
+            const idaYRegreso = checkboxes['tieneEscala_Ida_y_Regreso'].checked;
+
+            // PASO 1: Reiniciar todo al estado base
+            // Esto asegura que:
+            // - todos los checkboxes estén habilitados
+            // - todas las secciones ocultas
+            ['tieneEscala_Ida', 'tieneEscala_Regreso', 'tieneEscala_Ida_y_Regreso'].forEach(id => {
+              checkboxes[id].disabled = false;  // Habilita el checkbox
+              const sectionId = checkboxConfig.find(c => c.checkboxId === id).sectionId;
+              sections[sectionId].style.display = 'none'; // Oculta la sección
+            });
+
+            // PASO 2: Aplicar lógica dependiendo de qué opción está seleccionada
+
+            if (idaYRegreso) {
+              // Si se selecciona "ida y regreso":
+              // - Desmarcar las otras dos
+              checkboxes['tieneEscala_Ida'].checked = false;
+              checkboxes['tieneEscala_Regreso'].checked = false;
+
+              // - Deshabilitarlas
+              checkboxes['tieneEscala_Ida'].disabled = true;
+              checkboxes['tieneEscala_Regreso'].disabled = true;
+
+              // - Mostrar solo la sección de "ida y regreso"
+              sections['infoEscala_2'].style.display = 'block';
+
+            } else if (ida) {
+              // Si se selecciona solo "ida":
+              // - Desmarcar las otras dos
+              checkboxes['tieneEscala_Regreso'].checked = false;
+              checkboxes['tieneEscala_Ida_y_Regreso'].checked = false;
+
+              // - Deshabilitarlas
+              checkboxes['tieneEscala_Regreso'].disabled = true;
+              checkboxes['tieneEscala_Ida_y_Regreso'].disabled = true;
+
+              // - Mostrar solo la sección de "ida"
+              sections['infoEscala'].style.display = 'block';
+
+            } else if (regreso) {
+              // Si se selecciona solo "regreso":
+              // - Desmarcar las otras dos
+              checkboxes['tieneEscala_Ida'].checked = false;
+              checkboxes['tieneEscala_Ida_y_Regreso'].checked = false;
+
+              // - Deshabilitarlas
+              checkboxes['tieneEscala_Ida'].disabled = true;
+              checkboxes['tieneEscala_Ida_y_Regreso'].disabled = true;
+
+              // - Mostrar solo la sección de "regreso"
+              sections['infoEscala_1'].style.display = 'block';
+            }
+          }
+
+
+
+          // Escuchar cambios en todos los checkboxes relevantes
+          ['tieneEscala_Ida', 'tieneEscala_Regreso', 'tieneEscala_Ida_y_Regreso'].forEach(id => {
+            checkboxes[id].addEventListener('change', actualizarEscalas);
+          });
+
+          // Resto de checkboxes normales
+          ['asesorExterno', 'nocheAdicional', 'suplemento'].forEach(id => {
+            checkboxes[id].addEventListener('change', function () {
+              const sectionId = checkboxConfig.find(item => item.checkboxId === id).sectionId;
+              sections[sectionId].style.display = this.checked ? 'block' : 'none';
+            });
+          });
+
+
+
+
+          // ============================ CIUDADES DE SALIDA ============================ //
+          const ciudadesConAeropuerto = [
+            "Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Pereira",
+            "Cúcuta", "Bucaramanga", "Santa Marta", "Montería", "Villavicencio",
+            "Armenia", "Manizales", "Neiva", "Ibagué", "Leticia", "San Andrés",
+            "Riohacha", "Yopal", "Valledupar", "Quibdó", "Pasto", "Florencia",
+            "Tumaco", "Popayán", "Apartadó", "Corozal", "Rionegro", "Sincelejo",
+            "Guapi", "Puerto Carreño", "Inírida", "Mitú", "Turbo"
+          ];
+
+          const selectCiudadSalida = document.getElementById("ciudadSalida");
+          // Limpiar y agregar opción por defecto
+          selectCiudadSalida.innerHTML = '';
+          const defaultOptionSalida = document.createElement("option");
+          defaultOptionSalida.value = "";
+          defaultOptionSalida.textContent = "✈️ Seleccione ciudad de salida";
+          defaultOptionSalida.disabled = true;
+          defaultOptionSalida.selected = true;
+          selectCiudadSalida.appendChild(defaultOptionSalida);
+
+          ciudadesConAeropuerto.forEach(ciudad => {
+            const option = document.createElement("option");
+            option.value = ciudad;
+            option.textContent = ciudad;
+            selectCiudadSalida.appendChild(option);
+          });
+
+          // ============================ DESTINOS ============================ //
+          const data = await Cargar_Datos_Backend();
+          const destinos = data.destinos || [];
+
+          const selectDestino = document.getElementById("destino");
+          selectDestino.innerHTML = '';
+          const defaultOptionDestino = document.createElement("option");
+          defaultOptionDestino.value = '';
+          defaultOptionDestino.textContent = '🌍 Seleccionar destino...';
+          defaultOptionDestino.disabled = true;
+          defaultOptionDestino.selected = true;
+          selectDestino.appendChild(defaultOptionDestino);
+
+          destinos.forEach(destino => {
+            const option = document.createElement("option");
+            option.value = destino.nombre;
+            option.textContent = `${destino.emoji || ''} ${destino.nombre}`;
+            selectDestino.appendChild(option);
+          });
+
+          // ============================ HOTELES ============================  //
+          const selectHotel = document.getElementById("hotel");
+          selectHotel.innerHTML = '';
+          const defaultOptionHotel = document.createElement('option');
+          defaultOptionHotel.value = '';
+          defaultOptionHotel.textContent = '🏨 Seleccionar hotel...';
+          defaultOptionHotel.disabled = true;
+          defaultOptionHotel.selected = true;
+          selectHotel.appendChild(defaultOptionHotel);
+
+          let tiposHabitacionDisponibles = [];
+
+          selectDestino.addEventListener('change', async () => {
+            const destinoSeleccionado = selectDestino.value;
+
+            // Limpiar selectHotel y reset tipos habitación
+            selectHotel.innerHTML = '';
+            selectHotel.appendChild(defaultOptionHotel.cloneNode(true));
+            tiposHabitacionDisponibles = [];
+            actualizarHabitaciones();
+
+            if (!destinoSeleccionado) return;
+
+            // Cargar hoteles según destino
+            const dataHoteles = await Cargar_Datos_Backend({ destino: destinoSeleccionado });
+            const hoteles = dataHoteles.hoteles || [];
+
+            hoteles.forEach(hotel => {
+              // Si hotel es objeto con propiedad 'hotel' o solo string, adaptamos:
+              const nombreHotel = typeof hotel === 'string' ? hotel : hotel.hotel || '';
+              if (nombreHotel) {
+                const option = document.createElement('option');
+                option.value = nombreHotel;
+                option.textContent = nombreHotel;
+                selectHotel.appendChild(option);
+              }
+            });
+          });
+
+          // ============================ TIPOS DE HABITACIÓN SEGÚN HOTEL ============================  //
+          selectHotel.addEventListener('change', async () => {
+            const hotelSeleccionado = selectHotel.value;
+            if (!hotelSeleccionado) {
+              tiposHabitacionDisponibles = [];
+              actualizarHabitaciones();
+              return;
+            }
+
+            const dataHotel = await Cargar_Datos_Backend({ hotel: hotelSeleccionado });
+            tiposHabitacionDisponibles = dataHotel.tiposHabitacion || [];
+            actualizarHabitaciones();
+          });
+
+          // ============================ CONFIGURACIÓN DE HABITACIONES ============================  //
+          const inputHabitaciones = document.getElementById('habitaciones');
+          const contenedorHabitaciones = document.getElementById('habitaciones-container');
+
+          function crearBloqueHabitacion(index) {
+            const divGrid = document.createElement('div');
+            divGrid.className = 'form-grid grid-3';
+            divGrid.id = `habitacion-${index + 1}`;
+
+            const opcionesTipo = tiposHabitacionDisponibles.length > 0
+              ? tiposHabitacionDisponibles.map(tipo => `<option value="${tipo}">${tipo}</option>`).join('')
+              : `<option value="" disabled selected>❓ Sin tipos disponibles</option>`;
+
+            divGrid.innerHTML = `
+              <div class="form-group">
+                <label class="form-label">Tipo de Habitación</label>
+                <select class="form-select" name="tipoHabitacion-${index + 1}">
+                  ${opcionesTipo}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Adultos</label>
+                <input type="number" name="adultos-${index + 1}" class="form-input adultos-input" value="2" min="1" max="13">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Niños</label>
+                <input type="number" name="ninos-${index + 1}" class="form-input" value="0" min="0">
+              </div>
+            `;
+
+            // Evento para limitar el maximo de adultos
+             const inputAdultos = divGrid.querySelector('.adultos-input');
+              inputAdultos.addEventListener('blur', () => {
+                let val = parseInt(inputAdultos.value);
+                if (isNaN(val) || val < 1) {
+                  inputAdultos.value = 1;
+                } else if (val > 13) {
+                  inputAdultos.value = 13;
+                }
+              });
+
+            return divGrid;
+          }
+
+          function actualizarHabitaciones() {
+            const cantidad = Math.min(Math.max(parseInt(inputHabitaciones.value) || 1, 1), 10);
+            contenedorHabitaciones.innerHTML = '';
+
+            for (let i = 0; i < cantidad; i++) {
+              if (i > 0) {
+                const divider = document.createElement('div');
+                divider.className = 'divider';
+                contenedorHabitaciones.appendChild(divider);
+              }
+              contenedorHabitaciones.appendChild(crearBloqueHabitacion(i));
+            }
+          }
+
+          // Inicializar habitaciones
+          actualizarHabitaciones();
+
+          // Actualizar habitaciones al cambiar cantidad
+          inputHabitaciones.addEventListener('input', actualizarHabitaciones);
+
+          // ====================================================================== Informacion del Cliente =================================================== //
+          const selectCliente = document.getElementById('cliente');
+          const inputCorreoCliente = document.getElementById('correoCliente');
+          const iconoBloqueado = document.getElementById('iconoBloqueado');
+
+          // Cargar lista de clientes
+          const dataClientes = await Cargar_Datos_Backend({ cliente: true });
+          const clientes = dataClientes.clientes || [];
+
+          // Limpiar y agregar opción por defecto
+          selectCliente.innerHTML = '<option value="" disabled selected>👤 Seleccionar cliente...</option>';
+
+          // Agregar clientes al select
+          clientes.forEach(nombre => {
+            const option = document.createElement('option');
+            option.value = nombre;
+            option.textContent = nombre;
+            selectCliente.appendChild(option);
+          });
+
+          // Evento al cambiar el cliente
+          selectCliente.addEventListener('change', async () => {
+            const clienteSeleccionado = selectCliente.value;
+
+            if (!clienteSeleccionado) {
+              inputCorreoCliente.value = '';
+              inputCorreoCliente.disabled = false;
+              iconoBloqueado.style.display = 'none';
+              return;
+            }
+
+            const dataCliente = await Cargar_Datos_Backend({ cliente: clienteSeleccionado });
+            const correo = dataCliente.correo;
+
+            if (correo) {
+              inputCorreoCliente.value = correo;
+              inputCorreoCliente.disabled = true;
+              iconoBloqueado.style.display = 'inline-block';
+              iconoBloqueado.title = 'Correo asignado automáticamente';
+            } else {
+              inputCorreoCliente.value = '';
+              inputCorreoCliente.disabled = false;
+              iconoBloqueado.style.display = 'none';
+            }
+          });
+
+
+          // ======================================================================== PROGRAMAS =========================================================================================== //
+          const selectPrograma = document.getElementById("programaSelect");
+
+          // Opción por defecto
+          const defaultOptionPrograma = document.createElement("option");
+          defaultOptionPrograma.value = '';
+          defaultOptionPrograma.textContent = '🌍 Seleccione un programa';
+          defaultOptionPrograma.disabled = true;
+          defaultOptionPrograma.selected = true;
+
+          // Función para actualizar los programas disponibles
+          const actualizarProgramas = async () => {
+            const destino = document.getElementById("destino").value;
+            const fechaInicio = document.getElementById("fechaInicio").value;
+            const fechaFin = document.getElementById("fechaFin").value;
+
+            // Validar que haya datos
+            if (!destino || !fechaInicio || !fechaFin) {
+              resetProgramaSelect();
+              return;
+            }
+
+            try {
+              // Llamar al backend
+              const data = await Cargar_Datos_Backend({
+                destino,
+                start: fechaInicio,
+                end: fechaFin
+              });
+
+              const programas = data.programas || [];
+
+              // Resetear el select antes de agregar nuevos programas
+              resetProgramaSelect();
+
+              if (programas.length === 0) {
+                const noOption = document.createElement("option");
+                noOption.value = "";
+                noOption.textContent = "❌ No hay programas disponibles";
+                noOption.disabled = true;
+                selectPrograma.appendChild(noOption);
+                return;
+              }
+
+              // Agregar opciones de programas válidas
+              programas.forEach((programa) => {
+                const option = document.createElement("option");
+                option.value = programa.nombrePrograma;
+                option.textContent = `📘 ${programa.nombrePrograma}`;
+                selectPrograma.appendChild(option);
+              });
+
+            } catch (error) {
+              console.error("Error al cargar programas:", error);
+              resetProgramaSelect();
+            }
+          };
+
+          // Función para resetear el select del programa
+          const resetProgramaSelect = () => {
+            selectPrograma.innerHTML = '';
+            selectPrograma.appendChild(defaultOptionPrograma.cloneNode(true));
+          };
+
+          // Eventos para cargar los programas cuando cambian filtros
+          document.getElementById("destino").addEventListener("change", actualizarProgramas);
+          document.getElementById("fechaInicio").addEventListener("change", actualizarProgramas);
+          document.getElementById("fechaFin").addEventListener("change", actualizarProgramas);
+
+
+          // ========================================================== Noches =================================================== //
+          const selectNoches = document.getElementById('selectNoches');
+
+          selectHotel.addEventListener('change', async () => {
+            const hotelSeleccionado = selectHotel.value;
+
+            // Reiniciar selectNoches
+            selectNoches.innerHTML = '<option value="" disabled selected>Seleccione noches</option>';
+            selectNoches.disabled = true;
+
+            if (!hotelSeleccionado) return;
+
+            // Traer noches según hotel (solo depende de hotel)
+            const dataHotel = await Cargar_Datos_Backend({ hotel: hotelSeleccionado, soloNoches: true });
+
+            const nochesDisponibles = dataHotel.noches;
+
+            // Validar si recibiste un array válido
+            if (!Array.isArray(nochesDisponibles) || nochesDisponibles.length === 0) {
+              selectNoches.innerHTML = '<option value="" disabled selected>No hay noches disponibles</option>';
+              selectNoches.disabled = true;
+              return;
+            }
+
+            // Llenar selectNoches con cada noche disponible
+            for (const noche of nochesDisponibles) {
+              const option = document.createElement('option');
+              option.value = noche;
+              option.textContent = `${noche} noche${noche !== 1 ? 's' : ''}`;
+              selectNoches.appendChild(option);
+            }
+
+            selectNoches.disabled = false;
+          });
+
+
+          // ===================================================================== Seleccion del Asesor =================================================== //
+
+          // Referencias a elementos
+          const asesorExternoCheckbox = document.getElementById('asesorExterno');
+          const selectAsesor = document.getElementById('asesor');
+          const infoAsesorExterno = document.getElementById('infoAsesorExterno');
+
+          asesorExternoCheckbox.addEventListener('change', async function () {
+            const mostrar = this.checked;
+            infoAsesorExterno.style.display = mostrar ? 'block' : 'none';
+
+            if (mostrar) {
+              // Limpiar el select antes de cargar
+              selectAsesor.innerHTML = '<option value="" disabled selected>👤 Seleccionar un Asesor...</option>';
+
+              try {
+                // Llamada al backend para obtener asesores
+                const data = await Cargar_Datos_Backend({ asesor: true });
+                const asesores = data.asesores || [];
+
+                if (asesores.length === 0) {
+                  const option = document.createElement('option');
+                  option.value = '';
+                  option.textContent = '⚠️ No hay asesores disponibles';
+                  selectAsesor.appendChild(option);
+                } else {
+                  asesores.forEach(nombre => {
+                    const option = document.createElement('option');
+                    option.value = nombre;
+                    option.textContent = nombre;
+                    selectAsesor.appendChild(option);
+                  });
+                }
+              } catch (error) {
+                console.error('Error al cargar asesores:', error);
+                // Opcional: muestra un mensaje de error en el select
+                selectAsesor.innerHTML = '<option value="" disabled>❌ Error al cargar asesores</option>';
+              }
+            } else {
+              // Si se oculta, limpiar el select
+              selectAsesor.innerHTML = '<option value="" disabled selected>👤 Seleccionar un Asesor...</option>';
+            }
+          });
+
+        },
+
+
+        preConfirm: () => {
+          // Función auxiliar para recopilar datos de habitaciones
+          const recopilarHabitaciones = () => {
+            const habitaciones = [];
+            const cantidad = parseInt(document.getElementById('habitaciones').value) || 1;
+
+            for (let i = 1; i <= cantidad; i++) {
+              const tipoHabitacion = document.querySelector(`[name="tipoHabitacion-${i}"]`)?.value || '';
+              const adultos = parseInt(document.querySelector(`[name="adultos-${i}"]`)?.value) || 0;
+              const ninos = parseInt(document.querySelector(`[name="ninos-${i}"]`)?.value) || 0;
+
+              habitaciones.push({
+                numero: i,
+                tipoHabitacion,
+                adultos,
+                ninos
+              });
+            }
+
+            return habitaciones;
+          };
+
+          // Función auxiliar para recopilar datos de escalas
+          const recopilarEscalas = () => {
+            const escalas = {
+              ida: null,
+              regreso: null,
+              idaYRegreso: null
+            };
+
+            // Escala de Ida
+            if (document.getElementById('tieneEscala_Ida').checked) {
+              const seccionIda = document.getElementById('infoEscala');
+              escalas.ida = {
+                aerolinea: seccionIda.querySelector('#aerolineaEscala')?.value || '',
+                numeroVuelo: seccionIda.querySelector('#vueloEscala')?.value || '',
+                horaSalida: seccionIda.querySelector('#horaSalidaEscala')?.value || '',
+                horaLlegada: seccionIda.querySelector('#horaLlegadaEscala')?.value || '',
+                clase: seccionIda.querySelector('#claseEscala')?.value || ''
+              };
+            }
+
+            // Escala de Regreso
+            if (document.getElementById('tieneEscala_Regreso').checked) {
+              const seccionRegreso = document.getElementById('infoEscala_1');
+              escalas.regreso = {
+                aerolinea: seccionRegreso.querySelector('input[placeholder="Ej: Copa Airlines"]')?.value || '',
+                numeroVuelo: seccionRegreso.querySelector('input[placeholder="Ej: CM789"]')?.value || '',
+                horaSalida: seccionRegreso.querySelector('input[type="time"]')?.value || '',
+                horaLlegada: seccionRegreso.querySelectorAll('input[type="time"]')[1]?.value || '',
+                clase: seccionRegreso.querySelector('input[placeholder="Ej: Económica, Ejecutiva, Primera Clase"]')?.value || ''
+              };
+            }
+
+            // Escala de Ida y Regreso
+            if (document.getElementById('tieneEscala_Ida_y_Regreso').checked) {
+              const seccionIdaRegreso = document.getElementById('infoEscala_2');
+              const inputs = seccionIdaRegreso.querySelectorAll('input');
+
+              escalas.idaYRegreso = {
+                vuelo1: {
+                  aerolinea: inputs[0]?.value || '',
+                  numeroVuelo: inputs[1]?.value || '',
+                  horaSalida: inputs[2]?.value || '',
+                  horaLlegada: inputs[3]?.value || '',
+                  clase: inputs[4]?.value || ''
+                },
+                vuelo2: {
+                  aerolinea: inputs[5]?.value || '',
+                  numeroVuelo: inputs[6]?.value || '',
+                  horaSalida: inputs[7]?.value || '',
+                  horaLlegada: inputs[8]?.value || '',
+                  clase: inputs[9]?.value || ''
+                }
+              };
+            }
+
+            return escalas;
+          };
+
+          // Recopilar todos los datos del formulario
+          const formData = {
+            // Información General
+            fechaInicio: document.getElementById('fechaInicio').value,
+            fechaFin: document.getElementById('fechaFin').value,
+            ciudadSalida: document.getElementById('ciudadSalida').value,
+            destino: document.getElementById('destino').value,
+
+            // Alojamiento
+            hotel: document.getElementById('hotel').value,
+            habitaciones: recopilarHabitaciones(),
+            numeroHabitaciones: parseInt(document.getElementById('habitaciones').value),
+
+            // Cliente y opciones
+            cliente: document.getElementById('cliente').value,
+            correoCliente: document.getElementById('correoCliente').value,
+            programa: document.getElementById('programaSelect').value,
+            duracionNoches: document.getElementById('selectNoches').value,
+
+            // Vuelos
+            vueloIda: {
+              aerolinea: document.getElementById('aerolineaIda').value,
+              numeroVuelo: document.getElementById('vueloIda').value,
+              horaSalida: document.getElementById('horaSalidaIda').value,
+              horaLlegada: document.getElementById('horaLlegadaIda').value,
+              clase: document.getElementById('claseIda').value
+            },
+            vueloVuelta: {
+              aerolinea: document.getElementById('aerolineaVuelta').value,
+              numeroVuelo: document.getElementById('vueloVuelta').value,
+              horaSalida: document.getElementById('horaSalidaVuelta').value,
+              horaLlegada: document.getElementById('horaLlegadaVuelta').value,
+              clase: document.getElementById('claseVuelta').value
+            },
+
+            // Escalas
+            escalas: recopilarEscalas(),
+
+            // Opciones adicionales
+            opciones: {
+              asesorExterno: {
+                activo: document.getElementById('asesorExterno').checked,
+                asesor: document.getElementById('asesorExterno').checked ?
+                       (document.getElementById('asesor')?.value || '') : null
+              },
+              nocheAdicional: {
+                activo: document.getElementById('nocheAdicional').checked,
+                motivo: document.getElementById('nocheAdicional').checked ?
+                       (document.getElementById('motivoNoche')?.value || '') : null
+              },
+              suplemento: {
+                activo: document.getElementById('suplemento').checked,
+                tipo: document.getElementById('suplemento').checked ?
+                     (document.getElementById('tipoSuplemento')?.value || '') : null
+              }
+            },
+
+            // Valores adicionales
+            valoresExtra: parseInt(document.getElementById('valoresExtra').value) || 0,
+            transferencia: document.getElementById('transferencia').value,
+
+            // Metadatos
+            tipo: 'normales',
+            fechaCreacion: new Date().toISOString(),
+            estado: 'pendiente'
+          };
+
+          // Validaciones básicas
+          if (!formData.destino) {
+            Swal.showValidationMessage('Por favor selecciona un destino');
+            return false;
+          }
+
+          if (!formData.hotel) {
+            Swal.showValidationMessage('Por favor selecciona un hotel');
+            return false;
+          }
+
+          if (!formData.cliente) {
+            Swal.showValidationMessage('Por favor selecciona un cliente');
+            return false;
+          }
+
+          if (!formData.correoCliente) {
+            Swal.showValidationMessage('Por favor ingresa el correo del cliente');
+            return false;
+          }
+
+          if (!formData.programa) {
+            Swal.showValidationMessage('Por favor selecciona un programa');
+            return false;
+          }
+
+          if (!formData.duracionNoches) {
+            Swal.showValidationMessage('Por favor selecciona la duración en noches');
+            return false;
+          }
+
+          // Validar que al menos una habitación tenga datos válidos
+          const habitacionesValidas = formData.habitaciones.filter(hab =>
+            hab.tipoHabitacion && hab.adultos > 0
+          );
+
+          if (habitacionesValidas.length === 0) {
+            Swal.showValidationMessage('Por favor configura al menos una habitación con tipo y número de adultos');
+            return false;
+          }
+
+          return formData;
+        }
+      });
+
+      if (formValues) {
+        try {
+          // Mostrar ventana con datos para confirmación manual
+          await Swal.fire({
+            title: '📋 ¿Deseas guardar esta cotización?',
+            html: `<pre style="text-align:left;max-height:300px;overflow:auto;background:#f7f7f7;padding:1em;border-radius:6px">${JSON.stringify(formValues, null, 2)}</pre>`,
+            width: 600,
+            confirmButtonText: 'Sí, guardar',
+            confirmButtonColor: '#48bb78',
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            cancelButtonColor: '#e53e3e'
+          }).then(result => {
+            if (!result.isConfirmed) {
+              throw new Error('Cancelado por el usuario');
+            }
+          });
+
+          // Mostrar loading
+          Swal.fire({
+            title: '⏳ Guardando cotización...',
+            text: 'Por favor espera mientras procesamos la información',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+
+          const response = await api.post('http://localhost:8010/cotizacion/guardar', formValues);
+
+          if (response.data.success) {
+            await Swal.fire({
+              icon: 'success',
+              title: '🎉 ¡Cotización guardada exitosamente!',
+              text: `ID de cotización: ${response.data.id}`,
+              confirmButtonText: 'Perfecto',
+              confirmButtonColor: '#48bb78'
+            });
+
+            await cargarCotizaciones('normales');
+          } else {
+            throw new Error(response.data.message || 'Error al guardar');
+          }
+
         } catch (error) {
-          // Maneja cualquier error que pueda ocurrir durante las solicitudes
-          console.log("error");
-          this.$q.notify({
-            message: "¡Ha ocurrido un error al guardar las habitaciones!",
-            color: "negative",
+          console.error('Error al guardar cotización:', error);
+
+          await Swal.fire({
+            icon: 'error',
+            title: '❌ Error al guardar',
+            text: error.message || 'Hubo un problema al guardar la cotización. Por favor intenta nuevamente.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#e53e3e'
           });
         }
-        // fin ciclo de hablitaciones
-        //---------------------------------------------------------
-        //FIN HABITACIONES
-
-        // Ahora tienes el total de adultos y niños de todos los cuartos
-        console.log("Array de habitacionesDatos:", this.habitacionesDatos);
-
-        console.log("Total de adultos:", this.totalAdultos);
-        console.log("Total de niños:", this.totalNiños);
-
-        //otros
-        //suma
-        //PENDIENTES IMPUESTOS
-        // let totalImpuestos = 0;
-        // for (const impuesto in impuestosHabitacion) {
-        //   totalImpuestos += impuestosHabitacion[impuesto];
-        // }
-
-        // //FIN IMPUESTOS CAÑO CRISTAL
-
-        // // Add to TotalAcomodacion
-        // TotalAcomodacion += totalImpuestos;
-        // valorBrutoTotal += totalImpuestos;
-        // console.log(
-        //   "TOTALACOMODACION DESPUES DE IMPUESTOS ",
-        //   TotalAcomodacion
-        // );
-        // console.log("TOTALBRUTO DESPUES DE IMPUESTOS ", valorBrutoTotal);
-        // fin otros
-        // Iterar sobre el array habitacionesDatos
-        this.habitacionesDatos.forEach((habitacion) => {
-          // Sumar el valor de TotalAcomodacion de cada habitación a la suma total
-          this.sumaTotalAcomodacion += habitacion.TotalAcomodacion;
-          this.sumaValorBrutohab += habitacion.precioHabitacionTotal;
-          this.sumaTotalDescuento += habitacion.descuento;
-
-          this.cormacarena5a11Total += habitacion.cormacarena5a11 || 0;
-
-          this.cormacarena12a65Total += habitacion.cormacarena12a65 || 0;
-          this.cormacarenaExtranjeroTotal +=
-            habitacion.cormacarenaExtranjero || 0;
-          this.pqsNaturales5a24Total += habitacion.pqsNaturales5a24 || 0;
-          this.pqsNaturales25a65Total += habitacion.pqsNaturales25a65 || 0;
-          this.pqsNaturalesExtranjeroTotal +=
-            habitacion.pqsNaturalesExtranjero || 0;
-          this.alcaldiaNacionalTotal += habitacion.alcaldiaNacional || 0;
-          this.alcaldiaExtranjeroTotal += habitacion.alcaldiaExtranjero || 0;
-          this.defensaCivilTotal += habitacion.defensaCivil || 0;
-
-          //numero de personas
-          this.cormacarena5a11Personas += habitacion.cormacarena5a11Personas;
-          this.cormacarena12a65Personas += habitacion.cormacarena12a65Personas;
-          this.cormacarenaExtranjeroPersonas +=
-            habitacion.cormacarenaExtranjeroPersonas;
-          this.pqsNaturales5a24Personas += habitacion.pqsNaturales5a24Personas;
-          this.pqsNaturales25a65Personas +=
-            habitacion.pqsNaturales25a65Personas;
-          this.pqsNaturalesExtranjeroPersonas +=
-            habitacion.pqsNaturalesExtranjeroPersonas;
-          this.alcaldiaNacionalPersonas += habitacion.alcaldiaNacionalPersonas;
-          this.alcaldiaExtranjeroPersonas +=
-            habitacion.alcaldiaExtranjeroPersonas;
-          this.defensaCivilPersonas +=
-            habitacion.pqsNaturalesExtranjeroPersonas;
-        });
-        // Suma total de impuestos (considerando valores nulos como 0)
-        this.totalImpuestos =
-          (this.cormacarena5a11Total || 0) +
-          (this.cormacarena12a65Total || 0) +
-          (this.cormacarenaExtranjeroTotal || 0) +
-          (this.pqsNaturales5a24Total || 0) +
-          (this.pqsNaturales25a65Total || 0) +
-          (this.pqsNaturalesExtranjeroTotal || 0) +
-          (this.alcaldiaNacionalTotal || 0) +
-          (this.alcaldiaExtranjeroTotal || 0) +
-          (this.defensaCivilTotal || 0);
-        //fin suma total impuestos
-
-        console.log(
-          "VALOR ANTES DE IMPUESTOS CAÑO CRISTAL",
-          "VALOR BRUTO",
-          this.sumaValorBrutohab,
-          "VALORCLIENTE",
-          this.sumaTotalAcomodacion
-        );
-        //sumas a valor bruto a cliente TOTAL IMPUESTOS
-        this.sumaValorBrutohab += this.totalImpuestos;
-        this.sumaTotalAcomodacion += this.totalImpuestos;
-
-        console.log("VALOR TOTAL IMPUESTOS", this.totalImpuestos);
-        console.log(
-          "VALOR DESPUES DE IMPUESTOS CAÑO CRISTAL",
-          "VALOR BRUTO",
-          this.sumaValorBrutohab,
-          "VALORCLIENTE",
-          this.sumaTotalAcomodacion
-        );
-        //suplemento
-        this.sumaValorBrutohab += valorSuplemento;
-        this.sumaTotalAcomodacion += valorSuplemento;
-
-        // Imprimir la suma total
-        console.log(
-          "La suma total de TotalAcomodacion en todas las habitaciones es:",
-          this.sumaTotalAcomodacion
-        );
-        console.log(
-          "La suma total de sumaValorBrutohab en todas las habitaciones es:",
-          this.sumaValorBrutohab
-        );
-        console.log(
-          "La suma total de descuetno en todas las habitaciones es:",
-          this.sumaTotalDescuento
-        );
-
-        //SI ES COMISION O NO
-        // Variables para almacenar los valores calculados
-        let rteFuenteCalculado = null;
-        let ivaCalculado = null;
-        let rteIcaCalculado = null;
-        let totalComision = null;
-        if (clienteTipoBase === "Comisión") {
-          console.log("si es comison");
-          this.total;
-          totalComision = this.sumaTotalDescuento;
-          if (ivaValor !== null && ivaValor !== 0) {
-            // Calcula y redondea el valor de ivaCalculado
-            ivaCalculado = Math.round(
-              this.sumaTotalDescuento * (ivaValor / 100)
-            );
-            this.ivaCalculado = ivaCalculado;
-            totalComision += ivaCalculado;
-          }
-
-          if (rteFuente !== null && rteFuente !== 0) {
-            // Calcula y redondea el valor de rteFuenteCalculado
-            rteFuenteCalculado = Math.round(
-              this.sumaTotalDescuento * (rteFuente / 100)
-            );
-            this.rteFuenteCalculado = rteFuenteCalculado;
-            totalComision -= rteFuenteCalculado;
-          }
-
-          if (rteIca !== null && rteIca !== 0) {
-            // Calcula y redondea el valor de rteIcaCalculado
-            rteIcaCalculado = Math.round(
-              this.sumaTotalDescuento * (rteIca / 100)
-            );
-            this.rteIcaCalculado = rteIcaCalculado;
-            totalComision -= rteIcaCalculado;
-          }
-        }
-
-        // Imprime los valores calculados en la consola
-        console.log("this.ivaCalculado", ivaCalculado);
-        console.log("this.rteFuenteCalculado", rteFuenteCalculado);
-        console.log("this.rteIcaCalculado", rteIcaCalculado);
-        console.log("this.totalComision", totalComision);
-
-        //transporte
-
-        const totalPasajeros =
-          this.totalAdultos + (this.totalNiños ? this.totalNiños : 0);
-
-        console.log("totalPasajeros", totalPasajeros);
-
-        combus *= totalPasajeros;
-        tasa *= totalPasajeros;
-        iva *= totalPasajeros;
-        ta *= totalPasajeros;
-        ivaTa *= totalPasajeros;
-        otros *= totalPasajeros;
-        precioTrans *= totalPasajeros;
-        this.sumaTotalAcomodacion += precioTrans;
-
-        console.log("combus", combus);
-        console.log("precioTrans", precioTrans);
-        //suma nueva total precioClienteAcomodacion
-        if (clienteTipoBase === "Comisión") {
-          this.sumaTotalAcomodacion = 0;
-          this.sumaTotalAcomodacion = this.sumaValorBrutohab - totalComision;
-        }
-        //fecha
-        const fechaCreacion = new Date();
-        fechaCreacion.setHours(0, 0, 0, 0); // Establece la hora a 00:00:00.000
-        console.log(fechaCreacion.toISOString().split("T")[0]); // Obtiene solo la parte de la fecha
-        //id usuario
-        const userData = LocalStorage.getItem("userData");
-        console.log(userData);
-        let numeroNoches = parseInt(this.noche.value); // Extrae el número usando una expresión regular
-        let totalNoche =
-          parseInt(numeroNoches) + // Asegúrate de que numeroNoches sea un número válido
-          parseInt(this.additionalNightCount ? this.additionalNightCount : 0); // Asegúrate de que additionalNightCount sea un número válido o establece 0 como valor por defecto si no está definido
-
-        // Imprime los valores de numeroNoches y additionalNightCount para depurar
-        console.log("numeroNoches:", numeroNoches);
-        console.log("additionalNightCount:", this.additionalNightCount);
-
-        console.log("totalNoche:", totalNoche); // Imprime el resultado de la suma
-
-        // SI APLICA RTE FUENTE O NO.
-
-        const formData = {
-          // idCotizacion: idCotizacion,
-          salida: this.selectedDeparture,
-          destino: this.destination,
-          nombrePrograma: this.programName,
-          noches: totalNoche,
-          // plan: this.plan,
-          hotel: this.hotel,
-          totalAdultos: this.totalAdultos,
-          totalNinos: this.totalNiños,
-          totalPasajeros: totalPasajeros,
-          precioBrutoTotal: this.sumaValorBrutohab,
-          totalPrecioCliente: this.sumaTotalAcomodacion,
-          valorDescuento: this.sumaTotalDescuento,
-
-          //transporte
-          combus: this.combus,
-          tasa: this.tasa,
-          iva: this.iva,
-          ta: this.ta,
-          ivaTa: this.ivaTa,
-          otros: this.otros,
-          precioTrans: this.precioTrans, // Este es el valor real, no una cadena literal
-
-          suplemento: valorSuplemento,
-
-          // esto siempre va.
-          cliente: this.selectedClient,
-          clientePorcentaje: clientePorcentaje,
-          CreadorCotizacion: userData.id,
-          fechaCreacion: fechaCreacion.toISOString().split("T")[0],
-          aerolineaIda: this.aerolineaValue1,
-          vueloIda: this.vueloValue1,
-          horaLlegadaIda: this.horaLlegadaValue1,
-          horaSalidaIda: this.horaSalidaValue1,
-          claseIda: this.claseValue1,
-          fechaInicio: this.dateRange[0],
-          aerolineaVuelta: this.aerolineaValue2,
-          vueloVuelta: this.vueloValue2,
-          horaLlegadaVuelta: this.horaLlegadaValue2,
-          horaSalidaVuelta: this.horaSalidaValue2,
-          claseVuelta: this.claseValue2,
-          fechaFin: this.dateRange[1],
-
-          //VUELOS ESCALA
-          aerolineaEscalaIda: this.aerolineaEscalaIda || null,
-          vueloEscalaIda: this.vueloEscalaIda || null,
-          horaLlegadaEscalaIda: this.horaLlegadaEscalaIda || null,
-          horaSalidaEscalaIda: this.horaSalidaEscalaIda || null,
-          claseEscalaIda: this.claseEscalaIda || null,
-
-          aerolineaEscalaVuelta: this.aerolineaEscalaVuelta || null,
-          vueloEscalaVuelta: this.vueloEscalaVuelta || null,
-          horaLlegadaEscalaVuelta: this.horaLlegadaEscalaVuelta || null,
-          horaSalidaEscalaVuelta: this.horaSalidaEscalaVuelta || null,
-          claseEscalaVuelta: this.claseEscalaVuelta || null,
-
-          //valores si es comision
-          rteFuente: rteFuenteCalculado,
-          ivaValor: ivaCalculado,
-          rteIca: rteIcaCalculado,
-          totalComision: totalComision,
-          correo: this.correo,
-
-          //VALORES IMPUESTOS
-
-          cormacarena5a11_Total: this.cormacarena5a11Total,
-          cormacarena12a65_Total: this.cormacarena12a65Total,
-          cormacarenaExtranjero_Total: this.cormacarenaExtranjeroTotal,
-          pqsNaturales5a24_Total: this.pqsNaturales5a24Total,
-          pqsNaturales25a65_Total: this.pqsNaturales25a65Total,
-          pqsNaturalesExtranjero_Total: this.pqsNaturalesExtranjeroTotal,
-          alcaldiaNacional_Total: this.alcaldiaNacionalTotal,
-          alcaldiaExtranjero_Total: this.alcaldiaExtranjeroTotal,
-          defensaCivil_Total: this.defensaCivilTotal,
-          //personas Impuestos Total
-          defensaCivil_numeroPersonas: this.defensaCivilPersonas,
-          alcaldiaNacional_numeroPersonas: this.alcaldiaNacionalPersonas,
-          alcaldiaExtranjero_numeroPersonas: this.alcaldiaExtranjeroPersonas,
-          pqsNaturalesExtranjero_numeroPersonas:
-            this.pqsNaturalesExtranjeroPersonas,
-          pqsNaturales25a65_numeroPersonas: this.pqsNaturales25a65Personas,
-          pqsNaturales5a24_numeroPersonas: this.pqsNaturales5a24Personas,
-          cormacarenaExtranjero_numeroPersonas:
-            this.cormacarenaExtranjeroPersonas,
-          cormacarena12a65_numeroPersonas: this.cormacarena12a65Personas,
-          cormacarena5a11_numeroPersonas: this.cormacarena5a11Personas,
-
-          //incluye y no incluye
-
-          incluye: this.textoIncluye
-            ? this.textoIncluye.replace(/\n/g, "¿")
-            : null,
-          noIncluye: this.textoNoIncluye //cambiar esto a incluye y no incluye
-            ? this.textoNoIncluye.replace(/\n/g, "¿")
-            : null,
-          extra1: null,
-          transfer: null,
-        };
-        console.log("formData", formData);
-
-        // Realizar la solicitud para guardar la cotización con los precios de las habitaciones
-        const cotizacionResponse = await axios.post(
-          this.programName !== "Caño Cristales"
-            ? "https://backmultidestinos.onrender.com/cotizacion"
-            : "https://backmultidestinos.onrender.com/cotizacion/c",
-          formData
-        );
-        if (cotizacionResponse.data.success) {
-          // Obtener el idCotizacion generado por el backend
-          console.log("mirar el numero", cotizacionResponse.data.success);
-          console.log("mirar el numero1", cotizacionResponse.data.idCotizacion);
-          this.idCotizacion = cotizacionResponse.data.idCotizacion;
-
-          this.$q.notify({
-            message: `Cotización guardada con éxito. ID: ${this.idCotizacion}`,
-            color: "positive",
-          });
-          console.log("idCotizacion", this.idCotizacion);
-        }
-        console.log("Respuesta del servidor:", cotizacionResponse.data);
-        console.log("idCotizacion1", this.idCotizacion);
-
-        // Obtener el idCotizacion generado
-        // Realizar las solicitudes para guardar las habitaciones
-        const habitacionesPromises = this.habitacionesDatos.map(
-          async (habitacion) => {
-            // Agregar el idCotizacion correspondiente al objeto de la habitación
-            habitacion.idCotizacion = this.idCotizacion;
-
-            // Realizar la solicitud POST para guardar los datos de la habitación
-            const habitacionResponse = await axios.post(
-              "https://backmultidestinos.onrender.com/habitacionCotizacion/",
-              habitacion
-            );
-            console.log("Respuesta de la habitación:", habitacionResponse.data);
-
-            return habitacionResponse.data; // Retornar la respuesta de la solicitud POST
-          }
-        );
-
-        const habitacionesResponses = await Promise.all(habitacionesPromises);
-        console.log(
-          "Respuestas de todas las habitaciones:",
-          habitacionesResponses
-        );
-        // Muestra el mensaje de éxito
-        this.$q.notify({
-          message: "¡Se ha registrado con éxito!",
-          color: "positive",
-        });
-
-        location.reload();
-
-        this.resetVariables();
-        // Llama al método para cerrar el modal
-        this.closeModalPersonalizado();
-        // Manejar la respuesta del servidor si es necesario
-      } catch (error) {
-        console.error("Error al guardar la cotización:", error);
-        this.resetVariables();
-
-        this.$q.notify({
-          message: "¡Ha ocurrido un error al guardar la cotización!",
-          color: "negative",
-        });
       }
-    },
-  },
-};
+
+    };
+    const abrirFormularioCristal = () => console.log('Abrir formulario cristal')
+    const abrirFormularioPersonalizada = () => console.log('Abrir formulario personalizada')
+
+    const verDetalle = (cotizacion, tipo) => console.log('Ver detalle:', cotizacion, tipo)
+    const editarCotizacion = (cotizacion, tipo) => console.log('Editar:', cotizacion, tipo)
+
+    const eliminarCotizacion = async (id, tipo) => {
+      const result = await Swal.fire({
+        title: '¿Eliminar cotización?',
+        text: 'Esta acción no se puede deshacer. ¿Deseas continuar?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#00bcd4',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        background: '#ffffff',
+        color: '#333',
+        backdrop: `
+          rgba(0,0,0,0.5)
+          url("https://i.imgur.com/UC2vXfT.gif")
+          center top
+          no-repeat
+        `,
+        customClass: {
+          popup: 'swal2-elegante'
+        }
+      });
+
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`http://localhost:8010/cotizacion/${tipo}/${id}`);
+          Swal.fire({
+            icon: 'success',
+            title: '¡Eliminada!',
+            text: 'La cotización ha sido eliminada correctamente.',
+            background: '#ffffff',
+            color: '#333',
+            iconColor: '#4caf50',
+            confirmButtonColor: '#4caf50',
+            customClass: {
+              popup: 'swal2-elegante'
+            }
+          });
+          cargarCotizaciones(tipo);
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Ocurrió un problema al eliminar la cotización.',
+            background: '#ffffff',
+            color: '#333',
+            iconColor: '#f44336',
+            confirmButtonColor: '#f44336',
+            customClass: {
+              popup: 'swal2-elegante'
+            }
+          });
+        }
+      }
+    };
+
+
+
+
+
+    onMounted(() => {
+      cargarCotizaciones('normales')
+      cargarCotizaciones('cristal')
+      cargarCotizaciones('personalizadas')
+    })
+
+    return {
+      tabActual,
+      cotizacionesNormales,
+      cotizacionesCristal,
+      cotizacionesPersonalizadas,
+      loading,
+      paginacion,
+      totalCotizaciones,
+      montoTotal,
+      columnasNormales,
+      columnasCristal,
+      columnasPersonalizadas,
+      formatearMonto,
+      getEstadoColor,
+      cargarCotizaciones,
+      abrirFormularioNormal,
+      abrirFormularioCristal,
+      abrirFormularioPersonalizada,
+      verDetalle,
+      editarCotizacion,
+      eliminarCotizacion
+
+    }
+  }
+}
 </script>
 
-<style>
-.q-field__control {
-  overflow: hidden;
+
+<style lang="scss" scoped>
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
+  filter: brightness(0.6);
 }
 
-.q-field__control-container .q-field__native {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.dashboard-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  overflow: auto;
+  color: white;
 }
+
+
+.page-header {
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.2);
+
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+  }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.cotizaciones-tabs {
+  background: white;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+
+  .q-tab {
+    font-weight: 600;
+    text-transform: none;
+    font-size: 1rem;
+    padding: 1rem 1.5rem;
+  }
+}
+
+.tab-panels {
+  background: white;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  min-height: 600px;
+}
+
+.tab-panel {
+  padding: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    h2 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: #333;
+    }
+  }
+
+  .action-btn {
+    font-weight: 600;
+    text-transform: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+  }
+}
+
+.data-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border: none;
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #555;
+    }
+  }
+}
+
+.cotizaciones-table {
+  .total-amount {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #2e7d32;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+  }
+
+  .q-td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+  }
+
+  .q-th {
+    font-weight: 600;
+    color: #555;
+    background: #f8f9fa;
+  }
+}
+
+.no-data {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+
+  .no-data-text {
+    font-size: 1.1rem;
+    margin: 1rem 0;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+ .page-header {
+   padding: 1.5rem 0;
+
+   .header-content {
+     flex-direction: column;
+     text-align: center;
+     gap: 1.5rem;
+   }
+
+   .page-title {
+     font-size: 2rem;
+   }
+
+   .header-stats {
+     justify-content: center;
+     flex-wrap: wrap;
+   }
+
+   .stat-card {
+     min-width: 120px;
+   }
+ }
+
+ .section-header {
+   flex-direction: column;
+   align-items: stretch;
+
+   .section-title {
+     justify-content: center;
+
+     h2 {
+       font-size: 1.5rem;
+     }
+   }
+
+   .action-btn {
+     align-self: center;
+   }
+ }
+
+ .tab-panel {
+   padding: 1rem;
+ }
+
+ .cotizaciones-table {
+   .q-td,
+   .q-th {
+     padding: 0.5rem 0.25rem;
+     font-size: 0.9rem;
+   }
+
+   .action-buttons {
+     flex-direction: column;
+     gap: 0.125rem;
+   }
+ }
+
+ .data-card {
+   .card-header {
+     padding: 1rem;
+     flex-direction: column;
+     gap: 1rem;
+
+     .card-title {
+       justify-content: center;
+     }
+   }
+ }
+}
+
+@media (max-width: 480px) {
+ .header-stats {
+   flex-direction: column;
+   width: 100%;
+ }
+
+ .stat-card {
+   width: 100%;
+ }
+
+ .cotizaciones-tabs {
+   .q-tab {
+     font-size: 0.9rem;
+     padding: 0.75rem 1rem;
+   }
+ }
+
+ .no-data {
+   padding: 2rem 1rem;
+
+   .q-icon {
+     font-size: 3em !important;
+   }
+ }
+}
+
 </style>

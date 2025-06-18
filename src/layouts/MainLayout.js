@@ -8,7 +8,6 @@ export default {
   setup() {
     const router = useRouter();
     const leftDrawerOpen = ref(false);
-    const miniState = ref(true);
     const drawer = ref(false);
     const nombre = ref("Usuario");
     const imagenPerfil = ref("https://imgs.search.brave.com/-pUIVTqW8I-PGNqZNvfunzlQC_Gl8kxUWz05wrmd-aM/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9hbmF0/by5vcmcvd3AtY29u/dGVudC91cGxvYWRz/LzIwMjIvMDUvbXVs/dGlkZXN0aW5vcy5q/cGc"); // Imagen por defecto
@@ -33,10 +32,7 @@ export default {
       leftDrawerOpen.value = !leftDrawerOpen.value;
     };
 
-    const toggleMiniState = () => {
-      leftDrawerOpen.value = true;
-      miniState.value = !miniState.value;
-    };
+
 
     const goPage = (pagina) => {
       router.push(pagina);
@@ -85,11 +81,19 @@ export default {
       leftDrawerOpen,
       drawer,
       toggleLeftDrawer,
-      miniState,
-      toggleMiniState,
+
       goPage,
       logout,
       currentTime, // ✅ Se devuelve la variable de la hora actual
+
+      // ------------------------------------------------------------- //
+
+
+      interval: null,
+      drawerState: 'expanded'
     };
+
+
+
   },
 };

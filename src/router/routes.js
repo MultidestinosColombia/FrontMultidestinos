@@ -1,4 +1,3 @@
-import DetallesPlanView from "pages/DetallesPlanView.vue";
 const routes = [
   {
     path: "/home",
@@ -19,7 +18,11 @@ const routes = [
       },
       {
         path: "/cotizacion",
-        component: () => import("pages/CotizacionViajes.vue"),
+        component: () => import("src/pages/CotizacionViajes.vue"),
+      },
+      {
+        path: "/Cotizacion2",
+        component: () => import("src/pages/CotizacionFormulario.vue"),
       },
       {
         path: "/liquidacion",
@@ -34,11 +37,6 @@ const routes = [
       {
         path: "/ControlPlanes",
         component: () => import("pages/ControlPlanes.vue"),
-      },
-      {
-        path: "/planes/:id", // Nueva ruta para los detalles del plan
-        name: "DetallesPlan",
-        component: DetallesPlanView,
       },
       {
         path: "/ControlLiquidacion",

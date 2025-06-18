@@ -611,6 +611,7 @@ export default {
           });
         });
     },
+
     editarUsuario(usuario) {
       // Abrir modal de edición con los datos del usuario
       this.nombreCompletoEditar = usuario.nombreCompleto;
@@ -621,8 +622,12 @@ export default {
       this.contraseñaEditar = ""; // Resetear la contraseña por seguridad
       this.emailEditar = usuario.email || "";
 
+      // Guardar el usuario completo original (incluyendo imagenPerfil)
+      this.usuarioOriginal = { ...usuario };
+
       this.mostrarModalEditar = true;
     },
+
     editarUsuarioSubmit() {
       if (!this.formValidoEditar) {
         Notify.create({
@@ -639,12 +644,21 @@ export default {
         id: this.usuarioEditandoId,
         nombreCompleto: this.nombreCompletoEditar,
         usuario: this.usuarioEditar,
-        contrasena: this.contraseñaEditar,
         rol: this.rolEditar,
         zona: this.zonaEditar || "",
-        activo: "1",
         email: this.emailEditar,
+        activo: "1",
+        // PRESERVAR imagenPerfil original
+        imagenPerfil: this.usuarioOriginal.imagenPerfil
       };
+
+      // Solo incluir contraseña si se ha ingresado una nueva
+      if (this.contraseñaEditar && this.contraseñaEditar.trim() !== "") {
+        usuarioEditado.contrasena = this.contraseñaEditar;
+      }
+
+      console.log("Usuario a actualizar:", usuarioEditado);
+      console.log("imagenPerfil preservado:", this.usuarioOriginal.imagenPerfil);
 
       fetch(
         `https://backmultidestinos.onrender.com/user/${usuarioEditado.id}`,
@@ -656,11 +670,21 @@ export default {
           body: JSON.stringify(usuarioEditado),
         }
       )
-        .then((response) => {
+        .then(async (response) => {
+          console.log("Status de respuesta:", response.status);
+
           if (!response.ok) {
-            throw new Error(
-              "Error en la respuesta del servidor: " + response.status
-            );
+            let errorMessage = `Error ${response.status}`;
+            try {
+              const errorData = await response.text();
+              console.log("Respuesta del servidor:", errorData);
+              if (errorData) {
+                errorMessage += `: ${errorData}`;
+              }
+            } catch (e) {
+              console.log("No se pudo leer el mensaje de error del servidor");
+            }
+            throw new Error(errorMessage);
           }
           return response.json();
         })
@@ -692,6 +716,7 @@ export default {
           });
         });
     },
+
     eliminarUsuario(id) {
       // Eliminar el usuario del servidor y actualizar la lista local
       fetch(`https://backmultidestinos.onrender.com/user/${id}`, {
