@@ -553,7 +553,7 @@ export default {
     const cargarCotizaciones = async (tipo) => {
       loading.value[tipo] = true
       try {
-        const response = await api.post('http://localhost:8010/cotizacion/cotizaciones', { tipo })
+        const response = await api.post('https://backmultidestinos.onrender.com/cotizacion/cotizaciones', { tipo })
         if (tipo === 'normales') cotizacionesNormales.value = response.data
         if (tipo === 'cristal') cotizacionesCristal.value = response.data
         if (tipo === 'personalizadas') cotizacionesPersonalizadas.value = response.data
@@ -602,7 +602,7 @@ export default {
               body.end = end;
             }
 
-            const response = await api.post('http://localhost:8010/cotizacion/lista', body);
+            const response = await api.post('https://backmultidestinos.onrender.com/cotizacion/lista', body);
             return response.data;
           } catch (error) {
             console.error('Error al cargar datos:', error);
@@ -1971,21 +1971,40 @@ export default {
 
 
         preConfirm: () => {
+          // Función auxiliar para obtener valor de input de forma segura
+          const getInputValue = (selector) => {
+            const element = document.querySelector(selector);
+            return element ? element.value.trim() : '';
+          };
+
+          // Función auxiliar para obtener valor numérico
+          const getNumericValue = (selector) => {
+            const value = getInputValue(selector);
+            return parseInt(value) || 0;
+          };
+
+          // Función auxiliar para verificar si un checkbox está marcado
+          const isChecked = (selector) => {
+            const element = document.querySelector(selector);
+            return element ? element.checked : false;
+          };
+
           // Función auxiliar para recopilar datos de habitaciones
           const recopilarHabitaciones = () => {
             const habitaciones = [];
-            const cantidad = parseInt(document.getElementById('habitaciones').value) || 1;
+            const cantidad = getNumericValue('#habitaciones') || 1;
 
             for (let i = 1; i <= cantidad; i++) {
-              const tipoHabitacion = document.querySelector(`[name="tipoHabitacion-${i}"]`)?.value || '';
-              const adultos = parseInt(document.querySelector(`[name="adultos-${i}"]`)?.value) || 0;
-              const ninos = parseInt(document.querySelector(`[name="ninos-${i}"]`)?.value) || 0;
+              const tipoHabitacion = getInputValue(`[name="tipoHabitacion-${i}"]`);
+              const adultos = getNumericValue(`[name="adultos-${i}"]`);
+              const ninos = getNumericValue(`[name="ninos-${i}"]`);
 
               habitaciones.push({
                 numero: i,
                 tipoHabitacion,
                 adultos,
-                ninos
+                ninos,
+                total: adultos + ninos
               });
             }
 
@@ -2001,88 +2020,108 @@ export default {
             };
 
             // Escala de Ida
-            if (document.getElementById('tieneEscala_Ida').checked) {
-              const seccionIda = document.getElementById('infoEscala');
-              escalas.ida = {
-                aerolinea: seccionIda.querySelector('#aerolineaEscala')?.value || '',
-                numeroVuelo: seccionIda.querySelector('#vueloEscala')?.value || '',
-                horaSalida: seccionIda.querySelector('#horaSalidaEscala')?.value || '',
-                horaLlegada: seccionIda.querySelector('#horaLlegadaEscala')?.value || '',
-                clase: seccionIda.querySelector('#claseEscala')?.value || ''
-              };
+            if (isChecked('#tieneEscala_Ida')) {
+              const seccionIda = document.querySelector('#infoEscala');
+              if (seccionIda) {
+                escalas.ida = {
+                  aerolinea: seccionIda.querySelector('#aerolineaEscala')?.value || '',
+                  numeroVuelo: seccionIda.querySelector('#vueloEscala')?.value || '',
+                  horaSalida: seccionIda.querySelector('#horaSalidaEscala')?.value || '',
+                  horaLlegada: seccionIda.querySelector('#horaLlegadaEscala')?.value || '',
+                  clase: seccionIda.querySelector('#claseEscala')?.value || ''
+                };
+              }
             }
 
             // Escala de Regreso
-            if (document.getElementById('tieneEscala_Regreso').checked) {
-              const seccionRegreso = document.getElementById('infoEscala_1');
-              escalas.regreso = {
-                aerolinea: seccionRegreso.querySelector('input[placeholder="Ej: Copa Airlines"]')?.value || '',
-                numeroVuelo: seccionRegreso.querySelector('input[placeholder="Ej: CM789"]')?.value || '',
-                horaSalida: seccionRegreso.querySelector('input[type="time"]')?.value || '',
-                horaLlegada: seccionRegreso.querySelectorAll('input[type="time"]')[1]?.value || '',
-                clase: seccionRegreso.querySelector('input[placeholder="Ej: Económica, Ejecutiva, Primera Clase"]')?.value || ''
-              };
-            }
-
-            // Escala de Ida y Regreso
-            if (document.getElementById('tieneEscala_Ida_y_Regreso').checked) {
-              const seccionIdaRegreso = document.getElementById('infoEscala_2');
-              const inputs = seccionIdaRegreso.querySelectorAll('input');
-
-              escalas.idaYRegreso = {
-                vuelo1: {
+            if (isChecked('#tieneEscala_Regreso')) {
+              const seccionRegreso = document.querySelector('#infoEscala_1');
+              if (seccionRegreso) {
+                const inputs = seccionRegreso.querySelectorAll('input');
+                escalas.regreso = {
                   aerolinea: inputs[0]?.value || '',
                   numeroVuelo: inputs[1]?.value || '',
                   horaSalida: inputs[2]?.value || '',
                   horaLlegada: inputs[3]?.value || '',
                   clase: inputs[4]?.value || ''
-                },
-                vuelo2: {
-                  aerolinea: inputs[5]?.value || '',
-                  numeroVuelo: inputs[6]?.value || '',
-                  horaSalida: inputs[7]?.value || '',
-                  horaLlegada: inputs[8]?.value || '',
-                  clase: inputs[9]?.value || ''
-                }
-              };
+                };
+              }
+            }
+
+            // Escala de Ida y Regreso
+            if (isChecked('#tieneEscala_Ida_y_Regreso')) {
+              const seccionIdaRegreso = document.querySelector('#infoEscala_2');
+              if (seccionIdaRegreso) {
+                const inputs = seccionIdaRegreso.querySelectorAll('input');
+                escalas.idaYRegreso = {
+                  vuelo1: {
+                    aerolinea: inputs[0]?.value || '',
+                    numeroVuelo: inputs[1]?.value || '',
+                    horaSalida: inputs[2]?.value || '',
+                    horaLlegada: inputs[3]?.value || '',
+                    clase: inputs[4]?.value || ''
+                  },
+                  vuelo2: {
+                    aerolinea: inputs[5]?.value || '',
+                    numeroVuelo: inputs[6]?.value || '',
+                    horaSalida: inputs[7]?.value || '',
+                    horaLlegada: inputs[8]?.value || '',
+                    clase: inputs[9]?.value || ''
+                  }
+                };
+              }
             }
 
             return escalas;
           };
 
+          // Recopilar habitaciones
+          const habitaciones = recopilarHabitaciones();
+
+          // Calcular totales
+          const totalAdultos = habitaciones.reduce((total, h) => total + h.adultos, 0);
+          const totalNinos = habitaciones.reduce((total, h) => total + h.ninos, 0);
+          const totalPasajeros = totalAdultos + totalNinos;
+
           // Recopilar todos los datos del formulario
           const formData = {
             // Información General
-            fechaInicio: document.getElementById('fechaInicio').value,
-            fechaFin: document.getElementById('fechaFin').value,
-            ciudadSalida: document.getElementById('ciudadSalida').value,
-            destino: document.getElementById('destino').value,
+            fechaInicio: getInputValue('#fechaInicio'),
+            fechaFin: getInputValue('#fechaFin'),
+            ciudadSalida: getInputValue('#ciudadSalida'),
+            destino: getInputValue('#destino'),
 
             // Alojamiento
-            hotel: document.getElementById('hotel').value,
-            habitaciones: recopilarHabitaciones(),
-            numeroHabitaciones: parseInt(document.getElementById('habitaciones').value),
+            hotel: getInputValue('#hotel'),
+            habitaciones: habitaciones,
+            numeroHabitaciones: habitaciones.length,
+
+            // Totales de pasajeros
+            totalAdultos: totalAdultos,
+            totalNinos: totalNinos,
+            totalPasajeros: totalPasajeros,
 
             // Cliente y opciones
-            cliente: document.getElementById('cliente').value,
-            correoCliente: document.getElementById('correoCliente').value,
-            programa: document.getElementById('programaSelect').value,
-            duracionNoches: document.getElementById('selectNoches').value,
+            cliente: getInputValue('#cliente'),
+            correoCliente: getInputValue('#correoCliente'),
+            telefono: getInputValue('#telefono'),
+            programa: getInputValue('#programaSelect'),
+            duracionNoches: getInputValue('#selectNoches'),
 
             // Vuelos
             vueloIda: {
-              aerolinea: document.getElementById('aerolineaIda').value,
-              numeroVuelo: document.getElementById('vueloIda').value,
-              horaSalida: document.getElementById('horaSalidaIda').value,
-              horaLlegada: document.getElementById('horaLlegadaIda').value,
-              clase: document.getElementById('claseIda').value
+              aerolinea: getInputValue('#aerolineaIda'),
+              numeroVuelo: getInputValue('#vueloIda'),
+              horaSalida: getInputValue('#horaSalidaIda'),
+              horaLlegada: getInputValue('#horaLlegadaIda'),
+              clase: getInputValue('#claseIda')
             },
             vueloVuelta: {
-              aerolinea: document.getElementById('aerolineaVuelta').value,
-              numeroVuelo: document.getElementById('vueloVuelta').value,
-              horaSalida: document.getElementById('horaSalidaVuelta').value,
-              horaLlegada: document.getElementById('horaLlegadaVuelta').value,
-              clase: document.getElementById('claseVuelta').value
+              aerolinea: getInputValue('#aerolineaVuelta'),
+              numeroVuelo: getInputValue('#vueloVuelta'),
+              horaSalida: getInputValue('#horaSalidaVuelta'),
+              horaLlegada: getInputValue('#horaLlegadaVuelta'),
+              clase: getInputValue('#claseVuelta')
             },
 
             // Escalas
@@ -2091,60 +2130,64 @@ export default {
             // Opciones adicionales
             opciones: {
               asesorExterno: {
-                activo: document.getElementById('asesorExterno').checked,
-                asesor: document.getElementById('asesorExterno').checked ?
-                       (document.getElementById('asesor')?.value || '') : null
+                activo: isChecked('#asesorExterno'),
+                asesor: isChecked('#asesorExterno') ? getInputValue('#asesor') : null
               },
               nocheAdicional: {
-                activo: document.getElementById('nocheAdicional').checked,
-                motivo: document.getElementById('nocheAdicional').checked ?
-                       (document.getElementById('motivoNoche')?.value || '') : null
+                activo: isChecked('#nocheAdicional'),
+                motivo: isChecked('#nocheAdicional') ? getInputValue('#motivoNoche') : null
               },
               suplemento: {
-                activo: document.getElementById('suplemento').checked,
-                tipo: document.getElementById('suplemento').checked ?
-                     (document.getElementById('tipoSuplemento')?.value || '') : null
+                activo: isChecked('#suplemento'),
+                tipo: isChecked('#suplemento') ? getInputValue('#tipoSuplemento') : null
               }
             },
 
             // Valores adicionales
-            valoresExtra: parseInt(document.getElementById('valoresExtra').value) || 0,
-            transferencia: document.getElementById('transferencia').value,
+            valoresExtra: getNumericValue('#valoresExtra'),
+            transferencia: getInputValue('#transferencia'),
+            precioTransferencia: getNumericValue('#precioTransferencia'),
+
+            // Información adicional del paquete
+            incluye: getInputValue('#incluye'),
+            noIncluye: getInputValue('#noIncluye'),
+            observaciones: getInputValue('#observaciones'),
+            descuentos: getNumericValue('#descuentos'),
+            impuestos: getNumericValue('#impuestos'),
+            total: getNumericValue('#total'),
+            moneda: getInputValue('#moneda') || 'USD',
 
             // Metadatos
             tipo: 'normales',
             fechaCreacion: new Date().toISOString(),
-            estado: 'pendiente'
+            estado: 'pendiente',
+            creadorCotizacion: getInputValue('#creadorCotizacion') || 'Sistema'
           };
 
           // Validaciones básicas
-          if (!formData.destino) {
-            Swal.showValidationMessage('Por favor selecciona un destino');
-            return false;
+          const validaciones = [
+            { campo: 'destino', mensaje: 'Por favor selecciona un destino' },
+            { campo: 'hotel', mensaje: 'Por favor selecciona un hotel' },
+            { campo: 'cliente', mensaje: 'Por favor selecciona un cliente' },
+            { campo: 'correoCliente', mensaje: 'Por favor ingresa el correo del cliente' },
+            { campo: 'programa', mensaje: 'Por favor selecciona un programa' },
+            { campo: 'duracionNoches', mensaje: 'Por favor selecciona la duración en noches' },
+            { campo: 'fechaInicio', mensaje: 'Por favor selecciona la fecha de inicio' },
+            { campo: 'fechaFin', mensaje: 'Por favor selecciona la fecha de fin' }
+          ];
+
+          // Verificar validaciones básicas
+          for (const validacion of validaciones) {
+            if (!formData[validacion.campo]) {
+              Swal.showValidationMessage(validacion.mensaje);
+              return false;
+            }
           }
 
-          if (!formData.hotel) {
-            Swal.showValidationMessage('Por favor selecciona un hotel');
-            return false;
-          }
-
-          if (!formData.cliente) {
-            Swal.showValidationMessage('Por favor selecciona un cliente');
-            return false;
-          }
-
-          if (!formData.correoCliente) {
-            Swal.showValidationMessage('Por favor ingresa el correo del cliente');
-            return false;
-          }
-
-          if (!formData.programa) {
-            Swal.showValidationMessage('Por favor selecciona un programa');
-            return false;
-          }
-
-          if (!formData.duracionNoches) {
-            Swal.showValidationMessage('Por favor selecciona la duración en noches');
+          // Validar email
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(formData.correoCliente)) {
+            Swal.showValidationMessage('Por favor ingresa un correo electrónico válido');
             return false;
           }
 
@@ -2158,6 +2201,15 @@ export default {
             return false;
           }
 
+          // Validar fechas
+          const fechaInicio = new Date(formData.fechaInicio);
+          const fechaFin = new Date(formData.fechaFin);
+          if (fechaFin <= fechaInicio) {
+            Swal.showValidationMessage('La fecha de fin debe ser posterior a la fecha de inicio');
+            return false;
+          }
+
+          console.log('Datos del formulario recopilados:', formData);
           return formData;
         }
       });
@@ -2192,7 +2244,7 @@ export default {
             }
           });
 
-          const response = await api.post('http://localhost:8010/cotizacion/guardar', formValues);
+          const response = await api.post('https://backmultidestinos.onrender.com/cotizacion/Guardar_Cotizacion', formValues);
 
           if (response.data.success) {
             await Swal.fire({
@@ -2225,7 +2277,50 @@ export default {
     const abrirFormularioCristal = () => console.log('Abrir formulario cristal')
     const abrirFormularioPersonalizada = () => console.log('Abrir formulario personalizada')
 
-    const verDetalle = (cotizacion, tipo) => console.log('Ver detalle:', cotizacion, tipo)
+
+    // ============================= Descargar Formato dependiendo la tabla en la que este ===================== //
+
+    const verDetalle = async (cotizacion, tipo) => {
+      console.log('Ver detalle:', cotizacion, tipo)
+
+      try {
+        const response = await fetch('https://backmultidestinos.onrender.com/api/generar-pdf/solicitud-reserva', { // Cambié el puerto a 8010
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            numeroCotizacion: cotizacion.numero || cotizacion.id,
+            razonSocial: cotizacion.cliente?.razonSocial || cotizacion.razonSocial,
+            nit: cotizacion.cliente?.nit || cotizacion.nit,
+            domicilio: cotizacion.cliente?.domicilio || cotizacion.domicilio,
+            vuelos: cotizacion.vuelos || [],
+            incluye: cotizacion.incluye,
+            noIncluye: cotizacion.noIncluye,
+            liquidacion: cotizacion.liquidacion || [],
+            observaciones: cotizacion.observaciones,
+            aerolinea: cotizacion.aerolinea || 'MULTISERVICIOS EXPRESS',
+            adultos: cotizacion.pasajeros?.adultos || 2,
+            niños: cotizacion.pasajeros?.niños || 1,
+            vehiculos: cotizacion.vehiculos || '1+1'
+          })
+        })
+
+        if (response.ok) {
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `solicitud-reserva-${Date.now()}.pdf`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(url)
+        }
+      } catch (error) {
+        console.error('Error generando PDF:', error)
+      }
+    }
     const editarCotizacion = (cotizacion, tipo) => console.log('Editar:', cotizacion, tipo)
 
     const eliminarCotizacion = async (id, tipo) => {
@@ -2253,7 +2348,7 @@ export default {
 
       if (result.isConfirmed) {
         try {
-          await api.delete(`http://localhost:8010/cotizacion/${tipo}/${id}`);
+          await api.delete(`https://backmultidestinos.onrender.com/cotizacion/${tipo}/${id}`);
           Swal.fire({
             icon: 'success',
             title: '¡Eliminada!',
