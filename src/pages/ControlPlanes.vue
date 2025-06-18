@@ -519,7 +519,7 @@ export default {
     const cargarListas = async () => {
       loadingListas.value = true
       try {
-        const response = await axios.get('http://localhost:8010/planes/Lista')
+        const response = await axios.get('https://backmultidestinos.onrender.com/planes/Lista')
 
         hoteles.value = response.data.hoteles
         transportes.value = response.data.transportes
@@ -922,7 +922,7 @@ export default {
       }).then((result) => {
           if (result.isConfirmed) {
             // Enviar datos al backend con fetch POST
-            fetch('http://localhost:8010/planes/Guardar_Hoteles', {
+            fetch('https://backmultidestinos.onrender.com/planes/Guardar_Hoteles', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(result.value)
@@ -1518,7 +1518,7 @@ export default {
     }).then((result) => {
       if (result.isConfirmed) {
         console.log('🚀 INICIANDO ENVÍO AL SERVIDOR...');
-        console.log('URL:', 'http://localhost:8010/planes/Guardar_Transporte');
+        console.log('URL:', 'https://backmultidestinos.onrender.com/planes/Guardar_Transporte');
         console.log('Método:', 'POST');
         console.log('Headers:', { 'Content-Type': 'application/json' });
         console.log('Body:', JSON.stringify(result.value, null, 2));
@@ -1534,7 +1534,7 @@ export default {
         });
 
         // Enviar datos al backend
-        fetch('http://localhost:8010/planes/Guardar_Transporte', {
+        fetch('https://backmultidestinos.onrender.com/planes/Guardar_Transporte', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1997,7 +1997,7 @@ export default {
     }).then((result) => {
       if (result.isConfirmed) {
         console.log('🚀 INICIANDO ENVÍO AL SERVIDOR...');
-        console.log('URL:', 'http://localhost:8010/planes/Guardar_Tiquete');
+        console.log('URL:', 'https://backmultidestinos.onrender.com/planes/Guardar_Tiquete');
         console.log('Método:', 'POST');
         console.log('Headers:', { 'Content-Type': 'application/json' });
         console.log('Body:', JSON.stringify(result.value, null, 2));
@@ -2013,7 +2013,7 @@ export default {
         });
 
         // Enviar datos al backend
-        fetch('http://localhost:8010/planes/Guardar_Tiquete', {
+        fetch('https://backmultidestinos.onrender.com/planes/Guardar_Tiquete', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2139,7 +2139,7 @@ export default {
       console.log('🧪 Eliminando tipo:', tipo)
       console.log('🆔 ID a eliminar:', id)
 
-      const url = `http://localhost:8010/planes/eliminar/${tipo}/${id}`
+      const url = `https://backmultidestinos.onrender.com/planes/eliminar/${tipo}/${id}`
       console.log('📡 Enviando DELETE a:', url)
 
       try {
@@ -2205,7 +2205,7 @@ export default {
             }
           })
 
-          const response = await axios.post('http://localhost:8010/planes/importarDatos', formData)
+          const response = await axios.post('https://backmultidestinos.onrender.com/planes/importarDatos', formData)
           const resultado = response.data
 
           if (!resultado.success) {
@@ -2255,7 +2255,7 @@ export default {
        // =========================================================================================================================================================== //
 
     const ExportarExcel = (tipo) => {
-      const url = `http://localhost:8010/planes/exportarDatos?tipo=${tipo}`;
+      const url = `https://backmultidestinos.onrender.com/planes/exportarDatos?tipo=${tipo}`;
       const link = document.createElement('a');
       link.href = url;
       link.download = `${tipo}.xlsx`;
@@ -2277,7 +2277,7 @@ export default {
 
       try {
         // 1. Obtener datos del backend por ID
-        const res = await fetch(`http://localhost:8010/planes/${tipo}/${data.id}`);
+        const res = await fetch(`https://backmultidestinos.onrender.com/planes/${tipo}/${data.id}`);
         const resultado = await res.json();
 
         if (!resultado.success) throw new Error('No se pudo obtener el item');
@@ -2365,7 +2365,7 @@ export default {
 
         // 3. Enviar los cambios al backend
         if (formData) {
-          const updateRes = await fetch(`http://localhost:8010/planes/${tipo}/${data.id}`, {
+          const updateRes = await fetch(`https://backmultidestinos.onrender.com/planes/${tipo}/${data.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)

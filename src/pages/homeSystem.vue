@@ -372,7 +372,7 @@ export default {
         const { id, rol: userRole } = typeof userData === "string" ? JSON.parse(userData) : userData
 
         // Llamada POST al backend con filtros y usuario
-        const response = await axios.post('http://localhost:8010/Home/data', {
+        const response = await axios.post('https://backmultidestinos.onrender.com/Home/data', {
           start: dateRange.value.start,
           end: dateRange.value.end,
           userId: id,
@@ -669,7 +669,7 @@ export default {
 
         const { id, rol: userRole } = typeof userData === "string" ? JSON.parse(userData) : userData;
 
-        const response = await axios.post('http://localhost:8010/Home/export', {
+        const response = await axios.post('https://backmultidestinos.onrender.com/Home/export', {
           start: dateRange.value.start,
           end: dateRange.value.end,
           userId: id,
@@ -703,7 +703,7 @@ export default {
         const { id, rol: userRole } = typeof userData === "string" ? JSON.parse(userData) : userData;
 
         // Llamar al endpoint para generar PDF
-        const response = await axios.post('http://localhost:8010/Home/export-pdf', {
+        const response = await axios.post('https://backmultidestinos.onrender.com/Home/export-pdf', {
           start: dateRange.value.start,
           end: dateRange.value.end,
           userId: id,
